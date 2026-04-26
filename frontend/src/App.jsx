@@ -12,52 +12,22 @@ import AuthPage from './components/AuthPage';
 import CourseCard from './components/CourseCard';
 import ReviewForm from './components/ReviewForm';
 
-// --- Course Data Mapping ---
-const COURSE_MAP = {
-  'Computer Science': [
-    { id: 'cs1', title: 'מבוא למדעי המחשב', code: '67101', avgRating: 4.5, difficulty: 4.8, type: 'חובה', description: 'יסודות התכנות בשפת Python, רקורסיה ואלגוריתמים.', instructor: 'פרופ\' דוד לוי', track: 'Computer Science' },
-    { id: 'cs2', title: 'מבני נתונים', code: '67109', avgRating: 4.2, difficulty: 4.2, type: 'חובה', description: 'ניהול יעיל של נתונים, עצים וגרפים.', instructor: 'פרופ\' אבי שחר', track: 'Computer Science' },
-    { id: 'cs3', title: 'אלגברה ליניארית 1', code: '80134', avgRating: 3.8, difficulty: 4.5, type: 'חובה', description: 'מרחבים וקטוריים והעתקות ליניאריות.', instructor: 'ד"ר רחל כהן', track: 'Computer Science' },
-    { id: 'cs4', title: 'פיתוח אפליקציות ווב', code: '67111', avgRating: 4.8, difficulty: 3.5, type: 'בחירה', description: 'בניית יישומי צד-לקוח מודרניים עם React.', instructor: 'ד"ר משה כהן', track: 'Computer Science' },
-  ],
-  'Business Administration': [
-    { id: 'ba1', title: 'מיקרו כלכלה', code: '57101', avgRating: 4.0, difficulty: 3.8, type: 'חובה', description: 'ניתוח התנהגות צרכנים ויצרנים בשוק חופשי.', instructor: 'ד"ר שמעון לוי', track: 'Business Administration' },
-    { id: 'ba2', title: 'מאקרו כלכלה', code: '57102', avgRating: 3.9, difficulty: 4.0, type: 'חובה', description: 'ניתוח המערכת הכלכלית בכללותה - אבטלה, אינפלציה וצמיחה.', instructor: 'פרופ\' יפה כהן', track: 'Business Administration' },
-    { id: 'ba3', title: 'יסודות המימון', code: '55101', avgRating: 4.3, difficulty: 4.5, type: 'חובה', description: 'הערכת שווי נכסים, ניהול סיכונים ותזרים מזומנים.', instructor: 'ד"ר עמית גולן', track: 'Business Administration' },
-    { id: 'ba4', title: 'יסודות השיווק', code: '55105', avgRating: 4.7, difficulty: 3.2, type: 'בחירה', description: 'אסטרטגיות שיווק, מיתוג והתנהגות צרכנים.', instructor: 'גב\' דנה רון', track: 'Business Administration' },
-    { id: 'ba5', title: 'התנהגות צרכנים', code: '55108', avgRating: 4.5, difficulty: 2.8, type: 'בחירה', description: 'תהליכי קבלת החלטות של צרכנים בשוק.', instructor: 'ד"ר לימור ששון', track: 'Business Administration' },
-    { id: 'ba6', title: 'יזמות עסקית', code: '55110', avgRating: 4.9, difficulty: 3.0, type: 'בחירה', description: 'פיתוח מודלים עסקיים והקמת סטרטאפים.', instructor: 'מר יוסי בר', track: 'Business Administration' },
-  ],
-  'Economics': [
-    { id: 'ec1', title: 'מבוא לסטטיסטיקה', code: '52101', avgRating: 4.1, difficulty: 3.5, type: 'חובה', description: 'הסתברות והסקה סטטיסטית.', instructor: 'ד"ר משה ישראלי', track: 'Economics' },
-  ]
-};
+// Data
+import projectData from './data.json';
 
-const INITIAL_REVIEWS = [
-  { id: '1', rating: 5, difficulty: 4, comment: 'קורס מאתגר אבל מרתק. המרצה מעולה ומעביר את החומר בצורה ברורה.', date: '2024-03-15', author: 'איתי א.' },
-  { id: '2', rating: 4, difficulty: 5, comment: 'עמוס מאוד בשיעורי בית, אבל לומדים המון. מומלץ למי שיש לו זמן להשקיע.', date: '2024-02-10', author: 'מיה ר.' },
-];
+const COURSE_MAP = projectData.courses;
+const INITIAL_REVIEWS = projectData.initialReviews;
+const INITIAL_QNA = projectData.initialQna;
+const INITIAL_MATERIALS = projectData.initialMaterials;
+const INITIAL_STATS = projectData.statistics;
+const STUDY_TRACKS = projectData.tracks;
 
-const INITIAL_QNA = [
-  { id: '1', question: 'יש המלצה על ספר עזר טוב למבחן?', answers: [{ text: 'הספר של CLRS מעולה.', date: '2024-01-20' }], date: '2024-01-18' },
-];
-
-const INITIAL_MATERIALS = [
-  { id: '1', title: 'סיכום מלא - סמסטר א 2023', type: 'PDF', author: 'דור לוי', date: '2023-12-01' },
-  { id: '2', title: 'שחזורי מבחנים 2018-2022', type: 'ZIP', author: 'נועה כ.', date: '2023-11-15' },
-];
-
-const INITIAL_STATS = [
-  { id: 's1', title: 'ממוצע כיתתי - סמסטר א\' תשפ"ד', date: '2024-02-15', author: 'איתי א.', url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800' },
-  { id: 's2', title: 'התפלגות ציונים - סמסטר ב\' תשפ"ג', date: '2023-07-10', author: 'מיה ר.', url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800' },
-];
-
-const STUDY_TRACKS = [
-  { id: 'cs', label: 'מדעי המחשב', value: 'Computer Science' },
-  { id: 'ba', label: 'מנהל עסקים', value: 'Business Administration' },
-  { id: 'eco', label: 'כלכלה', value: 'Economics' },
-  { id: 'psy', label: 'פסיכולוגיה', value: 'Psychology' },
-  { id: 'oth', label: 'אחר', value: 'Other' },
+const MATERIAL_CATEGORIES = [
+  { id: 'summaries', label: 'סיכומים', icon: FileText },
+  { id: 'tests', label: 'מבחנים', icon: GraduationCap },
+  { id: 'homework', label: 'מטלות בית', icon: BookOpen },
+  { id: 'formulas', label: 'דפי נוסחאות', icon: TrendingUp },
+  { id: 'misc', label: 'שונות', icon: MessageSquare }
 ];
 
 const App = () => {
@@ -78,6 +48,7 @@ const App = () => {
   const [reviews, setReviews] = useState(INITIAL_REVIEWS);
   const [questions, setQuestions] = useState(INITIAL_QNA);
   const [classStats, setClassStats] = useState(INITIAL_STATS);
+  const [materials, setMaterials] = useState(INITIAL_MATERIALS);
   
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
@@ -86,9 +57,14 @@ const App = () => {
   const [newStatsTitle, setNewStatsTitle] = useState('');
   const [newStatsFile, setNewStatsFile] = useState(null);
 
+  const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
+  const [newMaterialTitle, setNewMaterialTitle] = useState('');
+  const [newMaterialCategory, setNewMaterialCategory] = useState('summaries');
+  const [newMaterialFile, setNewMaterialFile] = useState(null);
+
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [newReviewComment, setNewReviewComment] = useState('');
-  const [newReviewSemester, setNewReviewSemester] = useState('סמסטר א\'');
+  const [newReviewSemester, setNewReviewSemester] = useState("סמסטר א'");
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ד');
   const [newReviewIdentity, setNewReviewIdentity] = useState('full'); // 'full', 'initials', 'anon'
 
@@ -186,12 +162,31 @@ const App = () => {
       author: user.name,
       url: URL.createObjectURL(newStatsFile)
     };
-    
     setClassStats([newStat, ...classStats]);
     setNewStatsTitle('');
     setNewStatsFile(null);
     setIsStatsModalOpen(false);
     alert('הנתונים הועלו בהצלחה!');
+  };
+
+  const handlePostMaterial = () => {
+    if (user?.isGuest) return alert('כדי להעלות חומרים יש להירשם למערכת');
+    if (!newMaterialTitle || !newMaterialFile) return alert('נא למלא כותרת ולבחור קובץ');
+
+    const newMat = {
+      id: Date.now().toString(),
+      title: newMaterialTitle,
+      category: newMaterialCategory,
+      type: newMaterialFile.name.split('.').pop().toUpperCase(),
+      author: user.name,
+      date: new Date().toLocaleDateString('he-IL')
+    };
+
+    setMaterials([newMat, ...materials]);
+    setNewMaterialTitle('');
+    setNewMaterialFile(null);
+    setIsMaterialModalOpen(false);
+    alert('החומר הועלה בהצלחה!');
   };
 
   if (!user) return <AuthPage onLogin={handleLogin} />;
@@ -479,8 +474,20 @@ const App = () => {
                 )}
 
                 {activeTab === 'materials' && (
-                  <div className="space-y-6 text-right">
-                    <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
+                  <div className="space-y-10 text-right">
+                    <div className="flex justify-between items-center mb-6">
+                      {!user.isGuest && (
+                        <button 
+                          onClick={() => setIsMaterialModalOpen(true)}
+                          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-2"
+                        >
+                          <Upload className="h-4 w-4" />
+                          העלאת חומר לימוד
+                        </button>
+                      )}
+                      <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
+                    </div>
+
                     {user.isGuest ? (
                       <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-200 p-12 text-center">
                         <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-400">
@@ -496,18 +503,41 @@ const App = () => {
                         </button>
                       </div>
                     ) : (
-                      INITIAL_MATERIALS.map(m => (
-                        <div key={m.id} className="flex items-center justify-between p-6 bg-white rounded-[32px] border border-slate-200 flex-row-reverse">
-                          <div className="flex items-center gap-6 flex-row-reverse">
-                            <div className="h-14 w-14 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600"><FileText className="h-6 w-6" /></div>
-                            <div>
-                              <h4 className="font-black text-slate-900 text-lg">{m.title}</h4>
-                              <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{m.type} • {m.author}</span>
+                      <div className="space-y-12">
+                        {MATERIAL_CATEGORIES.map(category => {
+                          const categoryMaterials = materials.filter(m => m.category === category.id);
+                          return (
+                            <div key={category.id} className="space-y-4">
+                              <div className="flex items-center gap-3 flex-row-reverse border-b-2 border-slate-100 pb-3">
+                                <category.icon className="h-6 w-6 text-indigo-600" />
+                                <h3 className="text-xl font-black text-slate-800">{category.label}</h3>
+                                <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black">{categoryMaterials.length}</span>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 gap-4">
+                                {categoryMaterials.length > 0 ? (
+                                  categoryMaterials.map(m => (
+                                    <div key={m.id} className="flex items-center justify-between p-6 bg-white rounded-[32px] border border-slate-200 flex-row-reverse hover:border-indigo-200 hover:shadow-md transition-all group">
+                                      <div className="flex items-center gap-6 flex-row-reverse">
+                                        <div className="h-14 w-14 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all"><FileText className="h-6 w-6" /></div>
+                                        <div>
+                                          <h4 className="font-black text-slate-900 text-lg">{m.title}</h4>
+                                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{m.type} • {m.author} • {m.date}</span>
+                                        </div>
+                                      </div>
+                                      <button className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all"><Download className="h-5 w-5" /></button>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="py-8 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 text-slate-400 font-bold">
+                                    אין חומרים בקטגוריה זו עדיין
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                          <button className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all"><Download className="h-5 w-5" /></button>
-                        </div>
-                      ))
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 )}
@@ -619,6 +649,82 @@ const App = () => {
       <footer className="bg-white border-t border-slate-200 py-16 mt-20 text-center">
         <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2026 COURSEMATE ISRAEL 🇮🇱 מיוצר על ידי סטודנטים</p>
       </footer>
+
+      {/* Material Upload Modal */}
+      {isMaterialModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsMaterialModalOpen(false)}>
+          <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-8 flex-row-reverse">
+              <h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3>
+              <button onClick={() => setIsMaterialModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
+                <X className="h-8 w-8" />
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת החומר</label>
+                <input 
+                  type="text" 
+                  value={newMaterialTitle}
+                  onChange={(e) => setNewMaterialTitle(e.target.value)}
+                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right"
+                  placeholder="למשל: סיכום הרצאה 1-5"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג החומר</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {MATERIAL_CATEGORIES.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setNewMaterialCategory(cat.id)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm flex-row-reverse ${newMaterialCategory === cat.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                    >
+                      <cat.icon className="h-4 w-4" />
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">בחירת קובץ</label>
+                <div 
+                  onClick={() => document.getElementById('materialFile').click()}
+                  className={`border-2 border-dashed rounded-[32px] p-8 text-center cursor-pointer transition-all ${newMaterialFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 hover:border-indigo-200 bg-slate-50'}`}
+                >
+                  <input 
+                    id="materialFile"
+                    type="file" 
+                    className="hidden" 
+                    onChange={(e) => setNewMaterialFile(e.target.files[0])}
+                  />
+                  {newMaterialFile ? (
+                    <div className="flex flex-col items-center text-emerald-600 font-bold">
+                      <CheckCircle className="h-10 w-10 mb-2" />
+                      <span className="text-sm truncate w-full px-4">{newMaterialFile.name}</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center text-slate-400">
+                      <Upload className="h-10 w-10 mb-2" />
+                      <span className="text-sm font-black uppercase tracking-widest text-center">לחץ לבחירת קובץ מהמחשב</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button 
+                onClick={handlePostMaterial}
+                className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all mt-4"
+              >
+                פרסם חומר לימוד
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Upload Modal */}
       {isStatsModalOpen && (

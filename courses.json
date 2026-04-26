@@ -1,1 +1,8 @@
-[]
+[
+  { "Course ID": "57101", "Course Name": "מיקרו כלכלה", "Credits": "4", "Semester": "א", "Teacher": "ד\"ר שמעון לוי" },
+  { "Course ID": "57102", "Course Name": "מאקרו כלכלה", "Credits": "4", "Semester": "ב", "Teacher": "פרופ' יפה כהן" },
+  { "Course ID": "55101", "Course Name": "יסודות המימון", "Credits": "4", "Semester": "א", "Teacher": "ד\"ר עמית גולן" },
+  { "Course ID": "55105", "Course Name": "יסודות השיווק", "Credits": "4", "Semester": "ב", "Teacher": "גב' דנה רון" },
+  { "Course ID": "55108", "Course Name": "התנהגות צרכנים", "Credits": "3", "Semester": "א", "Teacher": "ד\"ר לימור ששון" },
+  { "Course ID": "55110", "Course Name": "יזמות עסקית", "Credits": "2", "Semester": "ב", "Teacher": "מר יוסי בר" }
+]

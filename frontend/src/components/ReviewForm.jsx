@@ -33,8 +33,8 @@ const ReviewForm = ({
   };
 
   const SEMESTERS = [
-    { id: 'a', label: 'סמסטר א\'' },
-    { id: 'b', label: 'סמסטר ב\'' },
+    { id: 'a', label: "סמסטר א'" },
+    { id: 'b', label: "סמסטר ב'" },
     { id: 's', label: 'סמסטר קיץ' },
   ];
 
