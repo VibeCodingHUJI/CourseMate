@@ -88,7 +88,6 @@ const App = () => {
 
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [newReviewComment, setNewReviewComment] = useState('');
-  const [newReviewGrade, setNewReviewGrade] = useState('');
   const [newReviewSemester, setNewReviewSemester] = useState('סמסטר א\'');
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ד');
   const [newReviewIdentity, setNewReviewIdentity] = useState('full'); // 'full', 'initials', 'anon'
@@ -139,7 +138,6 @@ const App = () => {
       id: Date.now().toString(),
       difficulty: 4,
       comment: newReviewComment,
-      grade: newReviewGrade,
       semester: newReviewSemester,
       year: newReviewYear,
       date: new Date().toLocaleDateString('he-IL'),
@@ -149,7 +147,6 @@ const App = () => {
     
     setReviews([newReview, ...reviews]);
     setNewReviewComment('');
-    setNewReviewGrade('');
     setIsReviewModalOpen(false);
     alert('הביקורת פורסמה בהצלחה!');
   };
@@ -405,7 +402,7 @@ const App = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-              <div className="lg:col-span-2 space-y-6">
+              <div className={`${user.isGuest ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6`}>
                 {activeTab === 'reviews' && (
                   <div className="space-y-6">
                     <div className="flex justify-between items-center mb-4">
@@ -441,11 +438,6 @@ const App = () => {
                             <div className="text-xs font-black text-slate-400 bg-slate-50 px-4 py-1.5 rounded-xl uppercase tracking-widest">
                               {r.semester}, {r.year}
                             </div>
-                            {r.grade && (
-                              <div className="text-xs font-black text-indigo-600 bg-indigo-50 px-4 py-1.5 rounded-xl uppercase tracking-widest">
-                                ציון: {r.grade}
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -565,8 +557,8 @@ const App = () => {
                 )}
               </div>
 
-              <div className="lg:col-span-1">
-                {user.isGuest && (
+              {user.isGuest && (
+                <div className="lg:col-span-1">
                   <div className="bg-slate-900 text-white rounded-[40px] p-8 sticky top-28 shadow-2xl shadow-slate-900/20 text-center">
                     <Award className="h-12 w-12 text-indigo-400 mx-auto mb-4" />
                     <h3 className="text-2xl font-black mb-4">רוצה להשפיע?</h3>
@@ -578,8 +570,8 @@ const App = () => {
                       הרשמה בחינם
                     </button>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -587,16 +579,14 @@ const App = () => {
 
       {/* Review Modal */}
       {isReviewModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl">
-          <div className="bg-white w-full max-w-lg rounded-[40px] p-10 animate-in zoom-in-95 duration-200 shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsReviewModalOpen(false)}>
+          <div className="bg-white w-full max-w-4xl rounded-[40px] p-10 animate-in zoom-in-95 duration-200 shadow-2xl overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
             <ReviewForm 
               comment={newReviewComment}
-              grade={newReviewGrade}
               semester={newReviewSemester}
               year={newReviewYear}
               identityType={newReviewIdentity}
               onCommentChange={setNewReviewComment}
-              onGradeChange={setNewReviewGrade}
               onSemesterChange={setNewReviewSemester}
               onYearChange={setNewReviewYear}
               onIdentityChange={setNewReviewIdentity}

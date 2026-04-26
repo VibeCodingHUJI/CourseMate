@@ -2,10 +2,36 @@ import React from 'react';
 import { Send, X, User, UserCircle, Ghost } from 'lucide-react';
 
 const ReviewForm = ({ 
-  comment, grade, semester, year, identityType,
-  onCommentChange, onGradeChange, onSemesterChange, onYearChange, onIdentityChange,
+  comment, semester, year, identityType,
+  onCommentChange, onSemesterChange, onYearChange, onIdentityChange,
   onSubmit, onClose 
 }) => {
+  // Parsing the existing comment if it was already partially filled
+  // but usually this is a fresh state. We'll add local state for the parts.
+  const [parts, setParts] = React.useState({
+    lecturer: '',
+    difficulty: '',
+    investment: '',
+    exam: '',
+    general: ''
+  });
+
+  const updatePart = (key, value) => {
+    const newParts = { ...parts, [key]: value };
+    setParts(newParts);
+    
+    // Combine all non-empty parts into a single string
+    const combined = [
+      newParts.lecturer && `מרצה: ${newParts.lecturer}`,
+      newParts.difficulty && `רמת קושי: ${newParts.difficulty}`,
+      newParts.investment && `השקעה נדרשת: ${newParts.investment}`,
+      newParts.exam && `המבחן: ${newParts.exam}`,
+      newParts.general && `כללי: ${newParts.general}`
+    ].filter(Boolean).join('\n\n');
+    
+    onCommentChange(combined);
+  };
+
   const SEMESTERS = [
     { id: 'a', label: 'סמסטר א\'' },
     { id: 'b', label: 'סמסטר ב\'' },
@@ -18,86 +44,110 @@ const ReviewForm = ({
     { id: 'anon', label: 'אנונימי/ת', icon: Ghost },
   ];
 
+  const QUESTIONS = [
+    { id: 'lecturer', label: 'מה דעתך על המרצה?', placeholder: 'מעביר/ה את החומר בצורה מעניינת?' },
+    { id: 'difficulty', label: 'מה רמת הקושי של הקורס?', placeholder: 'האם החומר מורכב להבנה?' },
+    { id: 'investment', label: 'כמה השקעה הקורס דורש?', placeholder: 'יש הרבה עבודות/תרגילים?' },
+    { id: 'exam', label: 'האם המבחן היה הוגן?', placeholder: 'היה דומה לחומר שנלמד?' },
+    { id: 'general', label: 'משהו נוסף שתרצו להוסיף?', placeholder: 'טיפים לסטודנטים אחרים...' },
+  ];
+
   return (
     <div className="space-y-8 text-right">
-      <div className="flex justify-between items-center flex-row-reverse mb-2">
-        <h3 className="text-3xl font-black text-slate-900">הוספת ביקורת</h3>
-        <button onClick={onClose} className="text-slate-400 hover:text-rose-500 transition-colors">
-          <X className="h-8 w-8" />
+      <div className="flex justify-between items-start flex-row-reverse">
+        <div className="flex flex-col items-end">
+          <h3 className="text-4xl font-black text-slate-900">הוספת ביקורת</h3>
+          <p className="text-slate-500 font-bold mt-2 text-lg">שתפו את החוויה שלכם מהקורס</p>
+        </div>
+        <button 
+          onClick={onClose} 
+          className="bg-slate-100 p-4 rounded-2xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all active:scale-90 group"
+          title="סגור"
+        >
+          <X className="h-8 w-8 group-hover:rotate-90 transition-transform duration-300" />
         </button>
       </div>
 
-      <div className="space-y-6">
-        {/* Identity Selection */}
-        <div>
-          <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 block">איך להציג את שמך?</label>
-          <div className="grid grid-cols-3 gap-3">
-            {IDENTITY_OPTIONS.map(option => (
-              <button
-                key={option.id}
-                onClick={() => onIdentityChange(option.id)}
-                className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${identityType === option.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Left Column: Details & Identity */}
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-slate-400 mb-2 block">סמסטר</label>
+              <select 
+                value={semester}
+                onChange={(e) => onSemesterChange(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-3 outline-none focus:border-indigo-500 focus:bg-white transition-all text-right font-bold appearance-none cursor-pointer"
               >
-                <option.icon className="h-6 w-6" />
-                <span className="text-xs font-bold">{option.label}</span>
-              </button>
-            ))}
+                {SEMESTERS.map(s => (
+                  <option key={s.id} value={s.label}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-black uppercase tracking-widest text-slate-400 mb-2 block">שנת לימוד</label>
+              <input 
+                type="text" 
+                value={year}
+                onChange={(e) => onYearChange(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-3 outline-none focus:border-indigo-500 focus:bg-white transition-all text-right font-bold"
+                placeholder="תשפ״ד"
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">ציון (אופציונלי)</label>
-            <input 
-              type="number" 
-              value={grade}
-              onChange={(e) => onGradeChange(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all text-right font-bold"
-              placeholder="0-100"
-            />
+            <label className="text-sm font-black uppercase tracking-widest text-slate-400 mb-3 block">איך להציג את שמך?</label>
+            <div className="grid grid-cols-3 gap-2">
+              {IDENTITY_OPTIONS.map(option => (
+                <button
+                  key={option.id}
+                  onClick={() => onIdentityChange(option.id)}
+                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-2xl border-2 transition-all ${identityType === option.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600 font-bold' : 'border-slate-100 text-slate-400 hover:border-slate-200 font-medium'}`}
+                >
+                  <option.icon className="h-5 w-5" />
+                  <span className="text-xs">{option.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div>
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">שנת לימוד</label>
-            <input 
-              type="text" 
-              value={year}
-              onChange={(e) => onYearChange(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all text-right font-bold"
-              placeholder="תשפ״ד"
-            />
+
+          <div className="hidden lg:block pt-4">
+            <button 
+              onClick={onSubmit}
+              className="w-full bg-indigo-600 text-white py-6 rounded-[32px] font-black text-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-2xl shadow-indigo-600/30 flex items-center justify-center gap-4"
+            >
+              <Send className="h-6 w-6" />
+              פרסום ביקורת
+            </button>
+            <p className="text-center text-slate-400 font-bold mt-4 text-sm">ניתן להשאיר חלק מהשאלות ריקות</p>
           </div>
         </div>
 
-        <div>
-          <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סמסטר</label>
-          <select 
-            value={semester}
-            onChange={(e) => onSemesterChange(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all text-right font-bold appearance-none cursor-pointer"
-          >
-            {SEMESTERS.map(s => (
-              <option key={s.id} value={s.label}>{s.label}</option>
-            ))}
-          </select>
+        {/* Right Column: Categorical Questions */}
+        <div className="space-y-6 max-h-[500px] lg:max-h-none overflow-y-auto pr-2 custom-scrollbar">
+          {QUESTIONS.map(q => (
+            <div key={q.id}>
+              <label className="text-sm font-black text-slate-700 mb-2 block">{q.label}</label>
+              <textarea 
+                value={parts[q.id]}
+                onChange={(e) => updatePart(q.id, e.target.value)}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 h-24 outline-none focus:border-indigo-500 focus:bg-white transition-all resize-none text-right font-medium" 
+                placeholder={q.placeholder}
+              ></textarea>
+            </div>
+          ))}
+          
+          <div className="lg:hidden pb-4">
+            <button 
+              onClick={onSubmit}
+              className="w-full bg-indigo-600 text-white py-6 rounded-[32px] font-black text-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-2xl shadow-indigo-600/30 flex items-center justify-center gap-4"
+            >
+              <Send className="h-6 w-6" />
+              פרסום ביקורת
+            </button>
+          </div>
         </div>
-
-        <div>
-          <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 block">הביקורת שלך</label>
-          <textarea 
-            value={comment}
-            onChange={(e) => onCommentChange(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-[32px] p-6 h-40 outline-none focus:border-indigo-500 transition-all resize-none text-right font-medium" 
-            placeholder="מה דעתך על הקורס? איך היה המבחן?"
-          ></textarea>
-        </div>
-
-        <button 
-          onClick={onSubmit}
-          className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 active:scale-95 transition-all shadow-xl shadow-indigo-600/20 mt-4 flex items-center justify-center gap-3"
-        >
-          <Send className="h-5 w-5" />
-          פרסום ביקורת
-        </button>
       </div>
     </div>
   );
