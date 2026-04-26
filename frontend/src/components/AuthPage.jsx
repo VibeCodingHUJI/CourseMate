@@ -40,7 +40,7 @@ const AuthPage = ({ onLogin }) => {
             <div className="bg-indigo-600 p-4 rounded-3xl mb-4 shadow-xl shadow-indigo-600/20">
               < GraduationCap className="h-10 w-10 text-white" />
             </div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight">ReviewUni</h1>
+            <h1 className="text-4xl font-black text-slate-900 tracking-tight">CourseMate</h1>
             <p className="text-slate-400 font-bold mt-2 text-center">ברוכים הבאים לקהילת הסטודנטים</p>
           </div>
 

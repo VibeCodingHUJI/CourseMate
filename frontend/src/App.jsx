@@ -198,7 +198,7 @@ const App = () => {
             <div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform">
               <GraduationCap className="h-6 w-6 text-white" />
             </div>
-            <span className="text-2xl font-black text-slate-900 tracking-tight">ReviewUni</span>
+            <span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span>
           </div>
           
           <div className="flex-1 max-w-xl mx-12 relative group">
@@ -270,7 +270,7 @@ const App = () => {
             <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
               <div className="text-right">
                 <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight">
-                  {user.isGuest ? 'ברוכים הבאים ל-ReviewUni' : `שלום ${user.name.split(' ')[0]}!`}
+                  {user.isGuest ? 'ברוכים הבאים ל-CourseMate' : `שלום ${user.name.split(' ')[0]}!`}
                 </h1>
                 <p className="text-xl text-slate-500 font-medium text-right">
                   {user.isGuest && user.track === 'General' 
@@ -597,7 +597,7 @@ const App = () => {
       )}
 
       <footer className="bg-white border-t border-slate-200 py-16 mt-20 text-center">
-        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2026 REVIEWUNI ISRAEL 🇮🇱 מיוצר על ידי סטודנטים</p>
+        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2026 COURSEMATE ISRAEL 🇮🇱 מיוצר על ידי סטודנטים</p>
       </footer>
 
       {/* Stats Upload Modal */}

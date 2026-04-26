@@ -59,7 +59,7 @@ app.post('/api/reviews', async (req, res) => {
 });
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/reviewuni')
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/coursemate')
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('Could not connect to MongoDB', err));
 

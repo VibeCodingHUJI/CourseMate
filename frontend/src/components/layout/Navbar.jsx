@@ -7,7 +7,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <GraduationCap className="h-8 w-8 text-primary-600" />
-          <span className="text-xl font-bold text-secondary-800">ReviewUni</span>
+          <span className="text-xl font-bold text-secondary-800">CourseMate</span>
         </Link>
         
         <div className="flex-1 max-w-md mx-8 relative">
