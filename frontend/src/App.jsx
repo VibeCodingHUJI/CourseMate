@@ -86,14 +86,14 @@ const App = () => {
   const [newStatsTitle, setNewStatsTitle] = useState('');
   const [newStatsFile, setNewStatsFile] = useState(null);
 
-  const [selectedImage, setSelectedImage] = useState(null);
-  
-  // Review Form State
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [newReviewComment, setNewReviewComment] = useState('');
-  const [newReviewRating, setNewReviewRating] = useState(0);
   const [newReviewGrade, setNewReviewGrade] = useState('');
   const [newReviewSemester, setNewReviewSemester] = useState('סמסטר א\'');
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ד');
+  const [newReviewIdentity, setNewReviewIdentity] = useState('full'); // 'full', 'initials', 'anon'
+
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -123,24 +123,34 @@ const App = () => {
     return matchesSearch && matchesFilter;
   });
 
+  const getAuthorDisplayName = (fullName, type) => {
+    if (type === 'anon') return 'אנונימי/ת';
+    if (type === 'initials') {
+      return fullName.split(' ').map(n => n[0] + '.').join(' ');
+    }
+    return fullName;
+  };
+
   const handlePostReview = () => {
     if (user?.isGuest) return alert('כדי להוסיף ביקורת יש להירשם למערכת');
-    if (!newReviewComment || newReviewRating === 0) return alert('נא למלא דירוג ותגובה');
+    if (!newReviewComment) return alert('נא למלא את תוכן הביקורת');
+    
     const newReview = {
       id: Date.now().toString(),
-      rating: newReviewRating,
       difficulty: 4,
       comment: newReviewComment,
       grade: newReviewGrade,
       semester: newReviewSemester,
       year: newReviewYear,
       date: new Date().toLocaleDateString('he-IL'),
-      author: user.name
+      author: getAuthorDisplayName(user.name, newReviewIdentity),
+      identityType: newReviewIdentity
     };
+    
     setReviews([newReview, ...reviews]);
     setNewReviewComment('');
-    setNewReviewRating(0);
     setNewReviewGrade('');
+    setIsReviewModalOpen(false);
     alert('הביקורת פורסמה בהצלחה!');
   };
 
@@ -398,7 +408,21 @@ const App = () => {
               <div className="lg:col-span-2 space-y-6">
                 {activeTab === 'reviews' && (
                   <div className="space-y-6">
-                    <h2 className="text-2xl font-black text-slate-900 mb-4 text-right">ביקורות ({reviews.length})</h2>
+                    <div className="flex justify-between items-center mb-4">
+                      {!user.isGuest ? (
+                        <button 
+                          onClick={() => setIsReviewModalOpen(true)}
+                          className="bg-indigo-600 text-white px-6 py-2 rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center gap-2"
+                        >
+                          <Send className="h-4 w-4" />
+                          הוספת ביקורת
+                        </button>
+                      ) : (
+                        <div /> // Empty for layout
+                      )}
+                      <h2 className="text-2xl font-black text-slate-900 text-right">ביקורות ({reviews.length})</h2>
+                    </div>
+
                     {reviews.map(r => (
                       <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right">
                         <div className="flex justify-between items-center mb-6">
@@ -408,9 +432,7 @@ const App = () => {
                             </div>
                             <div className="font-black text-slate-900">{r.author}</div>
                           </div>
-                          <div className="flex gap-1 text-amber-500">
-                            {[...Array(5)].map((_, i) => <Star key={i} className={`h-5 w-5 ${i < r.rating ? 'fill-current' : 'text-slate-100'}`} />)}
-                          </div>
+                          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
                         </div>
                         <p className="text-slate-600 text-lg font-medium leading-relaxed italic mb-6">"{r.comment}"</p>
                         
@@ -544,7 +566,7 @@ const App = () => {
               </div>
 
               <div className="lg:col-span-1">
-                {user.isGuest ? (
+                {user.isGuest && (
                   <div className="bg-slate-900 text-white rounded-[40px] p-8 sticky top-28 shadow-2xl shadow-slate-900/20 text-center">
                     <Award className="h-12 w-12 text-indigo-400 mx-auto mb-4" />
                     <h3 className="text-2xl font-black mb-4">רוצה להשפיע?</h3>
@@ -556,26 +578,34 @@ const App = () => {
                       הרשמה בחינם
                     </button>
                   </div>
-                ) : (
-                  <ReviewForm 
-                    rating={newReviewRating}
-                    comment={newReviewComment}
-                    grade={newReviewGrade}
-                    semester={newReviewSemester}
-                    year={newReviewYear}
-                    onRatingChange={setNewReviewRating}
-                    onCommentChange={setNewReviewComment}
-                    onGradeChange={setNewReviewGrade}
-                    onSemesterChange={setNewReviewSemester}
-                    onYearChange={setNewReviewYear}
-                    onSubmit={handlePostReview}
-                  />
                 )}
               </div>
             </div>
           </div>
         )}
       </main>
+
+      {/* Review Modal */}
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl">
+          <div className="bg-white w-full max-w-lg rounded-[40px] p-10 animate-in zoom-in-95 duration-200 shadow-2xl">
+            <ReviewForm 
+              comment={newReviewComment}
+              grade={newReviewGrade}
+              semester={newReviewSemester}
+              year={newReviewYear}
+              identityType={newReviewIdentity}
+              onCommentChange={setNewReviewComment}
+              onGradeChange={setNewReviewGrade}
+              onSemesterChange={setNewReviewSemester}
+              onYearChange={setNewReviewYear}
+              onIdentityChange={setNewReviewIdentity}
+              onSubmit={handlePostReview}
+              onClose={() => setIsReviewModalOpen(false)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Question Modal */}
       {isQuestionModalOpen && (
