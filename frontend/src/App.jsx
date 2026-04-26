@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, GraduationCap, Star, MessageSquare, 
   BookOpen, TrendingUp, Send, FileText, 
@@ -44,10 +44,39 @@ const App = () => {
   const [courseFilter, setCourseFilter] = useState('All'); // 'All', 'חובה', 'בחירה'
   
   // Dynamic Content State
-  const [reviews, setReviews] = useState(INITIAL_REVIEWS);
-  const [questions, setQuestions] = useState(INITIAL_QNA);
-  const [materials, setMaterials] = useState(INITIAL_MATERIALS);
+  const [reviews, setReviews] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [materials, setMaterials] = useState([]);
+  const [allCourses, setAllCourses] = useState([]);
   
+  // Load initial courses
+  useEffect(() => {
+    fetch('http://localhost:3000/courses')
+      .then(res => res.json())
+      .then(data => setAllCourses(data))
+      .catch(err => console.error('Error fetching courses:', err));
+  }, []);
+
+  // Load reviews/questions/materials when course is selected
+  useEffect(() => {
+    if (selectedCourse) {
+      // Fetch reviews
+      fetch(`http://localhost:3000/reviews?courseId=${selectedCourse.id}`)
+        .then(res => res.json())
+        .then(data => setReviews(data));
+      
+      // Fetch questions
+      fetch(`http://localhost:3000/questions?courseId=${selectedCourse.id}`)
+        .then(res => res.json())
+        .then(data => setQuestions(data));
+
+      // Fetch materials
+      fetch(`http://localhost:3000/materials?courseId=${selectedCourse.id}`)
+        .then(res => res.json())
+        .then(data => setMaterials(data));
+    }
+  }, [selectedCourse]);
+
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
 
@@ -84,10 +113,12 @@ const App = () => {
 
   const filteredTracks = STUDY_TRACKS.filter(t => t.label.includes(trackSearch));
 
-  const filteredCourses = (COURSE_MAP[user?.track] || []).filter(c => {
+  const filteredCourses = allCourses.filter(c => {
+    if (!user) return false;
+    const matchesTrack = c.track === user.track || user.track === 'General';
     const matchesSearch = c.title.includes(searchQuery) || c.code.includes(searchQuery);
     const matchesFilter = courseFilter === 'All' || c.type === courseFilter;
-    return matchesSearch && matchesFilter;
+    return matchesTrack && matchesSearch && matchesFilter;
   });
 
   const getAuthorDisplayName = (fullName, type) => {
@@ -98,12 +129,12 @@ const App = () => {
     return fullName;
   };
 
-  const handlePostReview = () => {
+  const handlePostReview = async () => {
     if (user?.isGuest) return alert('כדי להוסיף ביקורת יש להירשם למערכת');
     if (!newReviewComment) return alert('נא למלא את תוכן הביקורת');
     
     const newReview = {
-      id: Date.now().toString(),
+      courseId: selectedCourse.id,
       difficulty: 4,
       comment: newReviewComment,
       semester: newReviewSemester,
@@ -113,42 +144,74 @@ const App = () => {
       identityType: newReviewIdentity
     };
     
-    setReviews([newReview, ...reviews]);
-    setNewReviewComment('');
-    setIsReviewModalOpen(false);
-    alert('הביקורת פורסמה בהצלחה!');
+    try {
+      const res = await fetch('http://localhost:3000/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newReview)
+      });
+      const savedReview = await res.json();
+      setReviews([savedReview, ...reviews]);
+      setNewReviewComment('');
+      setIsReviewModalOpen(false);
+      alert('הביקורת פורסמה בהצלחה!');
+    } catch (err) {
+      alert('שגיאה בפרסום הביקורת');
+    }
   };
 
-  const handlePostQuestion = () => {
+  const handlePostQuestion = async () => {
     if (user?.isGuest) return alert('כדי לשאול שאלה יש להירשם למערכת');
     if (!newQuestionText) return;
+    
     const newQ = {
-      id: Date.now().toString(),
+      courseId: selectedCourse.id,
       question: newQuestionText,
       answers: [],
       date: new Date().toLocaleDateString('he-IL')
     };
-    setQuestions([newQ, ...questions]);
-    setNewQuestionText('');
-    setIsQuestionModalOpen(false);
+
+    try {
+      const res = await fetch('http://localhost:3000/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newQ)
+      });
+      const savedQ = await res.json();
+      setQuestions([savedQ, ...questions]);
+      setNewQuestionText('');
+      setIsQuestionModalOpen(false);
+    } catch (err) {
+      alert('שגיאה בפרסום השאלה');
+    }
   };
 
-  const handlePostAnswer = (qId, text) => {
+  const handlePostAnswer = async (qId, text) => {
     if (user?.isGuest) return alert('כדי להשיב לשאלה יש להירשם למערכת');
     if (!text) return;
-    setQuestions(questions.map(q => 
-      q.id === qId 
-        ? { ...q, answers: [...q.answers, { text, date: new Date().toLocaleDateString('he-IL') }] }
-        : q
-    ));
+
+    const question = questions.find(q => q.id === qId);
+    const updatedAnswers = [...question.answers, { text, date: new Date().toLocaleDateString('he-IL') }];
+
+    try {
+      const res = await fetch(`http://localhost:3000/questions/${qId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: updatedAnswers })
+      });
+      const updatedQ = await res.json();
+      setQuestions(questions.map(q => q.id === qId ? updatedQ : q));
+    } catch (err) {
+      alert('שגיאה בפרסום התשובה');
+    }
   };
 
-  const handlePostMaterial = () => {
+  const handlePostMaterial = async () => {
     if (user?.isGuest) return alert('כדי להעלות חומרים יש להירשם למערכת');
     if (!newMaterialTitle || !newMaterialFile) return alert('נא למלא כותרת ולבחור קובץ');
 
     const newMat = {
-      id: Date.now().toString(),
+      courseId: selectedCourse.id,
       title: newMaterialTitle,
       category: newMaterialCategory,
       type: newMaterialFile.name.split('.').pop().toUpperCase(),
@@ -156,11 +219,21 @@ const App = () => {
       date: new Date().toLocaleDateString('he-IL')
     };
 
-    setMaterials([newMat, ...materials]);
-    setNewMaterialTitle('');
-    setNewMaterialFile(null);
-    setIsMaterialModalOpen(false);
-    alert('החומר הועלה בהצלחה!');
+    try {
+      const res = await fetch('http://localhost:3000/materials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMat)
+      });
+      const savedMat = await res.json();
+      setMaterials([savedMat, ...materials]);
+      setNewMaterialTitle('');
+      setNewMaterialFile(null);
+      setIsMaterialModalOpen(false);
+      alert('החומר הועלה בהצלחה!');
+    } catch (err) {
+      alert('שגיאה בהעלאת החומר');
+    }
   };
 
   if (!user) return <AuthPage onLogin={handleLogin} />;
@@ -185,8 +258,9 @@ const App = () => {
               </div>
               <button 
                 onClick={handleLogout}
-                className="bg-white text-slate-400 p-2 rounded-xl hover:text-rose-500 hover:bg-rose-50 transition-all shadow-sm"
+                className="bg-white text-slate-400 px-3 py-2 rounded-xl hover:text-rose-500 hover:bg-rose-50 transition-all shadow-sm flex items-center gap-2 group"
               >
+                <span className="text-[10px] font-black uppercase hidden lg:block">התנתקות</span>
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -251,7 +325,7 @@ const App = () => {
                 <p className="text-xl text-slate-500 font-medium text-right">
                   {user.isGuest && user.track === 'General' 
                     ? 'בחרו מסלול לימוד כדי לראות את הקורסים הרלוונטיים עבורכם' 
-                    : `ביקורות וסיכומים למסלול: ${STUDY_TRACKS.find(t => t.value === user.track)?.label || user.track}`}
+                    : `שלום ${user.name}, הנה הקורסים במסלול ${STUDY_TRACKS.find(t => t.value === user.track)?.label || user.track} שלך`}
                 </p>
               </div>
 
@@ -272,7 +346,7 @@ const App = () => {
             {(user.isGuest && user.track === 'General') ? (
               <div className="relative">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 opacity-20 grayscale blur-[2px] pointer-events-none select-none">
-                  {COURSE_MAP['Computer Science'].map(course => (
+                  {allCourses.slice(0, 6).map(course => (
                     <CourseCard key={course.id} course={course} onClick={() => {}} />
                   ))}
                 </div>

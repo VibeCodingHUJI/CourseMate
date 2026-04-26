@@ -18,18 +18,47 @@ const AuthPage = ({ onLogin }) => {
     { id: 'oth', label: 'אחר', value: 'Other' },
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (authMode === 'signup' && (!authForm.name || !authForm.email || !authForm.password)) {
       return alert('נא למלא את כל השדות');
     }
-    const userData = {
-      name: authMode === 'signup' ? authForm.name : 'סטודנט חוזר',
-      email: authForm.email,
-      track: authForm.track,
-      isGuest: false
-    };
-    onLogin(userData);
+
+    try {
+      if (authMode === 'signup') {
+        // Check if user already exists
+        const checkRes = await fetch(`http://localhost:3000/users?email=${authForm.email}`);
+        const existingUsers = await checkRes.json();
+        if (existingUsers.length > 0) {
+          throw new Error('משתמש עם אימייל זה כבר קיים במערכת');
+        }
+
+        const response = await fetch(`http://localhost:3000/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...authForm, isGuest: false })
+        });
+        const data = await response.json();
+        onLogin(data);
+      } else {
+        // Login: Find user by email and password
+        const response = await fetch(`http://localhost:3000/users?email=${authForm.email}&password=${authForm.password}`);
+        const users = await response.json();
+
+        if (users.length === 0) {
+          throw new Error('אימייל או סיסמה שגויים');
+        }
+
+        onLogin(users[0]);
+      }
+    } catch (err) {
+      // Translating common system errors
+      if (err.message.includes('Failed to fetch')) {
+        alert('לא ניתן להתחבר לשרת הנתונים. וודאו ש-json-server פועל.');
+      } else {
+        alert(err.message);
+      }
+    }
   };
 
   return (
