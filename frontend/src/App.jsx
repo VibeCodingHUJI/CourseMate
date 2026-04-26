@@ -4,7 +4,7 @@ import {
   BookOpen, TrendingUp, Send, FileText, 
   Download, Upload, User, ChevronLeft,
   Filter, Award, Clock, X, CheckCircle, Lock,
-  Camera, BarChart3
+  Camera
 } from 'lucide-react';
 
 // Components
@@ -19,7 +19,6 @@ const COURSE_MAP = projectData.courses;
 const INITIAL_REVIEWS = projectData.initialReviews;
 const INITIAL_QNA = projectData.initialQna;
 const INITIAL_MATERIALS = projectData.initialMaterials;
-const INITIAL_STATS = projectData.statistics;
 const STUDY_TRACKS = projectData.tracks;
 
 const MATERIAL_CATEGORIES = [
@@ -47,15 +46,10 @@ const App = () => {
   // Dynamic Content State
   const [reviews, setReviews] = useState(INITIAL_REVIEWS);
   const [questions, setQuestions] = useState(INITIAL_QNA);
-  const [classStats, setClassStats] = useState(INITIAL_STATS);
   const [materials, setMaterials] = useState(INITIAL_MATERIALS);
   
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
-
-  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
-  const [newStatsTitle, setNewStatsTitle] = useState('');
-  const [newStatsFile, setNewStatsFile] = useState(null);
 
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
   const [newMaterialTitle, setNewMaterialTitle] = useState('');
@@ -67,8 +61,6 @@ const App = () => {
   const [newReviewSemester, setNewReviewSemester] = useState("סמסטר א'");
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ד');
   const [newReviewIdentity, setNewReviewIdentity] = useState('full'); // 'full', 'initials', 'anon'
-
-  const [selectedImage, setSelectedImage] = useState(null);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -151,24 +143,6 @@ const App = () => {
     ));
   };
 
-  const handlePostStats = () => {
-    if (user?.isGuest) return alert('כדי להעלות נתונים יש להירשם למערכת');
-    if (!newStatsTitle || !newStatsFile) return alert('נא למלא כותרת ולהוסיף תמונה');
-    
-    const newStat = {
-      id: Date.now().toString(),
-      title: newStatsTitle,
-      date: new Date().toLocaleDateString('he-IL'),
-      author: user.name,
-      url: URL.createObjectURL(newStatsFile)
-    };
-    setClassStats([newStat, ...classStats]);
-    setNewStatsTitle('');
-    setNewStatsFile(null);
-    setIsStatsModalOpen(false);
-    alert('הנתונים הועלו בהצלחה!');
-  };
-
   const handlePostMaterial = () => {
     if (user?.isGuest) return alert('כדי להעלות חומרים יש להירשם למערכת');
     if (!newMaterialTitle || !newMaterialFile) return alert('נא למלא כותרת ולבחור קובץ');
@@ -196,23 +170,6 @@ const App = () => {
       {/* Navbar */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 transition-all">
         <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setSelectedCourse(null)}>
-            <div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span>
-          </div>
-          
-          <div className="flex-1 max-w-xl mx-12 relative group">
-            <input
-              type="text"
-              placeholder="חפש קורס..."
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100/50 border-2 border-transparent rounded-2xl py-3 px-12 focus:bg-white focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-right font-medium"
-            />
-            <Search className="absolute right-4 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-          </div>
-          
           <div className="hidden md:flex gap-4 items-center">
             <div className="flex items-center gap-4 bg-slate-50 px-5 py-2 rounded-2xl border border-slate-100">
               <div className="text-right">
@@ -232,6 +189,23 @@ const App = () => {
               >
                 <X className="h-4 w-4" />
               </button>
+            </div>
+          </div>
+
+          <div className="flex-1 max-w-xl mx-12 relative group">
+            <input
+              type="text"
+              placeholder="חפש קורס..."
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-100/50 border-2 border-transparent rounded-2xl py-3 px-12 focus:bg-white focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-right font-medium"
+            />
+            <Search className="absolute right-4 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+          </div>
+
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setSelectedCourse(null)}>
+            <span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span>
+            <div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform">
+              <GraduationCap className="h-6 w-6 text-white" />
             </div>
           </div>
         </div>
@@ -317,10 +291,46 @@ const App = () => {
                 </div>
               </div>
             ) : filteredCourses.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredCourses.map(course => (
-                  <CourseCard key={course.id} course={course} onClick={setSelectedCourse} />
-                ))}
+              <div className="space-y-16">
+                {/* Mandatory Courses Grouped by Year */}
+                {['א', 'ב', 'ג'].map(year => {
+                  const yearCourses = filteredCourses.filter(c => c.type === 'חובה' && c.year === year);
+                  if (yearCourses.length === 0) return null;
+                  return (
+                    <div key={year} className="space-y-8">
+                      <div className="flex items-center gap-4 flex-row-reverse">
+                        <div className="h-px flex-1 bg-slate-200"></div>
+                        <h2 className="text-3xl font-black text-slate-800">קורסי חובה - שנה {year}</h2>
+                        <div className="h-px flex-1 bg-slate-200"></div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {yearCourses.map(course => (
+                          <CourseCard key={course.id} course={course} onClick={setSelectedCourse} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Elective Courses Bulk */}
+                {(() => {
+                  const electiveCourses = filteredCourses.filter(c => c.type === 'בחירה');
+                  if (electiveCourses.length === 0) return null;
+                  return (
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-4 flex-row-reverse">
+                        <div className="h-px flex-1 bg-slate-200"></div>
+                        <h2 className="text-3xl font-black text-slate-800">קורסי בחירה</h2>
+                        <div className="h-px flex-1 bg-slate-200"></div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {electiveCourses.map(course => (
+                          <CourseCard key={course.id} course={course} onClick={setSelectedCourse} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <div className="text-center py-20 bg-white rounded-[40px] border-2 border-dashed border-slate-200">
@@ -380,8 +390,7 @@ const App = () => {
               {[
                 { id: 'reviews', label: 'ביקורות', icon: Star },
                 { id: 'qna', label: 'שאלות ותשובות', icon: MessageSquare },
-                { id: 'materials', label: 'חומרי לימוד', icon: BookOpen },
-                { id: 'statistics', label: 'סטטיסטיקה כיתתית', icon: BarChart3 }
+                { id: 'materials', label: 'חומרי לימוד', icon: BookOpen }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -541,50 +550,6 @@ const App = () => {
                     )}
                   </div>
                 )}
-
-                {activeTab === 'statistics' && (
-                  <div className="space-y-6 text-right animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="flex justify-between items-center mb-6">
-                      {!user.isGuest && (
-                        <button 
-                          onClick={() => setIsStatsModalOpen(true)}
-                          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-2"
-                        >
-                          <Camera className="h-4 w-4" />
-                          העלאת ממוצע סמסטריאלי
-                        </button>
-                      )}
-                      <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2">
-                        <BarChart3 className="h-6 w-6 text-indigo-600" />
-                        סטטיסטיקה כיתתית
-                      </h2>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {classStats.map(stat => (
-                        <div 
-                          key={stat.id} 
-                          onClick={() => setSelectedImage(stat)}
-                          className="bg-white rounded-[32px] overflow-hidden shadow-sm border border-slate-200 group cursor-pointer hover:shadow-xl hover:border-indigo-500/20 transition-all"
-                        >
-                          <div className="aspect-video relative overflow-hidden bg-slate-100">
-                            <img src={stat.url} alt={stat.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            <div className="absolute inset-0 bg-indigo-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <Search className="text-white h-8 w-8" />
-                            </div>
-                          </div>
-                          <div className="p-6">
-                            <h4 className="font-black text-slate-900 mb-1">{stat.title}</h4>
-                            <div className="flex items-center justify-between flex-row-reverse">
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.date}</span>
-                              <span className="text-[10px] font-black text-indigo-600 uppercase">מאת {stat.author}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {user.isGuest && (
@@ -645,10 +610,6 @@ const App = () => {
           </div>
         </div>
       )}
-
-      <footer className="bg-white border-t border-slate-200 py-16 mt-20 text-center">
-        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2026 COURSEMATE ISRAEL 🇮🇱 מיוצר על ידי סטודנטים</p>
-      </footer>
 
       {/* Material Upload Modal */}
       {isMaterialModalOpen && (
@@ -726,93 +687,9 @@ const App = () => {
         </div>
       )}
 
-      {/* Stats Upload Modal */}
-      {isStatsModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl">
-          <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right">
-            <div className="flex justify-between items-center mb-8 flex-row-reverse">
-              <h3 className="text-3xl font-black text-slate-900">העלאת נתונים</h3>
-              <button onClick={() => setIsStatsModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
-                <X className="h-8 w-8" />
-              </button>
-            </div>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת (למשל: סמסטר א - תשפ"ד)</label>
-                <input 
-                  type="text" 
-                  value={newStatsTitle}
-                  onChange={(e) => setNewStatsTitle(e.target.value)}
-                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right"
-                  placeholder="הזינו כותרת לנתונים"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">צילום מסך מהאובריט</label>
-                <div 
-                  onClick={() => document.getElementById('statsFile').click()}
-                  className={`border-2 border-dashed rounded-[32px] p-10 text-center cursor-pointer transition-all ${newStatsFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 hover:border-indigo-200 bg-slate-50'}`}
-                >
-                  <input 
-                    id="statsFile"
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={(e) => setNewStatsFile(e.target.files[0])}
-                  />
-                  {newStatsFile ? (
-                    <div className="flex flex-col items-center text-emerald-600 font-bold">
-                      <CheckCircle className="h-12 w-12 mb-3" />
-                      <span className="text-sm truncate w-full px-4">{newStatsFile.name}</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center text-slate-400">
-                      <Camera className="h-12 w-12 mb-3" />
-                      <span className="text-sm font-black uppercase tracking-widest">לחץ להעלאת תמונה</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <button 
-                onClick={handlePostStats}
-                className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all mt-4"
-              >
-                פרסם סטטיסטיקה
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Image Lightbox */}
-      {selectedImage && (
-        <div 
-          className="fixed inset-0 z-[110] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-12"
-          onClick={() => setSelectedImage(null)}
-        >
-          <button 
-            className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors"
-            onClick={() => setSelectedImage(null)}
-          >
-            <X className="h-10 w-10" />
-          </button>
-          
-          <div className="max-w-5xl w-full flex flex-col items-center gap-8 animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
-            <img 
-              src={selectedImage.url} 
-              alt={selectedImage.title} 
-              className="rounded-[40px] shadow-2xl max-h-[70vh] object-contain border border-white/10"
-            />
-            <div className="text-center text-white">
-              <h3 className="text-3xl font-black mb-2">{selectedImage.title}</h3>
-              <p className="text-white/60 font-bold">הועלה בתאריך {selectedImage.date} על ידי {selectedImage.author}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      <footer className="bg-white border-t border-slate-200 py-16 mt-20 text-center">
+        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2026 COURSEMATE ISRAEL 🇮🇱 מיוצר על ידי סטודנטים</p>
+      </footer>
     </div>
   );
 };

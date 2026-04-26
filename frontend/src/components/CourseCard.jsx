@@ -24,9 +24,22 @@ const CourseCard = ({ course, onClick }) => (
     <h3 className="text-2xl font-extrabold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1 text-right">
       {course.title}
     </h3>
-    <p className="text-slate-500 text-sm font-medium mb-6 line-clamp-2 leading-relaxed text-right">
+    <p className="text-slate-500 text-sm font-medium mb-4 line-clamp-2 leading-relaxed text-right">
       {course.description}
     </p>
+
+    {course.prerequisites && course.prerequisites.length > 0 && (
+      <div className="mb-6 text-right">
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">דרישות קדם:</span>
+        <div className="flex flex-wrap gap-2 justify-end">
+          {course.prerequisites.map((pre, index) => (
+            <span key={index} className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-[10px] font-bold">
+              {pre}
+            </span>
+          ))}
+        </div>
+      </div>
+    )}
     
     <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between flex-row-reverse">
       <div className="flex items-center gap-2 flex-row-reverse">

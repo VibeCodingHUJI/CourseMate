@@ -1,27 +1,23 @@
 {
   "courses": {
     "Computer Science": [
-      { "id": "cs1", "title": "מבוא למדעי המחשב", "code": "67101", "avgRating": 4.5, "difficulty": 4.8, "type": "חובה", "description": "יסודות התכנות בשפת Python, רקורסיה ואלגוריתמים.", "instructor": "פרופ' דוד לוי", "track": "Computer Science" },
-      { "id": "cs2", "title": "מבני נתונים", "code": "67109", "avgRating": 4.2, "difficulty": 4.2, "type": "חובה", "description": "ניהול יעיל של נתונים, עצים וגרפים.", "instructor": "פרופ' אבי שחר", "track": "Computer Science" },
-      { "id": "cs3", "title": "אלגברה ליניארית 1", "code": "80134", "avgRating": 3.8, "difficulty": 4.5, "type": "חובה", "description": "מרחבים וקטוריים והעתקות ליניאריות.", "instructor": "ד\"ר רחל כהן", "track": "Computer Science" },
-      { "id": "cs4", "title": "פיתוח אפליקציות ווב", "code": "67111", "avgRating": 4.8, "difficulty": 3.5, "type": "בחירה", "description": "בניית יישומי צד-לקוח מודרניים עם React.", "instructor": "ד\"ר משה כהן", "track": "Computer Science" }
+      { "id": "cs1", "title": "מבוא למדעי המחשב", "code": "67101", "avgRating": 4.5, "difficulty": 4.8, "type": "חובה", "year": "א", "description": "יסודות התכנות בשפת Python, רקורסיה ואלגוריתמים.", "instructor": "פרופ' דוד לוי", "track": "Computer Science" },
+      { "id": "cs2", "title": "מבני נתונים", "code": "67109", "avgRating": 4.2, "difficulty": 4.2, "type": "חובה", "year": "ב", "description": "ניהול יעיל של נתונים, עצים וגרפים.", "instructor": "פרופ' אבי שחר", "track": "Computer Science", "prerequisites": ["מבוא למדעי המחשב"] },
+      { "id": "cs3", "title": "אלגברה ליניארית 1", "code": "80134", "avgRating": 3.8, "difficulty": 4.5, "type": "חובה", "year": "א", "description": "מרחבים וקטוריים והעתקות ליניאריות.", "instructor": "ד\"ר רחל כהן", "track": "Computer Science" },
+      { "id": "cs4", "title": "פיתוח אפליקציות ווב", "code": "67111", "avgRating": 4.8, "difficulty": 3.5, "type": "בחירה", "description": "בניית יישומי צד-לקוח מודרניים עם React.", "instructor": "ד\"ר משה כהן", "track": "Computer Science", "prerequisites": ["מבוא למדעי המחשב"] }
     ],
     "Business Administration": [
-      { "id": "ba1", "title": "מיקרו כלכלה", "code": "57101", "avgRating": 4.0, "difficulty": 3.8, "type": "חובה", "description": "ניתוח התנהגות צרכנים ויצרנים בשוק חופשי.", "instructor": "ד\"ר שמעון לוי", "track": "Business Administration" },
-      { "id": "ba2", "title": "מאקרו כלכלה", "code": "57102", "avgRating": 3.9, "difficulty": 4.0, "type": "חובה", "description": "ניתוח המערכת הכלכלית בכללותה - אבטלה, אינפלציה וצמיחה.", "instructor": "פרופ' יפה כהן", "track": "Business Administration" },
-      { "id": "ba3", "title": "יסודות המימון", "code": "55101", "avgRating": 4.3, "difficulty": 4.5, "type": "חובה", "description": "הערכת שווי נכסים, ניהול סיכונים ותזרים מזומנים.", "instructor": "ד\"ר עמית גולן", "track": "Business Administration" },
+      { "id": "ba1", "title": "מיקרו כלכלה", "code": "57101", "avgRating": 4.0, "difficulty": 3.8, "type": "חובה", "year": "א", "description": "ניתוח התנהגות צרכנים ויצרנים בשוק חופשי.", "instructor": "ד\"ר שמעון לוי", "track": "Business Administration" },
+      { "id": "ba2", "title": "מאקרו כלכלה", "code": "57102", "avgRating": 3.9, "difficulty": 4.0, "type": "חובה", "year": "א", "description": "ניתוח המערכת הכלכלית בכללותה - אבטלה, אינפלציה וצמיחה.", "instructor": "פרופ' יפה כהן", "track": "Business Administration", "prerequisites": ["מיקרו כלכלה"] },
+      { "id": "ba3", "title": "יסודות המימון", "code": "55101", "avgRating": 4.3, "difficulty": 4.5, "type": "חובה", "year": "ב", "description": "הערכת שווי נכסים, ניהול סיכונים ותזרים מזומנים.", "instructor": "ד\"ר עמית גולן", "track": "Business Administration" },
       { "id": "ba4", "title": "יסודות השיווק", "code": "55105", "avgRating": 4.7, "difficulty": 3.2, "type": "בחירה", "description": "אסטרטגיות שיווק, מיתוג והתנהגות צרכנים.", "instructor": "גב' דנה רון", "track": "Business Administration" },
-      { "id": "ba5", "title": "התנהגות צרכנים", "code": "55108", "avgRating": 4.5, "difficulty": 2.8, "type": "בחירה", "description": "תהליכי קבלת החלטות של צרכנים בשוק.", "instructor": "ד\"ר לימור ששון", "track": "Business Administration" },
+      { "id": "ba5", "title": "התנהגות צרכנים", "code": "55108", "avgRating": 4.5, "difficulty": 2.8, "type": "בחירה", "description": "תהליכי קבלת החלטות של צרכנים בשוק.", "instructor": "ד\"ר לימור ששון", "track": "Business Administration", "prerequisites": ["יסודות השיווק"] },
       { "id": "ba6", "title": "יזמות עסקית", "code": "55110", "avgRating": 4.9, "difficulty": 3.0, "type": "בחירה", "description": "פיתוח מודלים עסקיים והקמת סטרטאפים.", "instructor": "מר יוסי בר", "track": "Business Administration" }
     ],
     "Economics": [
-      { "id": "ec1", "title": "מבוא לסטטיסטיקה", "code": "52101", "avgRating": 4.1, "difficulty": 3.5, "type": "חובה", "description": "הסתברות והסקה סטטיסטית.", "instructor": "ד\"ר משה ישראלי", "track": "Economics" }
+      { "id": "ec1", "title": "מבוא לסטטיסטיקה", "code": "52101", "avgRating": 4.1, "difficulty": 3.5, "type": "חובה", "year": "א", "description": "הסתברות והסקה סטטיסטית.", "instructor": "ד\"ר משה ישראלי", "track": "Economics" }
     ]
   },
-  "statistics": [
-    { "id": "s1", "title": "ממוצע כיתתי - סמסטר א' תשפ\"ד", "date": "2024-02-15", "author": "איתי א.", "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800" },
-    { "id": "s2", "title": "התפלגות ציונים - סמסטר ב' תשפ\"ג", "date": "2023-07-10", "author": "מיה ר.", "url": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800" }
-  ],
   "tracks": [
     { "id": "cs", "label": "מדעי המחשב", "value": "Computer Science" },
     { "id": "ba", "label": "מנהל עסקים", "value": "Business Administration" },
