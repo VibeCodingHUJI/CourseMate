@@ -440,6 +440,9 @@ const App = () => {
                     <span className={`px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest ${selectedCourse.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
                       {selectedCourse.type}
                     </span>
+                    <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
+                      {selectedCourse.credits} נ"ז
+                    </span>
                     <span className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
                       {selectedCourse.code}
                     </span>

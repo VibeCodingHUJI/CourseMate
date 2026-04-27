@@ -31,9 +31,14 @@ const CoursePage = () => {
       <header className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-8">
         <div className="flex flex-col md:flex-row justify-between items-start gap-4">
           <div>
-            <span className="bg-primary-50 text-primary-600 px-3 py-1 rounded-full text-xs font-bold mb-2 inline-block">
-              {course.code}
-            </span>
+            <div className="flex gap-2 items-center mb-2">
+              <span className="bg-primary-50 text-primary-600 px-3 py-1 rounded-full text-xs font-bold inline-block">
+                {course.code}
+              </span>
+              <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-xs font-bold inline-block">
+                {course.credits} נ"ז
+              </span>
+            </div>
             <h1 className="text-3xl font-bold text-secondary-800">{course.title}</h1>
             <p className="text-slate-600 mt-4 leading-relaxed">{course.description}</p>
           </div>

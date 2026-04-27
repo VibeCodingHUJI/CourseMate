@@ -30,7 +30,8 @@ async function seedDatabase() {
     const coursesToInsert = scrapedCourses.map(course => ({
       title: course["Course Name"],
       code: course["Course ID"],
-      description: `Credits: ${course["Credits"]} | Semester: ${course["Semester"]} | Lecturer: ${course["Teacher"]}`,
+      credits: parseFloat(course["Credits"]) || 0,
+      description: `Semester: ${course["Semester"]} | Lecturer: ${course["Teacher"]}`,
       averageRating: 0,
       averageDifficulty: 0
     }));

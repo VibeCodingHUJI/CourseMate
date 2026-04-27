@@ -12,7 +12,10 @@ const CourseCard = ({ course }) => {
           <h3 className="text-xl font-bold text-secondary-800 group-hover:text-primary-600 transition-colors">
             {course.title}
           </h3>
-          <span className="text-sm text-slate-500 font-mono">{course.code}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500 font-mono">{course.code}</span>
+            <span className="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-bold">{course.credits} נ"ז</span>
+          </div>
         </div>
         <div className="bg-primary-50 text-primary-600 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
           <Star className="h-4 w-4 fill-current" />
