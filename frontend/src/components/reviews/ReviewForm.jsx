@@ -59,7 +59,7 @@ const ReviewForm = ({ courseId }) => {
             rows="4"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="מה דעתך על הקורס? רמת המבחנים? איכות המרצה?"
+            placeholder="מה דעתך על הקורס? רמת המבחנים? איכות המרצה/ית?"
             className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-2 focus:ring-primary-500 outline-none transition-all resize-none"
           ></textarea>
         </div>

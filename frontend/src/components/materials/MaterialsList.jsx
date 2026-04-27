@@ -24,7 +24,7 @@ const MaterialsList = () => {
               <div className="h-10 w-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400">
                 <FileText className="h-5 w-5 text-primary-500" />
               </div>
-              <div>
+              <div className="text-right">
                 <h4 className="font-bold text-secondary-800 text-sm">{item.title}</h4>
                 <div className="flex gap-2 text-[10px] text-slate-400 font-mono mt-1">
                   <span>סוג: <b>{item.type}</b></span>

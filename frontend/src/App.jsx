@@ -11,14 +11,11 @@ import {
 import AuthPage from './components/AuthPage';
 import CourseCard from './components/CourseCard';
 import ReviewForm from './components/ReviewForm';
+import CombinationForum from './components/CombinationForum';
 
 // Data
 import projectData from './data.json';
 
-const COURSE_MAP = projectData.courses;
-const INITIAL_REVIEWS = projectData.initialReviews;
-const INITIAL_QNA = projectData.initialQna;
-const INITIAL_MATERIALS = projectData.initialMaterials;
 const STUDY_TRACKS = projectData.tracks;
 
 const MATERIAL_CATEGORIES = [
@@ -42,13 +39,16 @@ const App = () => {
   const [isChangingTrack, setIsChangingTrack] = useState(false);
   const [trackSearch, setTrackSearch] = useState('');
   const [courseFilter, setCourseFilter] = useState('All'); // 'All', 'חובה', 'בחירה'
+  const [showSuggestions, setShowSuggestions] = useState(false);
   
   // Dynamic Content State
   const [reviews, setReviews] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
-  
+  const [guestTab, setGuestTab] = useState('forum'); // 'forum', 'courses'
+  const [guestSelectedTrack, setGuestSelectedTrack] = useState('');
+
   // Load initial courses
   useEffect(() => {
     fetch('http://localhost:3000/courses')
@@ -113,9 +113,17 @@ const App = () => {
 
   const filteredTracks = STUDY_TRACKS.filter(t => t.label.includes(trackSearch));
 
+  const suggestions = searchQuery.length > 1 
+    ? allCourses.filter(c => 
+        c.title.includes(searchQuery) || 
+        c.code.includes(searchQuery)
+      ).slice(0, 5)
+    : [];
+
   const filteredCourses = allCourses.filter(c => {
     if (!user) return false;
-    const matchesTrack = c.track === user.track || user.track === 'General';
+    const currentTrack = user.isGuest ? guestSelectedTrack : user.track;
+    const matchesTrack = currentTrack === 'General' || !currentTrack || c.track === currentTrack;
     const matchesSearch = c.title.includes(searchQuery) || c.code.includes(searchQuery);
     const matchesFilter = courseFilter === 'All' || c.type === courseFilter;
     return matchesTrack && matchesSearch && matchesFilter;
@@ -130,7 +138,7 @@ const App = () => {
   };
 
   const handlePostReview = async () => {
-    if (user?.isGuest) return alert('כדי להוסיף ביקורת יש להירשם למערכת');
+    if (user?.isGuest) return;
     if (!newReviewComment) return alert('נא למלא את תוכן הביקורת');
     
     const newReview = {
@@ -161,7 +169,7 @@ const App = () => {
   };
 
   const handlePostQuestion = async () => {
-    if (user?.isGuest) return alert('כדי לשאול שאלה יש להירשם למערכת');
+    if (user?.isGuest) return;
     if (!newQuestionText) return;
     
     const newQ = {
@@ -187,7 +195,7 @@ const App = () => {
   };
 
   const handlePostAnswer = async (qId, text) => {
-    if (user?.isGuest) return alert('כדי להשיב לשאלה יש להירשם למערכת');
+    if (user?.isGuest) return;
     if (!text) return;
 
     const question = questions.find(q => q.id === qId);
@@ -207,7 +215,7 @@ const App = () => {
   };
 
   const handlePostMaterial = async () => {
-    if (user?.isGuest) return alert('כדי להעלות חומרים יש להירשם למערכת');
+    if (user?.isGuest) return;
     if (!newMaterialTitle || !newMaterialFile) return alert('נא למלא כותרת ולבחור קובץ');
 
     const newMat = {
@@ -249,12 +257,14 @@ const App = () => {
                 <div className="text-sm font-black text-slate-900 leading-none">
                   {user.name} {user.isGuest && <span className="text-[10px] text-indigo-400 mr-1 font-black underline">(אורח/ת)</span>}
                 </div>
-                <button 
-                  onClick={() => setIsChangingTrack(!isChangingTrack)}
-                  className="text-[10px] text-indigo-600 font-black uppercase mt-1 tracking-tighter hover:underline"
-                >
-                  {STUDY_TRACKS.find(t => t.value === user.track)?.label || (user.isGuest && user.track === 'General' ? 'בחירת מסלול' : user.track)}
-                </button>
+                {!user.isGuest && (
+                  <button 
+                    onClick={() => setIsChangingTrack(!isChangingTrack)}
+                    className="text-[10px] text-indigo-600 font-black uppercase mt-1 tracking-tighter hover:underline"
+                  >
+                    {STUDY_TRACKS.find(t => t.value === user.track)?.label || user.track}
+                  </button>
+                )}
               </div>
               <button 
                 onClick={handleLogout}
@@ -267,16 +277,55 @@ const App = () => {
           </div>
 
           <div className="flex-1 max-w-xl mx-12 relative group">
-            <input
-              type="text"
-              placeholder="חפש קורס..."
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100/50 border-2 border-transparent rounded-2xl py-3 px-12 focus:bg-white focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-right font-medium"
-            />
-            <Search className="absolute right-4 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+            {!user.isGuest && (
+              <>
+                <input
+                  type="text"
+                  placeholder="חפש קורס..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && suggestions.length > 0) {
+                      setSelectedCourse(suggestions[0]);
+                      setSearchQuery('');
+                      setShowSuggestions(false);
+                    }
+                  }}
+                  className="w-full bg-slate-100/50 border-2 border-transparent rounded-2xl py-3 px-12 focus:bg-white focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-right font-medium"
+                />
+                <Search className="absolute right-4 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+                    {suggestions.map(course => (
+                      <button
+                        key={course.id}
+                        onClick={() => {
+                          setSelectedCourse(course);
+                          setSearchQuery('');
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full text-right px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-3">
+                           <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-lg group-hover:bg-white transition-colors">{course.code}</span>
+                           <span className="font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{course.title}</span>
+                        </div>
+                        <ChevronLeft className="h-4 w-4 text-slate-300 group-hover:text-indigo-500 group-hover:-translate-x-1 transition-all" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setSelectedCourse(null)}>
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { setSelectedCourse(null); }}>
             <span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span>
             <div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform">
               <GraduationCap className="h-6 w-6 text-white" />
@@ -315,344 +364,367 @@ const App = () => {
       </nav>
       
       <main className="flex-grow container mx-auto px-6 py-12">
-        {!selectedCourse ? (
-          <div className="max-w-7xl mx-auto">
-            <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
-              <div className="text-right">
-                <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight">
-                  {user.isGuest ? 'ברוכים הבאים ל-CourseMate' : `שלום ${user.name.split(' ')[0]}!`}
-                </h1>
-                <p className="text-xl text-slate-500 font-medium text-right">
-                  {user.isGuest && user.track === 'General' 
-                    ? 'בחרו מסלול לימוד כדי לראות את הקורסים הרלוונטיים עבורכם' 
-                    : `שלום ${user.name}, הנה הקורסים במסלול ${STUDY_TRACKS.find(t => t.value === user.track)?.label || user.track} שלך`}
-                </p>
-              </div>
-
-              {/* Filter Chips */}
-              <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit self-end">
-                {['All', 'חובה', 'בחירה'].map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setCourseFilter(f)}
-                    className={`px-6 py-2.5 rounded-xl font-black text-xs transition-all ${courseFilter === f ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                  >
-                    {f === 'All' ? 'הכל' : f}
-                  </button>
-                ))}
-              </div>
-            </header>
-            
-            {(user.isGuest && user.track === 'General') ? (
-              <div className="relative">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 opacity-20 grayscale blur-[2px] pointer-events-none select-none">
-                  {allCourses.slice(0, 6).map(course => (
-                    <CourseCard key={course.id} course={course} onClick={() => {}} />
-                  ))}
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-10">
-                  <div className="bg-white rounded-[40px] p-10 shadow-2xl border border-slate-100 text-center max-w-sm">
-                    <Search className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
-                    <h3 className="text-2xl font-black text-slate-900 mb-2">בואו נתחיל</h3>
-                    <p className="text-slate-500 mb-8 font-medium">כדי לראות קורסים וביקורות, יש לבחור מסלול לימוד בתפריט למעלה</p>
-                    <button 
-                      onClick={() => setIsChangingTrack(true)}
-                      className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black hover:bg-indigo-700 transition-all"
-                    >
-                      בחירת מסלול
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : filteredCourses.length > 0 ? (
-              <div className="space-y-16">
-                {/* Mandatory Courses Grouped by Year */}
-                {['א', 'ב', 'ג'].map(year => {
-                  const yearCourses = filteredCourses.filter(c => c.type === 'חובה' && c.year === year);
-                  if (yearCourses.length === 0) return null;
-                  return (
-                    <div key={year} className="space-y-8">
-                      <div className="flex items-center gap-4 flex-row-reverse">
-                        <div className="h-px flex-1 bg-slate-200"></div>
-                        <h2 className="text-3xl font-black text-slate-800">קורסי חובה - שנה {year}</h2>
-                        <div className="h-px flex-1 bg-slate-200"></div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {yearCourses.map(course => (
-                          <CourseCard key={course.id} course={course} onClick={setSelectedCourse} />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Elective Courses Bulk */}
-                {(() => {
-                  const electiveCourses = filteredCourses.filter(c => c.type === 'בחירה');
-                  if (electiveCourses.length === 0) return null;
-                  return (
-                    <div className="space-y-8">
-                      <div className="flex items-center gap-4 flex-row-reverse">
-                        <div className="h-px flex-1 bg-slate-200"></div>
-                        <h2 className="text-3xl font-black text-slate-800">קורסי בחירה</h2>
-                        <div className="h-px flex-1 bg-slate-200"></div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {electiveCourses.map(course => (
-                          <CourseCard key={course.id} course={course} onClick={setSelectedCourse} />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            ) : (
-              <div className="text-center py-20 bg-white rounded-[40px] border-2 border-dashed border-slate-200">
-                <BookOpen className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-slate-800">לא נמצאו קורסים התואמים לחיפוש</h3>
-                <p className="text-slate-500 mb-6">אנחנו עובדים על הוספת תכנים חדשים בקרוב.</p>
-                <button 
-                  onClick={() => { setCourseFilter('All'); setSearchQuery(''); }}
-                  className="text-indigo-600 font-black hover:underline"
-                >
-                  נקה את כל הפילטרים
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="max-w-5xl mx-auto">
+        {user.isGuest && (
+          <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500">
             <button 
-              onClick={() => setSelectedCourse(null)}
-              className="group mb-8 flex items-center gap-3 text-slate-500 font-black hover:text-indigo-600 transition-all"
+              onClick={() => setGuestTab('forum')}
+              className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
             >
-              <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200 group-hover:border-indigo-100">
-                <ChevronLeft className="h-4 w-4 rotate-180" />
-              </div>
-              <span>חזרה לכל הקורסים</span>
+              פורום שילובים
             </button>
+            <button 
+              onClick={() => setGuestTab('courses')}
+              className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              צפייה בקורסים
+            </button>
+          </div>
+        )}
 
-            <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 p-10 mb-8 relative overflow-hidden text-right">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
-              <div className="relative z-10 flex flex-col md:flex-row justify-between items-start gap-8">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-4 justify-end">
-                    <span className={`px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest ${selectedCourse.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                      {selectedCourse.type}
-                    </span>
-                    <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
-                      {selectedCourse.credits} נ"ז
-                    </span>
-                    <span className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
-                      {selectedCourse.code}
-                    </span>
-                  </div>
-                  <h1 className="text-5xl font-black text-slate-900 mb-6 tracking-tight">{selectedCourse.title}</h1>
-                  <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-2xl">{selectedCourse.description}</p>
-                </div>
-                <div className="bg-slate-50 p-6 rounded-[32px] flex md:flex-col gap-8 min-w-[180px]">
-                  <div className="text-center">
-                    <div className="text-4xl font-black text-indigo-600 mb-1">{selectedCourse.avgRating}</div>
-                    <div className="text-xs text-slate-400 font-black uppercase text-center">דירוג</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-4xl font-black text-rose-500 mb-1">{selectedCourse.difficulty}</div>
-                    <div className="text-xs text-slate-400 font-black uppercase text-center">קושי</div>
-                  </div>
-                </div>
-              </div>
-            </header>
-
-            <div className="flex gap-2 p-1.5 bg-slate-100 rounded-[28px] mb-10 w-fit">
-              {[
-                { id: 'reviews', label: 'ביקורות', icon: Star },
-                { id: 'qna', label: 'שאלות ותשובות', icon: MessageSquare },
-                { id: 'materials', label: 'חומרי לימוד', icon: BookOpen }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 px-8 py-4 rounded-[22px] transition-all font-black text-sm ${
-                    activeTab === tab.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? 'fill-indigo-600' : ''}`} />
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-              <div className={`${user.isGuest ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6`}>
-                {activeTab === 'reviews' && (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center mb-4">
-                      {!user.isGuest ? (
-                        <button 
-                          onClick={() => setIsReviewModalOpen(true)}
-                          className="bg-indigo-600 text-white px-6 py-2 rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center gap-2"
-                        >
-                          <Send className="h-4 w-4" />
-                          הוספת ביקורת
-                        </button>
-                      ) : (
-                        <div /> // Empty for layout
-                      )}
-                      <h2 className="text-2xl font-black text-slate-900 text-right">ביקורות ({reviews.length})</h2>
-                    </div>
-
-                    {reviews.map(r => (
-                      <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right">
-                        <div className="flex justify-between items-center mb-6">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black">
-                              {r.author[0]}
-                            </div>
-                            <div className="font-black text-slate-900">{r.author}</div>
-                          </div>
-                          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
-                        </div>
-                        <p className="text-slate-600 text-lg font-medium leading-relaxed italic mb-6">"{r.comment}"</p>
-                        
-                        <div className="flex items-center justify-between border-t border-slate-100 pt-6 flex-row-reverse">
-                          <div className="flex items-center gap-4 flex-row-reverse">
-                            <div className="text-xs font-black text-slate-400 bg-slate-50 px-4 py-1.5 rounded-xl uppercase tracking-widest">
-                              {r.semester}, {r.year}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {activeTab === 'qna' && (
-                  <div className="space-y-6 text-right">
-                    <div className="flex justify-between items-center mb-4">
-                      <button onClick={() => setIsQuestionModalOpen(true)} className="bg-white border-2 border-slate-200 px-6 py-2 rounded-2xl font-black text-sm hover:border-indigo-500 transition-all">שאל שאלה</button>
-                      <h2 className="text-2xl font-black text-slate-900">שאלות מהקהילה</h2>
-                    </div>
-                    {questions.map(q => (
-                      <div key={q.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden text-right">
-                        <div className="p-8 bg-slate-900 text-white flex items-center gap-4 flex-row-reverse">
-                          <MessageSquare className="h-6 w-6 text-indigo-400" />
-                          <div className="flex-1 text-xl font-bold">{q.question}</div>
-                        </div>
-                        <div className="p-8 space-y-6">
-                          {q.answers.map((a, i) => (
-                            <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6 flex-row-reverse">
-                              <div className="h-10 w-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0"><User className="h-5 w-5" /></div>
-                              <p className="text-slate-700 font-medium">{a.text}</p>
-                            </div>
-                          ))}
-                          <div className="pt-4 mr-16 flex gap-3 flex-row-reverse">
-                            <input 
-                              type="text" 
-                              placeholder="תשובה..."
-                              onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
-                              className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {activeTab === 'materials' && (
-                  <div className="space-y-10 text-right">
-                    <div className="flex justify-between items-center mb-6">
-                      {!user.isGuest && (
-                        <button 
-                          onClick={() => setIsMaterialModalOpen(true)}
-                          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-2"
-                        >
-                          <Upload className="h-4 w-4" />
-                          העלאת חומר לימוד
-                        </button>
-                      )}
-                      <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
-                    </div>
-
+        {(user.isGuest && guestTab === 'forum') ? (
+          <CombinationForum user={user} onLogout={handleLogout} />
+        ) : (
+          !selectedCourse ? (
+            <div className="max-w-7xl mx-auto">
+              <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
+                  <div className="text-right">
                     {user.isGuest ? (
-                      <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-200 p-12 text-center">
-                        <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-400">
-                          <Lock className="h-10 w-10" />
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-900 mb-2">התוכן נעול</h3>
-                        <p className="text-slate-500 mb-8 font-medium">צפייה בסיכומים וחומרי לימוד זמינה למשתמשים רשומים בלבד</p>
-                        <button 
-                          onClick={handleLogout}
-                          className="bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all"
+                      <div className="space-y-4">
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-2">בחר חוג:</label>
+                        <select 
+                          value={guestSelectedTrack}
+                          onChange={(e) => setGuestSelectedTrack(e.target.value)}
+                          className="w-full max-w-md bg-white border-2 border-slate-200 rounded-[24px] px-6 py-4 outline-none focus:border-indigo-500 transition-all font-bold text-right cursor-pointer shadow-sm"
                         >
-                          להרשמה וצפייה בסיכומים
-                        </button>
+                          <option value="">בחר חוג מהרשימה...</option>
+                          {STUDY_TRACKS.map(t => <option key={t.id} value={t.value}>{t.label}</option>)}
+                        </select>
                       </div>
                     ) : (
-                      <div className="space-y-12">
-                        {MATERIAL_CATEGORIES.map(category => {
-                          const categoryMaterials = materials.filter(m => m.category === category.id);
-                          return (
-                            <div key={category.id} className="space-y-4">
-                              <div className="flex items-center gap-3 flex-row-reverse border-b-2 border-slate-100 pb-3">
-                                <category.icon className="h-6 w-6 text-indigo-600" />
-                                <h3 className="text-xl font-black text-slate-800">{category.label}</h3>
-                                <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black">{categoryMaterials.length}</span>
+                      <>
+                        <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight tracking-tight">שלום {user.name.split(' ')[0]}!</h1>
+                        <p className="text-xl text-slate-500 font-medium">הנה הקורסים במסלול {STUDY_TRACKS.find(t => t.value === user.track)?.label || user.track} שלך</p>
+                      </>
+                    )}
+                  </div>
+
+                <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit self-end">
+                  {['All', 'חובה', 'בחירה'].map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setCourseFilter(f)}
+                      className={`px-6 py-2.5 rounded-xl font-black text-xs transition-all ${courseFilter === f ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                      {f === 'All' ? 'הכל' : f}
+                    </button>
+                  ))}
+                </div>
+              </header>
+              
+              <div className="space-y-16">
+                {(user.isGuest && user.track === 'General') ? (
+                  <div className="relative">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 opacity-20 grayscale blur-[2px] pointer-events-none select-none">
+                      {allCourses.slice(0, 6).map(course => (
+                        <CourseCard key={course.id} course={course} onClick={() => {}} />
+                      ))}
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-10">
+                      <div className="bg-white rounded-[40px] p-10 shadow-2xl border border-slate-100 text-center max-w-sm">
+                        <Search className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
+                        <h3 className="text-2xl font-black text-slate-900 mb-2">בואו נתחיל</h3>
+                        <p className="text-slate-500 mb-8 font-medium">כדי לראות קורסים וביקורות, יש לבחור מסלול לימוד בתפריט למעלה</p>
+                        <button 
+                          onClick={() => setIsChangingTrack(true)}
+                          className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black hover:bg-indigo-700 transition-all"
+                        >
+                          בחירת מסלול
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {['א', 'ב', 'ג'].map(year => {
+                      const yearCourses = filteredCourses.filter(c => c.type === 'חובה' && c.year === year);
+                      if (yearCourses.length === 0) return null;
+                      return (
+                        <div key={year} className="space-y-8">
+                          <div className="flex items-center gap-4 flex-row-reverse">
+                            <div className="h-px flex-1 bg-slate-200"></div>
+                            <h2 className="text-3xl font-black text-slate-800">קורסי חובה - שנה {year}</h2>
+                            <div className="h-px flex-1 bg-slate-200"></div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {yearCourses.map(course => (
+                              <CourseCard key={course.id} course={course} onClick={setSelectedCourse} />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {(() => {
+                      const electiveCourses = filteredCourses.filter(c => c.type === 'בחירה');
+                      if (electiveCourses.length === 0) return null;
+                      return (
+                        <div className="space-y-8">
+                          <div className="flex items-center gap-4 flex-row-reverse">
+                            <div className="h-px flex-1 bg-slate-200"></div>
+                            <h2 className="text-3xl font-black text-slate-800">קורסי בחירה</h2>
+                            <div className="h-px flex-1 bg-slate-200"></div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {electiveCourses.map(course => (
+                              <CourseCard key={course.id} course={course} onClick={setSelectedCourse} />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <button 
+                onClick={() => setSelectedCourse(null)}
+                className="group mb-8 flex items-center gap-3 text-slate-500 font-black hover:text-indigo-600 transition-all"
+              >
+                <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200 group-hover:border-indigo-100">
+                  <ChevronLeft className="h-4 w-4 rotate-180" />
+                </div>
+                <span>חזרה לכל הקורסים</span>
+              </button>
+
+              <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 p-10 mb-8 relative overflow-hidden text-right">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start gap-8">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-4 justify-end">
+                      <span className={`px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest ${selectedCourse.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                        {selectedCourse.type}
+                      </span>
+                      <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
+                        {selectedCourse.credits} נ"ז
+                      </span>
+                      <span className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
+                        {selectedCourse.code}
+                      </span>
+                    </div>
+                    <h1 className="text-5xl font-black text-slate-900 mb-6 tracking-tight">{selectedCourse.title}</h1>
+                    <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-2xl">{selectedCourse.description}</p>
+                  </div>
+                  <div className="bg-slate-50 p-6 rounded-[32px] flex md:flex-col gap-8 min-w-[180px]">
+                    <div className="text-center">
+                      <div className="text-4xl font-black text-indigo-600 mb-1">{selectedCourse.avgRating}</div>
+                      <div className="text-xs text-slate-400 font-black uppercase text-center">דירוג</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-4xl font-black text-rose-500 mb-1">{selectedCourse.difficulty}</div>
+                      <div className="text-xs text-slate-400 font-black uppercase text-center">קושי</div>
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              <div className="mb-10" style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <div className="p-1.5 bg-slate-100 rounded-[28px] w-fit flex gap-2" style={{ direction: 'rtl' }}>
+                  {[
+                    { id: 'materials', label: 'חומרי לימוד', icon: BookOpen },
+                    { id: 'qna', label: 'שאלות ותשובות', icon: MessageSquare },
+                    { id: 'reviews', label: 'ביקורות', icon: Star }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`px-8 py-4 rounded-[22px] transition-all font-black text-sm flex items-center gap-3 ${
+                        activeTab === tab.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? 'fill-indigo-600' : ''}`} />
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <div className={`${user.isGuest ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6`}>
+                  {activeTab === 'reviews' && (
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-black text-slate-900 text-right">ביקורות ({reviews.length})</h2>
+                        {!user.isGuest && (
+                          <button 
+                            onClick={() => setIsReviewModalOpen(true)}
+                            className="bg-indigo-600 text-white px-6 py-2 rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center gap-2"
+                          >
+                            <Send className="h-4 w-4" />
+                            הוספת ביקורת
+                          </button>
+                        )}
+                      </div>
+
+                      {reviews.map(r => (
+                        <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right">
+                          <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black">
+                                {r.author[0]}
                               </div>
-                              
-                              <div className="grid grid-cols-1 gap-4">
-                                {categoryMaterials.length > 0 ? (
-                                  categoryMaterials.map(m => (
-                                    <div key={m.id} className="flex items-center justify-between p-6 bg-white rounded-[32px] border border-slate-200 flex-row-reverse hover:border-indigo-200 hover:shadow-md transition-all group">
-                                      <div className="flex items-center gap-6 flex-row-reverse">
-                                        <div className="h-14 w-14 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all"><FileText className="h-6 w-6" /></div>
-                                        <div>
-                                          <h4 className="font-black text-slate-900 text-lg">{m.title}</h4>
-                                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{m.type} • {m.author} • {m.date}</span>
-                                        </div>
-                                      </div>
-                                      <button className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all"><Download className="h-5 w-5" /></button>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <div className="py-8 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 text-slate-400 font-bold">
-                                    אין חומרים בקטגוריה זו עדיין
-                                  </div>
-                                )}
+                              <div className="font-black text-slate-900">{r.author}</div>
+                            </div>
+                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
+                          </div>
+                          <p className="text-slate-600 text-lg font-medium leading-relaxed italic mb-6">"{r.comment}"</p>
+                          
+                          <div className="flex items-center justify-between border-t border-slate-100 pt-6">
+                            <div className="flex items-center gap-4">
+                              <div className="text-xs font-black text-slate-400 bg-slate-50 px-4 py-1.5 rounded-xl uppercase tracking-widest">
+                                {r.semester}, {r.year}
                               </div>
                             </div>
-                          );
-                        })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {activeTab === 'qna' && (
+                    <div className="space-y-6 text-right">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-black text-slate-900">שאלות מהקהילה</h2>
+                        <button onClick={() => setIsQuestionModalOpen(true)} className="bg-white border-2 border-slate-200 px-6 py-2 rounded-2xl font-black text-sm hover:border-indigo-500 transition-all">שאל שאלה</button>
                       </div>
-                    )}
+                      {questions.map(q => (
+                        <div key={q.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden text-right">
+                          <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
+                            <div className="flex items-center gap-4">
+                              <MessageSquare className="h-6 w-6 text-indigo-400" />
+                              <div className="text-xl font-bold text-right">{q.question}</div>
+                            </div>
+                            <div className="text-xs font-medium text-white/50 whitespace-nowrap">
+                              פורסם ב-{q.date}
+                            </div>
+                          </div>
+                          <div className="p-8 space-y-6">
+                            {q.answers.map((a, i) => (
+                              <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6">
+                                <div className="h-10 w-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0"><User className="h-5 w-5" /></div>
+                                <p className="text-slate-700 font-medium">{a.text}</p>
+                              </div>
+                            ))}
+                            <div className="pt-4 mr-16 flex gap-3">
+                              <input 
+                                type="text" 
+                                placeholder="תשובה..."
+                                onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
+                                className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {activeTab === 'materials' && (
+                    <div className="space-y-10 text-right">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
+                        {!user.isGuest && (
+                          <button 
+                            onClick={() => setIsMaterialModalOpen(true)}
+                            className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-2"
+                          >
+                            <Upload className="h-4 w-4" />
+                            העלאת חומר לימוד
+                          </button>
+                        )}
+                      </div>
+
+                      {user.isGuest ? (
+                        <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-200 p-12 text-center">
+                          <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-400">
+                            <Lock className="h-10 w-10" />
+                          </div>
+                          <h3 className="text-2xl font-black text-slate-900 mb-2">חומרי הלימוד זמינים לסטודנטים רשומים בלבד</h3>
+                          <p className="text-slate-500 mb-8 font-medium">הירשמו עכשיו כדי לקבל גישה לסיכומים, מבחנים ודפי נוסחאות!</p>
+                          <button 
+                            onClick={handleLogout}
+                            className="bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all"
+                          >
+                            הירשמו עכשיו
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-12">
+                          {MATERIAL_CATEGORIES.map(category => {
+                            const categoryMaterials = materials.filter(m => m.category === category.id);
+                            return (
+                              <div key={category.id} className="space-y-4">
+                                <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-3">
+                                  <category.icon className="h-6 w-6 text-indigo-600" />
+                                  <h3 className="text-xl font-black text-slate-800">{category.label}</h3>
+                                  <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black">{categoryMaterials.length}</span>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 gap-4">
+                                  {categoryMaterials.length > 0 ? (
+                                    categoryMaterials.map(m => (
+                                      <div key={m.id} className="flex items-center justify-between p-6 bg-white rounded-[32px] border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all group">
+                                        <div className="flex items-center gap-6">
+                                          <div className="h-14 w-14 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all"><FileText className="h-6 w-6" /></div>
+                                          <div className="text-right">
+                                            <h4 className="font-black text-slate-900 text-lg">{m.title}</h4>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{m.type} • {m.author} • {m.date}</span>
+                                          </div>
+                                        </div>
+                                        <button className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all"><Download className="h-5 w-5" /></button>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="py-8 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 text-slate-400 font-bold">
+                                      אין חומרים בקטגוריה זו עדיין
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {user.isGuest && (
+                  <div className="lg:col-span-1">
+                    <div className="bg-slate-900 text-white rounded-[40px] p-8 sticky top-28 shadow-2xl shadow-slate-900/20 text-center">
+                      <Award className="h-12 w-12 text-indigo-400 mx-auto mb-4" />
+                      <h3 className="text-2xl font-black mb-4">רוצה להשפיע?</h3>
+                      <p className="text-slate-400 font-medium mb-8 leading-relaxed">כדי להוסיף ביקורות, לשאול שאלות ולשתף סיכומים, עליך להצטרף לקהילה שלנו.</p>
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full bg-indigo-600 text-white py-4 rounded-3xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/10"
+                      >
+                        הרשמה בחינם
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
-
-              {user.isGuest && (
-                <div className="lg:col-span-1">
-                  <div className="bg-slate-900 text-white rounded-[40px] p-8 sticky top-28 shadow-2xl shadow-slate-900/20 text-center">
-                    <Award className="h-12 w-12 text-indigo-400 mx-auto mb-4" />
-                    <h3 className="text-2xl font-black mb-4">רוצה להשפיע?</h3>
-                    <p className="text-slate-400 font-medium mb-8 leading-relaxed">כדי להוסיף ביקורות, לשאול שאלות ולשתף סיכומים, עליך להצטרף לקהילה שלנו.</p>
-                    <button 
-                      onClick={handleLogout}
-                      className="w-full bg-indigo-600 text-white py-4 rounded-3xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/10"
-                    >
-                      הרשמה בחינם
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
+          )
         )}
       </main>
 
       {/* Review Modal */}
       {isReviewModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsReviewModalOpen(false)}>
-          <div className="bg-white w-full max-w-4xl rounded-[40px] p-10 animate-in zoom-in-95 duration-200 shadow-2xl overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
+          <div className="bg-white w-full max-w-4xl rounded-[40px] p-10 shadow-2xl overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
             <ReviewForm 
               comment={newReviewComment}
               semester={newReviewSemester}
@@ -671,8 +743,8 @@ const App = () => {
 
       {/* Question Modal */}
       {isQuestionModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl">
-          <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsQuestionModalOpen(false)}>
+          <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <h3 className="text-3xl font-black mb-8 text-slate-900">שאל שאלה</h3>
             <textarea 
               value={newQuestionText}
@@ -688,77 +760,41 @@ const App = () => {
         </div>
       )}
 
-      {/* Material Upload Modal */}
+      {/* Material Modal */}
       {isMaterialModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsMaterialModalOpen(false)}>
           <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-8 flex-row-reverse">
               <h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3>
-              <button onClick={() => setIsMaterialModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
-                <X className="h-8 w-8" />
-              </button>
+              <button onClick={() => setIsMaterialModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button>
             </div>
-            
             <div className="space-y-6">
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת החומר</label>
-                <input 
-                  type="text" 
-                  value={newMaterialTitle}
-                  onChange={(e) => setNewMaterialTitle(e.target.value)}
-                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right"
-                  placeholder="למשל: סיכום הרצאה 1-5"
-                />
+                <input type="text" value={newMaterialTitle} onChange={(e) => setNewMaterialTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: סיכום הרצאה 1-5" />
               </div>
-
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג החומר</label>
                 <div className="grid grid-cols-2 gap-3">
                   {MATERIAL_CATEGORIES.map(cat => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setNewMaterialCategory(cat.id)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm flex-row-reverse ${newMaterialCategory === cat.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
-                    >
-                      <cat.icon className="h-4 w-4" />
-                      {cat.label}
+                    <button key={cat.id} onClick={() => setNewMaterialCategory(cat.id)} className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm flex-row-reverse ${newMaterialCategory === cat.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}>
+                      <cat.icon className="h-4 w-4" /> {cat.label}
                     </button>
                   ))}
                 </div>
               </div>
-
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">בחירת קובץ</label>
-                <div 
-                  onClick={() => document.getElementById('materialFile').click()}
-                  className={`border-2 border-dashed rounded-[32px] p-8 text-center cursor-pointer transition-all ${newMaterialFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 hover:border-indigo-200 bg-slate-50'}`}
-                >
-                  <input 
-                    id="materialFile"
-                    type="file" 
-                    className="hidden" 
-                    onChange={(e) => setNewMaterialFile(e.target.files[0])}
-                  />
+                <div onClick={() => document.getElementById('materialFile').click()} className={`border-2 border-dashed rounded-[32px] p-8 text-center cursor-pointer transition-all ${newMaterialFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 hover:border-indigo-200 bg-slate-50'}`}>
+                  <input id="materialFile" type="file" className="hidden" onChange={(e) => setNewMaterialFile(e.target.files[0])} />
                   {newMaterialFile ? (
-                    <div className="flex flex-col items-center text-emerald-600 font-bold">
-                      <CheckCircle className="h-10 w-10 mb-2" />
-                      <span className="text-sm truncate w-full px-4">{newMaterialFile.name}</span>
-                    </div>
+                    <div className="flex flex-col items-center text-emerald-600 font-bold"><CheckCircle className="h-10 w-10 mb-2" /><span className="text-sm truncate w-full px-4">{newMaterialFile.name}</span></div>
                   ) : (
-                    <div className="flex flex-col items-center text-slate-400">
-                      <Upload className="h-10 w-10 mb-2" />
-                      <span className="text-sm font-black uppercase tracking-widest text-center">לחץ לבחירת קובץ מהמחשב</span>
-                    </div>
+                    <div className="flex flex-col items-center text-slate-400"><Upload className="h-10 w-10 mb-2" /><span className="text-sm font-black uppercase tracking-widest text-center">לחץ לבחירת קובץ</span></div>
                   )}
                 </div>
               </div>
-
-              <button 
-                onClick={handlePostMaterial}
-                className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all mt-4"
-              >
-                פרסם חומר לימוד
-              </button>
+              <button onClick={handlePostMaterial} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">פרסם חומר לימוד</button>
             </div>
           </div>
         </div>

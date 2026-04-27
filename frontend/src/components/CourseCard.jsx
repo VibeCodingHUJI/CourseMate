@@ -32,9 +32,9 @@ const CourseCard = ({ course, onClick }) => (
     </p>
 
     {course.prerequisites && course.prerequisites.length > 0 && (
-      <div className="mb-6 text-right">
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">דרישות קדם:</span>
-        <div className="flex flex-wrap gap-2 justify-end">
+      <div className="mb-6 flex flex-col gap-2 text-right">
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">דרישות קדם:</span>
+        <div className="flex flex-wrap gap-2 justify-start">
           {course.prerequisites.map((pre, index) => (
             <span key={index} className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-[10px] font-bold">
               {pre}
@@ -45,11 +45,16 @@ const CourseCard = ({ course, onClick }) => (
     )}
     
     <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between flex-row-reverse">
-      <div className="flex items-center gap-2 flex-row-reverse">
-        <div className="h-8 w-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
-          <User className="h-4 w-4" />
+      <div className="flex items-center gap-3 flex-row-reverse">
+        <div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 shrink-0">
+          <User className="h-5 w-5" />
         </div>
-        <span className="text-xs text-slate-500 font-bold">{course.instructor}</span>
+        <div className="flex flex-col text-right">
+          <span className="text-xs text-slate-700 font-black">מרצה: {course.instructor}</span>
+          {course.ta && (
+            <span className="text-[10px] text-slate-500 font-bold mt-0.5">מתרגל/ת: {course.ta}</span>
+          )}
+        </div>
       </div>
       <div className={`flex items-center gap-1.5 text-xs font-black ${course.difficulty > 4 ? 'text-rose-500' : 'text-emerald-500'}`}>
         <TrendingUp className="h-4 w-4" />

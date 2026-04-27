@@ -38,6 +38,13 @@ const ReviewForm = ({
     { id: 's', label: 'סמסטר קיץ' },
   ];
 
+  const ACADEMIC_YEARS = [
+    { id: '5786', label: 'תשפ"ו (2025-26)' },
+    { id: '5785', label: 'תשפ"ה (2024-25)' },
+    { id: '5784', label: 'תשפ"ד (2023-24)' },
+    { id: '5783', label: 'תשפ"ג (2022-23)' },
+  ];
+
   const IDENTITY_OPTIONS = [
     { id: 'full', label: 'שם מלא', icon: UserCircle },
     { id: 'initials', label: 'ראשי תיבות', icon: User },
@@ -53,9 +60,9 @@ const ReviewForm = ({
   ];
 
   return (
-    <div className="space-y-8 text-right">
-      <div className="flex justify-between items-start flex-row-reverse">
-        <div className="flex flex-col items-end">
+    <div className="space-y-8 text-right" style={{ direction: 'rtl' }}>
+      <div className="flex justify-between items-start">
+        <div className="text-right">
           <h3 className="text-4xl font-black text-slate-900">הוספת ביקורת</h3>
           <p className="text-slate-500 font-bold mt-2 text-lg">שתפו את החוויה שלכם מהקורס</p>
         </div>
@@ -86,13 +93,15 @@ const ReviewForm = ({
             </div>
             <div>
               <label className="text-sm font-black uppercase tracking-widest text-slate-400 mb-2 block">שנת לימוד</label>
-              <input 
-                type="text" 
+              <select 
                 value={year}
                 onChange={(e) => onYearChange(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-3 outline-none focus:border-indigo-500 focus:bg-white transition-all text-right font-bold"
-                placeholder="תשפ״ד"
-              />
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-5 py-3 outline-none focus:border-indigo-500 focus:bg-white transition-all text-right font-bold appearance-none cursor-pointer"
+              >
+                {ACADEMIC_YEARS.map(y => (
+                  <option key={y.id} value={y.label}>{y.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -112,7 +121,7 @@ const ReviewForm = ({
             </div>
           </div>
 
-          <div className="hidden lg:block pt-4">
+          <div className="hidden lg:block pt-6">
             <button 
               onClick={onSubmit}
               className="w-full bg-indigo-600 text-white py-6 rounded-[32px] font-black text-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-2xl shadow-indigo-600/30 flex items-center justify-center gap-4"
@@ -120,7 +129,6 @@ const ReviewForm = ({
               <Send className="h-6 w-6" />
               פרסום ביקורת
             </button>
-            <p className="text-center text-slate-400 font-bold mt-4 text-sm">ניתן להשאיר חלק מהשאלות ריקות</p>
           </div>
         </div>
 
