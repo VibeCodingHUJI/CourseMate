@@ -532,9 +532,9 @@ const App = () => {
               <div className="mb-10" style={{ display: 'flex', justifyContent: 'flex-start' }}>
                 <div className="p-1.5 bg-slate-100 rounded-[28px] w-fit flex gap-2" style={{ direction: 'rtl' }}>
                   {[
-                    { id: 'materials', label: 'חומרי לימוד', icon: BookOpen },
+                    { id: 'reviews', label: 'ביקורות', icon: Star },
                     { id: 'qna', label: 'שאלות ותשובות', icon: MessageSquare },
-                    { id: 'reviews', label: 'ביקורות', icon: Star }
+                    { id: 'materials', label: 'חומרי לימוד', icon: BookOpen }
                   ].map(tab => (
                     <button
                       key={tab.id}

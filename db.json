@@ -23,6 +23,22 @@
       "track": "Economics",
       "isGuest": false,
       "id": 3
+    },
+    {
+      "name": "מאיה",
+      "email": "maya!@gmail.com",
+      "password": "1234",
+      "track": "Computer Science",
+      "isGuest": false,
+      "id": 4
+    },
+    {
+      "name": "jsdj",
+      "email": "israek@gmai.com",
+      "password": "123",
+      "track": "Computer Science",
+      "isGuest": false,
+      "id": 5
     }
   ],
   "courses": [
