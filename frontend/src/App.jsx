@@ -745,7 +745,12 @@ const App = () => {
       {isQuestionModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsQuestionModalOpen(false)}>
           <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <h3 className="text-3xl font-black mb-8 text-slate-900">שאל שאלה</h3>
+            <div className="flex items-center gap-4 mb-8">
+              <button onClick={() => setIsQuestionModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
+                <X className="h-8 w-8" />
+              </button>
+              <h3 className="text-3xl font-black text-slate-900">שאל שאלה</h3>
+            </div>
             <textarea 
               value={newQuestionText}
               onChange={(e) => setNewQuestionText(e.target.value)}
@@ -764,21 +769,26 @@ const App = () => {
       {isMaterialModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsMaterialModalOpen(false)}>
           <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-8 flex-row-reverse">
-              <h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3>
+            <div className="flex items-center gap-4 mb-8">
               <button onClick={() => setIsMaterialModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button>
+              <h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3>
             </div>
             <div className="space-y-6">
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת החומר</label>
-                <input type="text" value={newMaterialTitle} onChange={(e) => setNewMaterialTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: סיכום הרצאה 1-5" />
+                <input type="text" value={newMaterialTitle} onChange={(e) => setNewMaterialTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: מבחן מועד א 2023" />
               </div>
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג החומר</label>
                 <div className="grid grid-cols-2 gap-3">
                   {MATERIAL_CATEGORIES.map(cat => (
-                    <button key={cat.id} onClick={() => setNewMaterialCategory(cat.id)} className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm flex-row-reverse ${newMaterialCategory === cat.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}>
-                      <cat.icon className="h-4 w-4" /> {cat.label}
+                    <button 
+                      key={cat.id} 
+                      onClick={() => setNewMaterialCategory(cat.id)} 
+                      className={`flex items-center justify-start gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm ${newMaterialCategory === cat.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                    >
+                      <cat.icon className="h-4 w-4" />
+                      <span>{cat.label}</span>
                     </button>
                   ))}
                 </div>

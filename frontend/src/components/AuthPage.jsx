@@ -24,6 +24,10 @@ const AuthPage = ({ onLogin }) => {
       return alert('נא למלא את כל השדות');
     }
 
+    if (!authForm.email.endsWith('@mail.huji.ac.il')) {
+      return alert('נא להשתמש בכתובת אימייל של האוניברסיטה העברית (@mail.huji.ac.il)');
+    }
+
     try {
       if (authMode === 'signup') {
         // Check if user already exists
@@ -111,7 +115,7 @@ const AuthPage = ({ onLogin }) => {
                 value={authForm.email}
                 onChange={(e) => setAuthForm({...authForm, email: e.target.value})}
                 className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-5 py-3.5 outline-none transition-all font-medium text-right"
-                placeholder="name@university.ac.il"
+                placeholder="name@mail.huji.ac.il"
               />
             </div>
 

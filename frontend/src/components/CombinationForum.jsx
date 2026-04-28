@@ -268,7 +268,7 @@ const CombinationForum = ({ user, onLogout }) => {
       {isNewCombModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsNewCombModalOpen(false)}>
           <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-8 flex-row-reverse">
+            <div className="flex justify-between items-center mb-8">
               <h3 className="text-3xl font-black text-slate-900">פתח דיון חדש</h3>
               <button onClick={() => setIsNewCombModalOpen(false)}><X className="h-8 w-8 text-slate-400" /></button>
             </div>
@@ -290,7 +290,7 @@ const CombinationForum = ({ user, onLogout }) => {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-black text-slate-400 uppercase mb-2 block">שאלה ראשונה</label>
+                <label className="text-xs font-black text-slate-400 uppercase mb-2 block">שאל שאלה</label>
                 <textarea 
                   value={initialQuestion} 
                   onChange={(e) => setInitialQuestion(e.target.value)} 

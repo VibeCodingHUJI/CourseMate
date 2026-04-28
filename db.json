@@ -39,6 +39,14 @@
       "track": "Computer Science",
       "isGuest": false,
       "id": 5
+    },
+    {
+      "name": "שירה ",
+      "email": "shira.mutzafi@mail.huji.ac.il",
+      "password": "12345",
+      "track": "Business Administration",
+      "isGuest": false,
+      "id": 6
     }
   ],
   "courses": [
@@ -202,6 +210,17 @@
       "author": "איתי א.",
       "semester": "א",
       "year": "תשפ\"ד"
+    },
+    {
+      "courseId": "ba1",
+      "difficulty": 4,
+      "comment": "מרצה: מעולה\n\nרמת קושי: סבירה\n\nהשקעה נדרשת: יש תרגיל שבועי\n\nהמבחן: כן",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "28.4.2026",
+      "author": "אנונימי/ת",
+      "identityType": "anon",
+      "id": "oI1zuvk"
     }
   ],
   "questions": [
@@ -228,6 +247,13 @@
       ],
       "date": "27.4.2026",
       "id": 2
+    },
+    {
+      "courseId": "ba1",
+      "question": "האם נאכפת נוכחות?",
+      "answers": [],
+      "date": "28.4.2026",
+      "id": 3
     }
   ],
   "materials": [],
