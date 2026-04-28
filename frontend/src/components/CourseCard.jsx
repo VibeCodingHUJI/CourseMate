@@ -15,7 +15,7 @@ const CourseCard = ({ course, onClick }) => (
           {course.credits} נ"ז
         </div>
         <div className="bg-indigo-50 text-indigo-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-          {course.code}
+          {course.code} | {course.language || 'עברית'}
         </div>
         <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
           {course.attendanceMandatory ? 'חובת נוכחות' : 'אין חובת נוכחות'}
@@ -56,12 +56,6 @@ const CourseCard = ({ course, onClick }) => (
           <span className="text-xs text-slate-700 font-black">מרצה: {course.instructor}</span>
           {course.ta && (
             <span className="text-[10px] text-slate-500 font-bold mt-0.5">מתרגל/ת: {course.ta}</span>
-          )}
-          {course.attendanceMandatory && (
-            <span className="text-[10px] text-rose-600 font-black mt-1 flex items-center justify-end gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></div>
-              חובת נוכחות
-            </span>
           )}
         </div>
       </div>

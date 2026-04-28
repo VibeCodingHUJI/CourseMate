@@ -3,7 +3,7 @@ import {
   MessageSquare, ChevronLeft, X, Send, User, BookOpen, Search
 } from 'lucide-react';
 
-const CombinationForum = ({ user, onLogout }) => {
+const CombinationForum = ({ user, onLogout, onTrackSelect }) => {
   const [combinations, setCombinations] = useState([]);
   const [selectedCombination, setSelectedCombination] = useState(null);
   const [combinationQuestions, setCombinationQuestions] = useState([]);
@@ -199,9 +199,25 @@ const CombinationForum = ({ user, onLogout }) => {
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{c.date}</span>
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 mb-6 group-hover:text-indigo-600 transition-colors">{c.title}</h3>
-                <div className="flex items-center gap-2 text-indigo-600 font-black text-sm">
-                  <span>קרא את הדיון המלא</span>
-                  <ChevronLeft className="h-4 w-4" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-indigo-600 font-black text-sm">
+                    <span>קרא את הדיון המלא</span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </div>
+                  <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                    {[
+                      { val: c.majorA, label: STUDY_TRACKS.find(t => t.value === c.majorA)?.label },
+                      { val: c.majorB, label: STUDY_TRACKS.find(t => t.value === c.majorB)?.label }
+                    ].map((m, i) => (
+                      <button
+                        key={i}
+                        onClick={() => onTrackSelect(m.val)}
+                        className="bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-600 px-4 py-2 rounded-xl text-xs font-black transition-all"
+                      >
+                        צפה בקורסי {m.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}

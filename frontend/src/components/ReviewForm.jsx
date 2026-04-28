@@ -25,7 +25,7 @@ const ReviewForm = ({
       newParts.lecturer && `מרצה: ${newParts.lecturer}`,
       newParts.difficulty && `רמת קושי: ${newParts.difficulty}`,
       newParts.investment && `השקעה נדרשת: ${newParts.investment}`,
-      newParts.exam && `המבחן: ${newParts.exam}`,
+      newParts.exam && `המבחן היה הוגן: ${newParts.exam}`,
       newParts.general && `כללי: ${newParts.general}`
     ].filter(Boolean).join('\n\n');
     
@@ -55,7 +55,7 @@ const ReviewForm = ({
     { id: 'lecturer', label: 'מה דעתך על המרצה?', placeholder: 'מעביר/ה את החומר בצורה מעניינת?' },
     { id: 'difficulty', label: 'מה רמת הקושי של הקורס?', placeholder: 'האם החומר מורכב להבנה?' },
     { id: 'investment', label: 'כמה השקעה הקורס דורש?', placeholder: 'יש הרבה עבודות/תרגילים?' },
-    { id: 'exam', label: 'האם המבחן היה הוגן?', placeholder: 'היה דומה לחומר שנלמד?' },
+    { id: 'exam', label: 'האם המבחן/העבודה היה הוגן?', placeholder: 'האם המבחן/העבודה היה הוגן?' },
     { id: 'general', label: 'משהו נוסף שתרצו להוסיף?', placeholder: 'טיפים לסטודנטים אחרים...' },
   ];
 

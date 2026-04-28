@@ -398,7 +398,7 @@ const App = () => {
         )}
 
         {(user.isGuest && guestTab === 'forum') ? (
-          <CombinationForum user={user} onLogout={handleLogout} />
+          <CombinationForum user={user} onLogout={handleLogout} onTrackSelect={handleChangeTrack} />
         ) : (
           !selectedCourse ? (
             <div className="max-w-7xl mx-auto">
@@ -584,17 +584,27 @@ const App = () => {
                       </div>
 
                       {reviews.map(r => (
-                        <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right">
-                          <div className="flex justify-between items-center mb-6">
+                        <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right relative overflow-hidden">
+                          <div className="flex justify-between items-start mb-6">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black">
+                              <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black shrink-0">
                                 {r.author[0]}
                               </div>
-                              <div className="font-black text-slate-900">{r.author}</div>
+                              <div className="text-right">
+                                <div className="font-black text-slate-900">{r.author}</div>
+                                <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">מרצה: {selectedCourse.instructor}</div>
+                              </div>
                             </div>
                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
                           </div>
-                          <p className="text-slate-600 text-lg font-medium leading-relaxed italic mb-6">"{r.comment}"</p>
+                          
+                          <div className="space-y-4 mb-8 pr-4 border-r-2 border-indigo-50">
+                            {r.comment.split('\n\n').map((line, idx) => (
+                              <div key={idx} className="text-slate-600 text-lg font-medium leading-relaxed italic whitespace-pre-wrap">
+                                {line.startsWith('המבחן:') ? line.replace('המבחן:', 'המבחן היה הוגן:') : line}
+                              </div>
+                            ))}
+                          </div>
                           
                           <div className="flex items-center justify-between border-t border-slate-100 pt-6">
                             <div className="flex items-center gap-4">

@@ -175,7 +175,8 @@
       "instructor": "גב' דנה רון",
       "ta": "ליאור חן",
       "track": "Business Administration",
-      "attendanceMandatory": false
+      "attendanceMandatory": false,
+      "language": "אנגלית"
     },
     {
       "id": "ba5",
@@ -231,6 +232,17 @@
       "author": "אנונימי/ת",
       "identityType": "anon",
       "id": "oI1zuvk"
+    },
+    {
+      "courseId": "ba3",
+      "difficulty": 4,
+      "comment": "מרצה: החומר מועבר בצורה טובה\n\nרמת קושי: סבבה לגמרי\n\nהשקעה נדרשת: לא הרבה, יש תרגיל כל כמה שבועות\n\nהמבחן: כן, ממוצע גבוה",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "28.4.2026",
+      "author": "שירה ",
+      "identityType": "full",
+      "id": "rs7kU4p"
     }
   ],
   "questions": [
