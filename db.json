@@ -291,6 +291,14 @@
       "date": "27.4.2026",
       "replies": 1,
       "id": 3
+    },
+    {
+      "majorA": "Business Administration",
+      "majorB": "Psychology",
+      "title": "מנהל עסקים + פסיכולוגיה",
+      "date": "28.4.2026",
+      "replies": 1,
+      "id": 4
     }
   ],
   "combinationQuestions": [
@@ -331,6 +339,14 @@
       "date": "27.4.2026",
       "author": "אורח/ת",
       "id": 3
+    },
+    {
+      "combinationId": 4,
+      "question": "האם השילוב עמוס? כמה ימים בשבוע לומדים בממוצע?",
+      "answers": [],
+      "date": "28.4.2026",
+      "author": "אורח/ת",
+      "id": 4
     }
   ]
 }

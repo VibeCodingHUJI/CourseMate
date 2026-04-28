@@ -103,9 +103,14 @@ const App = () => {
   };
 
   const handleChangeTrack = (newTrack) => {
-    const updatedUser = { ...user, track: newTrack };
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    if (user.isGuest) {
+      setGuestSelectedTrack(newTrack);
+      setGuestTab('courses'); // Switch to courses view for guests
+    } else {
+      const updatedUser = { ...user, track: newTrack };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
     setIsChangingTrack(false);
     setTrackSearch('');
     setSelectedCourse(null);
@@ -358,8 +363,12 @@ const App = () => {
               {filteredTracks.map(t => (
                 <button
                   key={t.id}
-                  onClick={() => handleChangeTrack(t.value)}
-                  className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${user.track === t.value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                  onClick={() => {
+                    // Explicit direct mapping to ensure no jumps
+                    const targetTrack = t.value;
+                    handleChangeTrack(targetTrack);
+                  }}
+                  className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${(user.isGuest ? guestSelectedTrack : user.track) === t.value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
                 >
                   {t.label}
                 </button>
