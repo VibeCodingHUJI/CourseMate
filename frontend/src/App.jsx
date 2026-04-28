@@ -122,8 +122,15 @@ const App = () => {
 
   const filteredCourses = allCourses.filter(c => {
     if (!user) return false;
-    const currentTrack = user.isGuest ? guestSelectedTrack : user.track;
-    const matchesTrack = currentTrack === 'General' || !currentTrack || c.track === currentTrack;
+    
+    // Guest Mode logic: Must have a selected track to see any courses
+    if (user.isGuest) {
+      if (!guestSelectedTrack) return false;
+      return c.track === guestSelectedTrack;
+    }
+
+    // Logged-in user logic (unchanged)
+    const matchesTrack = user.track === 'General' || !user.track || c.track === user.track;
     const matchesSearch = c.title.includes(searchQuery) || c.code.includes(searchQuery);
     const matchesFilter = courseFilter === 'All' || c.type === courseFilter;
     return matchesTrack && matchesSearch && matchesFilter;

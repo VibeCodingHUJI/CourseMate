@@ -7,7 +7,7 @@ const CourseCard = ({ course, onClick }) => (
     className={`bg-white rounded-[32px] shadow-sm border p-8 hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer flex flex-col h-full ${course.type === 'חובה' ? 'border-rose-100 hover:border-rose-200' : 'border-slate-200 hover:border-indigo-200'}`}
   >
     <div className="flex justify-between items-start mb-6">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
           {course.type}
         </div>
@@ -16,6 +16,9 @@ const CourseCard = ({ course, onClick }) => (
         </div>
         <div className="bg-indigo-50 text-indigo-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
           {course.code}
+        </div>
+        <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
+          {course.attendanceMandatory ? 'חובת נוכחות' : 'אין חובת נוכחות'}
         </div>
       </div>
       <div className="flex items-center gap-1.5 text-amber-500 font-black">
@@ -53,6 +56,12 @@ const CourseCard = ({ course, onClick }) => (
           <span className="text-xs text-slate-700 font-black">מרצה: {course.instructor}</span>
           {course.ta && (
             <span className="text-[10px] text-slate-500 font-bold mt-0.5">מתרגל/ת: {course.ta}</span>
+          )}
+          {course.attendanceMandatory && (
+            <span className="text-[10px] text-rose-600 font-black mt-1 flex items-center justify-end gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></div>
+              חובת נוכחות
+            </span>
           )}
         </div>
       </div>

@@ -62,7 +62,8 @@
       "description": "יסודות התכנות בשפת Python, רקורסיה ואלגוריתמים.",
       "instructor": "פרופ' דוד לוי",
       "ta": "עידו כהן",
-      "track": "Computer Science"
+      "track": "Computer Science",
+      "attendanceMandatory": true
     },
     {
       "id": "cs2",
@@ -79,7 +80,8 @@
       "track": "Computer Science",
       "prerequisites": [
         "מבוא למדעי המחשב"
-      ]
+      ],
+      "attendanceMandatory": false
     },
     {
       "id": "cs3",
@@ -93,7 +95,8 @@
       "description": "מרחבים וקטוריים והעתקות ליניאריות.",
       "instructor": "ד\"ר רחל כהן",
       "ta": "יונתן ארז",
-      "track": "Computer Science"
+      "track": "Computer Science",
+      "attendanceMandatory": false
     },
     {
       "id": "cs4",
@@ -109,7 +112,8 @@
       "track": "Computer Science",
       "prerequisites": [
         "מבוא למדעי המחשב"
-      ]
+      ],
+      "attendanceMandatory": true
     },
     {
       "id": "ba1",
@@ -123,7 +127,8 @@
       "description": "ניתוח התנהגות צרכנים ויצרנים בשוק חופשי.",
       "instructor": "ד\"ר שמעון לוי",
       "ta": "דנה מילר",
-      "track": "Business Administration"
+      "track": "Business Administration",
+      "attendanceMandatory": false
     },
     {
       "id": "ba2",
@@ -140,7 +145,8 @@
       "track": "Business Administration",
       "prerequisites": [
         "מיקרו כלכלה"
-      ]
+      ],
+      "attendanceMandatory": false
     },
     {
       "id": "ba3",
@@ -154,7 +160,8 @@
       "description": "הערכת שווי נכסים, ניהול סיכונים ותזרים מזומנים.",
       "instructor": "ד\"ר עמית גולן",
       "ta": "קרן אור",
-      "track": "Business Administration"
+      "track": "Business Administration",
+      "attendanceMandatory": true
     },
     {
       "id": "ba4",
@@ -167,7 +174,8 @@
       "description": "אסטרטגיות שיווק, מיתוג והתנהגות צרכנים.",
       "instructor": "גב' דנה רון",
       "ta": "ליאור חן",
-      "track": "Business Administration"
+      "track": "Business Administration",
+      "attendanceMandatory": false
     },
     {
       "id": "ba5",
@@ -183,7 +191,8 @@
       "track": "Business Administration",
       "prerequisites": [
         "יסודות השיווק"
-      ]
+      ],
+      "attendanceMandatory": true
     },
     {
       "id": "ba6",
@@ -196,7 +205,8 @@
       "description": "פיתוח מודלים עסקיים והקמת סטרטאפים.",
       "instructor": "מר יוסי בר",
       "ta": "עדי סלע",
-      "track": "Business Administration"
+      "track": "Business Administration",
+      "attendanceMandatory": false
     }
   ],
   "reviews": [
@@ -299,6 +309,13 @@
           "date": "28.4.2026"
         }
       ]
+    },
+    {
+      "id": 2,
+      "combinationId": 1,
+      "question": "יש חפיפה בין קורסי המתמטיקה?",
+      "date": "25.4.2026",
+      "answers": []
     },
     {
       "id": 2,
