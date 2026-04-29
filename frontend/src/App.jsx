@@ -288,54 +288,7 @@ const App = () => {
             </div>
           </div>
 
-          <div className="flex-1 max-w-xl mx-12 relative group">
-            {!user.isGuest && (
-              <>
-                <input
-                  type="text"
-                  placeholder="חפש קורס..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && suggestions.length > 0) {
-                      setSelectedCourse(suggestions[0]);
-                      setSearchQuery('');
-                      setShowSuggestions(false);
-                    }
-                  }}
-                  className="w-full bg-slate-100/50 border-2 border-transparent rounded-2xl py-3 px-12 focus:bg-white focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-right font-medium"
-                />
-                <Search className="absolute right-4 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
-                    {suggestions.map(course => (
-                      <button
-                        key={course.id}
-                        onClick={() => {
-                          setSelectedCourse(course);
-                          setSearchQuery('');
-                          setShowSuggestions(false);
-                        }}
-                        className="w-full text-right px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group"
-                      >
-                        <div className="flex items-center gap-3">
-                           <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-lg group-hover:bg-white transition-colors">{course.code}</span>
-                           <span className="font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{course.title}</span>
-                        </div>
-                        <ChevronLeft className="h-4 w-4 text-slate-300 group-hover:text-indigo-500 group-hover:-translate-x-1 transition-all" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <div className="flex-1"></div>
 
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { setSelectedCourse(null); }}>
             <span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span>
@@ -436,6 +389,52 @@ const App = () => {
                   ))}
                 </div>
               </header>
+
+              {/* Course Search Bar */}
+              <div className="mb-12 relative max-w-2xl ml-auto group">
+                <input
+                  type="text"
+                  placeholder="חפש קורס..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && suggestions.length > 0) {
+                      setSelectedCourse(suggestions[0]);
+                      setSearchQuery('');
+                      setShowSuggestions(false);
+                    }
+                  }}
+                  className="w-full bg-white border-2 border-slate-200 rounded-[24px] py-4 px-12 focus:border-indigo-500 transition-all outline-none text-right font-medium shadow-sm"
+                />
+                <Search className="absolute right-5 top-4.5 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+                    {suggestions.map(course => (
+                      <button
+                        key={course.id}
+                        onClick={() => {
+                          setSelectedCourse(course);
+                          setSearchQuery('');
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full text-right px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group/item"
+                      >
+                        <div className="flex items-center gap-3">
+                           <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-lg group-hover/item:bg-white transition-colors">{course.code}</span>
+                           <span className="font-bold text-slate-700 group-hover/item:text-indigo-600 transition-colors">{course.title}</span>
+                        </div>
+                        <ChevronLeft className="h-4 w-4 text-slate-300 group-hover/item:text-indigo-500 group-hover/item:-translate-x-1 transition-all" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               
               <div className="space-y-16">
                 {(user.isGuest && user.track === 'General') ? (
@@ -450,12 +449,26 @@ const App = () => {
                         <Search className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
                         <h3 className="text-2xl font-black text-slate-900 mb-2">בואו נתחיל</h3>
                         <p className="text-slate-500 mb-8 font-medium">כדי לראות קורסים וביקורות, יש לבחור מסלול לימוד בתפריט למעלה</p>
-                        <button 
-                          onClick={() => setIsChangingTrack(true)}
-                          className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black hover:bg-indigo-700 transition-all"
-                        >
-                          בחירת מסלול
-                        </button>
+                        <div className="flex flex-col gap-3">
+                          <button 
+                            onClick={() => handleChangeTrack('Computer Science')}
+                            className="w-full bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
+                          >
+                            בחר חוג: מדעי המחשב
+                          </button>
+                          <button 
+                            onClick={() => handleChangeTrack('Business Administration')}
+                            className="w-full bg-white border-2 border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-black hover:border-indigo-500 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
+                          >
+                            בחר חוג: מנהל עסקים
+                          </button>
+                          <button 
+                            onClick={() => setIsChangingTrack(true)}
+                            className="text-xs font-black text-slate-400 uppercase tracking-widest mt-4 hover:text-indigo-600 transition-colors"
+                          >
+                            חוג אחר? לחץ כאן
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
