@@ -47,6 +47,14 @@
       "track": "Business Administration",
       "isGuest": false,
       "id": 6
+    },
+    {
+      "name": "מאיה ",
+      "email": "maya@mail.huji.ac.il",
+      "password": "1234",
+      "track": "Business Administration",
+      "isGuest": false,
+      "id": 7
     }
   ],
   "courses": [
@@ -220,7 +228,8 @@
       "date": "2024-03-15",
       "author": "איתי א.",
       "semester": "א",
-      "year": "תשפ\"ד"
+      "year": "תשפ\"ד",
+      "likedBy": []
     },
     {
       "courseId": "ba1",
@@ -231,7 +240,11 @@
       "date": "28.4.2026",
       "author": "אנונימי/ת",
       "identityType": "anon",
-      "id": "oI1zuvk"
+      "id": "oI1zuvk",
+      "likes": 17,
+      "likedBy": [
+        7
+      ]
     },
     {
       "courseId": "ba3",
@@ -242,7 +255,48 @@
       "date": "28.4.2026",
       "author": "שירה ",
       "identityType": "full",
-      "id": "rs7kU4p"
+      "id": "rs7kU4p",
+      "likedBy": []
+    },
+    {
+      "courseId": "ba1",
+      "difficulty": 4,
+      "comment": "מרצה: כן\n\nרמת קושי: קלה\n\nהשקעה נדרשת: הן ",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "29.4.2026",
+      "author": "מאיה ",
+      "identityType": "full",
+      "id": "7V1j09r",
+      "likedBy": [
+        7
+      ]
+    },
+    {
+      "courseId": "ba1",
+      "difficulty": 4,
+      "comment": "מרצה: געג\n\nרמת קושי: גכ",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "29.4.2026",
+      "author": "מאיה ",
+      "authorId": 7,
+      "identityType": "full",
+      "likedBy": [],
+      "id": "SmCZ9by"
+    },
+    {
+      "courseId": "cs1",
+      "difficulty": 4,
+      "comment": "מרצה: גרוע\n\nרמת קושי: קשה ברמות על\n\nהשקעה נדרשת: המון השקעה, דם יזע ודמעות\n\nהמבחן היה הוגן: לא\n\nכללי: בהצלחה לכולם",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "29.4.2026",
+      "author": "אנונימי/ת",
+      "authorId": 7,
+      "identityType": "anon",
+      "likedBy": [],
+      "id": "oUVWEph"
     }
   ],
   "questions": [
@@ -252,7 +306,8 @@
       "answers": [
         {
           "text": "kfngtgt",
-          "date": "26.4.2026"
+          "date": "26.4.2026",
+          "likedBy": []
         }
       ],
       "date": "26.4.2026",
@@ -264,7 +319,8 @@
       "answers": [
         {
           "text": "לא",
-          "date": "27.4.2026"
+          "date": "27.4.2026",
+          "likedBy": []
         }
       ],
       "date": "27.4.2026",
@@ -273,7 +329,15 @@
     {
       "courseId": "ba1",
       "question": "האם נאכפת נוכחות?",
-      "answers": [],
+      "answers": [
+        {
+          "text": "כן ",
+          "date": "29.4.2026",
+          "likedBy": [
+            7
+          ]
+        }
+      ],
       "date": "28.4.2026",
       "id": 3
     }
@@ -322,11 +386,13 @@
       "answers": [
         {
           "text": "מאוד עמוס, בעיקר בגלל המטלות במדעי המחשב.",
-          "date": "27.4.2026"
+          "date": "27.4.2026",
+          "likedBy": []
         },
         {
           "text": "אפשרי אם מנהלים את הזמן נכון.",
-          "date": "28.4.2026"
+          "date": "28.4.2026",
+          "likedBy": []
         }
       ]
     },
@@ -338,27 +404,20 @@
       "answers": []
     },
     {
-      "id": 2,
-      "combinationId": 1,
-      "question": "יש חפיפה בין קורסי המתמטיקה?",
-      "date": "25.4.2026",
-      "answers": []
-    },
-    {
+      "id": 3,
       "combinationId": 3,
       "question": "האם זה שילוב מומלץ?",
       "answers": [],
       "date": "27.4.2026",
-      "author": "אורח/ת",
-      "id": 3
+      "author": "אורח/ת"
     },
     {
+      "id": 4,
       "combinationId": 4,
       "question": "האם השילוב עמוס? כמה ימים בשבוע לומדים בממוצע?",
       "answers": [],
       "date": "28.4.2026",
-      "author": "אורח/ת",
-      "id": 4
+      "author": "אורח/ת"
     }
   ]
 }

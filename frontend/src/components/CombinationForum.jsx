@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  MessageSquare, ChevronLeft, X, Send, User, BookOpen, Search
+  MessageSquare, ChevronLeft, X, Send, User, BookOpen, Search, Heart
 } from 'lucide-react';
 
-const CombinationForum = ({ user, onLogout }) => {
+const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   const [combinations, setCombinations] = useState([]);
   const [selectedCombination, setSelectedCombination] = useState(null);
   const [combinationQuestions, setCombinationQuestions] = useState([]);
@@ -17,14 +17,6 @@ const CombinationForum = ({ user, onLogout }) => {
   // New Question Modal State
   const [isNewQModalOpen, setIsNewQModalOpen] = useState(false);
   const [newQText, setNewQText] = useState('');
-
-  const STUDY_TRACKS = [
-    { id: 'cs', label: "מדעי המחשב", value: "Computer Science" },
-    { id: 'ba', label: "מנהל עסקים", value: "Business Administration" },
-    { id: 'eco', label: "כלכלה", value: "Economics" },
-    { id: 'psy', label: "פסיכולוגיה", value: "Psychology" },
-    { id: 'oth', label: "אחר", value: "Other" }
-  ];
 
   // Filters
   const [filterA, setFilterA] = useState('');
@@ -116,10 +108,15 @@ const CombinationForum = ({ user, onLogout }) => {
   };
 
   const handlePostAnswer = async (qId, text) => {
+    if (user?.isGuest) return;
     if (!text) return;
     const question = combinationQuestions.find(q => q.id === qId);
     const updatedAnswers = [...question.answers, { 
-      text, date: new Date().toLocaleDateString('he-IL'), author: 'אורח/ת' 
+      text, 
+      date: new Date().toLocaleDateString('he-IL'), 
+      author: user.name,
+      authorId: user.id,
+      likedBy: []
     }];
 
     try {
@@ -132,6 +129,38 @@ const CombinationForum = ({ user, onLogout }) => {
       setCombinationQuestions(combinationQuestions.map(q => q.id === qId ? updatedQ : q));
     } catch (err) {
       alert('שגיאה בפרסום התשובה');
+    }
+  };
+
+  const handleLikeAnswer = async (qId, answerIndex) => {
+    const question = combinationQuestions.find(q => q.id === qId);
+    if (!question || !user?.id) return;
+
+    const answer = question.answers[answerIndex];
+    if (answer.authorId === user.id) {
+      alert('לא ניתן לעשות לייק לתשובה של עצמך');
+      return;
+    }
+
+    const updatedAnswers = question.answers.map((a, i) => {
+      if (i === answerIndex) {
+        const likedBy = a.likedBy || [];
+        if (likedBy.includes(user.id)) return a;
+        return { ...a, likedBy: [...likedBy, user.id] };
+      }
+      return a;
+    });
+
+    try {
+      const res = await fetch(`http://localhost:3000/combinationQuestions/${qId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: updatedAnswers })
+      });
+      const updatedQ = await res.json();
+      setCombinationQuestions(combinationQuestions.map(q => q.id === qId ? updatedQ : q));
+    } catch (err) {
+      console.error('Error liking combination answer:', err);
     }
   };
 
@@ -199,9 +228,25 @@ const CombinationForum = ({ user, onLogout }) => {
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{c.date}</span>
                 </div>
                 <h3 className="text-2xl font-black text-slate-900 mb-6 group-hover:text-indigo-600 transition-colors">{c.title}</h3>
-                <div className="flex items-center gap-2 text-indigo-600 font-black text-sm">
-                  <span>קרא את הדיון המלא</span>
-                  <ChevronLeft className="h-4 w-4" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-indigo-600 font-black text-sm">
+                    <span>קרא את הדיון המלא</span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </div>
+                  <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                    {[
+                      { val: c.majorA, label: STUDY_TRACKS.find(t => t.value === c.majorA)?.label },
+                      { val: c.majorB, label: STUDY_TRACKS.find(t => t.value === c.majorB)?.label }
+                    ].map((m, i) => (
+                      <button
+                        key={i}
+                        onClick={() => onTrackSelect(m.val)}
+                        className="bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-600 px-4 py-2 rounded-xl text-xs font-black transition-all"
+                      >
+                        צפה בקורסי {m.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}
@@ -241,22 +286,33 @@ const CombinationForum = ({ user, onLogout }) => {
                 </div>
                 <div className="p-8 space-y-6">
                   {q.answers.map((a, i) => (
-                    <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6">
+                    <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6 group/ans">
                       <div className="h-10 w-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0"><User className="h-5 w-5" /></div>
-                      <div>
-                        <p className="text-slate-700 font-medium">{a.text}</p>
-                        <div className="text-[10px] text-slate-400 font-black mt-1">מאת {a.author || 'אורח/ת'} • {a.date}</div>
+                      <div className="flex-1 flex justify-between items-start">
+                        <div>
+                          <p className="text-slate-700 font-medium">{a.text}</p>
+                          <div className="text-[10px] text-slate-400 font-black mt-1">מאת {a.author || 'אורח/ת'} • {a.date}</div>
+                        </div>
+                        <button 
+                          onClick={() => handleLikeAnswer(q.id, i)}
+                          className="flex items-center gap-1.5 text-slate-300 hover:text-rose-500 transition-colors"
+                        >
+                          <span className="text-[10px] font-black">{a.likedBy?.length || 0}</span>
+                          <Heart className={`h-4 w-4 ${(a.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
+                        </button>
                       </div>
                     </div>
                   ))}
-                  <div className="pt-4 mr-16">
-                    <input 
-                      type="text" 
-                      placeholder="הוסף תשובה..."
-                      onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
-                      className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
-                    />
-                  </div>
+                  {!user.isGuest && (
+                    <div className="pt-4 mr-16">
+                      <input 
+                        type="text" 
+                        placeholder="הוסף תשובה..."
+                        onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
+                        className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -268,7 +324,7 @@ const CombinationForum = ({ user, onLogout }) => {
       {isNewCombModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsNewCombModalOpen(false)}>
           <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-8 flex-row-reverse">
+            <div className="flex justify-between items-center mb-8">
               <h3 className="text-3xl font-black text-slate-900">פתח דיון חדש</h3>
               <button onClick={() => setIsNewCombModalOpen(false)}><X className="h-8 w-8 text-slate-400" /></button>
             </div>
@@ -290,7 +346,7 @@ const CombinationForum = ({ user, onLogout }) => {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-black text-slate-400 uppercase mb-2 block">שאלה ראשונה</label>
+                <label className="text-xs font-black text-slate-400 uppercase mb-2 block">שאל שאלה</label>
                 <textarea 
                   value={initialQuestion} 
                   onChange={(e) => setInitialQuestion(e.target.value)} 

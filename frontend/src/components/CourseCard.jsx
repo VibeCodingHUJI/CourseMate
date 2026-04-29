@@ -7,7 +7,7 @@ const CourseCard = ({ course, onClick }) => (
     className={`bg-white rounded-[32px] shadow-sm border p-8 hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer flex flex-col h-full ${course.type === 'חובה' ? 'border-rose-100 hover:border-rose-200' : 'border-slate-200 hover:border-indigo-200'}`}
   >
     <div className="flex justify-between items-start mb-6">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
           {course.type}
         </div>
@@ -15,12 +15,20 @@ const CourseCard = ({ course, onClick }) => (
           {course.credits} נ"ז
         </div>
         <div className="bg-indigo-50 text-indigo-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-          {course.code}
+          {course.code} | {course.language || 'עברית'}
+        </div>
+        <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
+          {course.attendanceMandatory ? 'חובת נוכחות' : 'אין חובת נוכחות'}
         </div>
       </div>
-      <div className="flex items-center gap-1.5 text-amber-500 font-black">
-        <Star className="h-4 w-4 fill-current" />
-        <span>{course.avgRating}</span>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 text-slate-400 font-bold text-xs bg-slate-50 px-3 py-1 rounded-full">
+          <span>({course.reviewCount || 0})</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-amber-500 font-black">
+          <Star className="h-4 w-4 fill-current" />
+          <span>{course.avgRating}</span>
+        </div>
       </div>
     </div>
     

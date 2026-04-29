@@ -4,7 +4,7 @@ import {
   BookOpen, TrendingUp, Send, FileText, 
   Download, Upload, User, ChevronLeft,
   Filter, Award, Clock, X, CheckCircle, Lock,
-  Camera
+  Camera, Heart
 } from 'lucide-react';
 
 // Components
@@ -43,24 +43,41 @@ const App = () => {
   
   // Dynamic Content State
   const [reviews, setReviews] = useState([]);
+  const [allReviews, setAllReviews] = useState([]); // For course card counters
   const [questions, setQuestions] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
   const [guestTab, setGuestTab] = useState('forum'); // 'forum', 'courses'
   const [guestSelectedTrack, setGuestSelectedTrack] = useState('');
 
-  // Load initial courses
+  // Consolidated initial data fetching
   useEffect(() => {
-    fetch('http://localhost:3000/courses')
-      .then(res => res.json())
-      .then(data => setAllCourses(data))
-      .catch(err => console.error('Error fetching courses:', err));
+    const fetchData = async () => {
+      try {
+        const [coursesRes, reviewsRes] = await Promise.all([
+          fetch('http://localhost:3000/courses'),
+          fetch('http://localhost:3000/reviews')
+        ]);
+        const courses = await coursesRes.json();
+        const reviewsData = await reviewsRes.json();
+        
+        setAllReviews(reviewsData);
+        const coursesWithCounts = courses.map(c => ({
+          ...c,
+          reviewCount: reviewsData.filter(r => r.courseId === c.id).length
+        }));
+        setAllCourses(coursesWithCounts);
+      } catch (err) {
+        console.error('Error fetching initial data:', err);
+      }
+    };
+    fetchData();
   }, []);
 
   // Load reviews/questions/materials when course is selected
   useEffect(() => {
     if (selectedCourse) {
-      // Fetch reviews
+      // Fetch reviews for specific course
       fetch(`http://localhost:3000/reviews?courseId=${selectedCourse.id}`)
         .then(res => res.json())
         .then(data => setReviews(data));
@@ -103,9 +120,14 @@ const App = () => {
   };
 
   const handleChangeTrack = (newTrack) => {
-    const updatedUser = { ...user, track: newTrack };
-    setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    if (user.isGuest) {
+      setGuestSelectedTrack(newTrack);
+      setGuestTab('courses'); // Switch to courses view for guests
+    } else {
+      const updatedUser = { ...user, track: newTrack };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
     setIsChangingTrack(false);
     setTrackSearch('');
     setSelectedCourse(null);
@@ -122,8 +144,15 @@ const App = () => {
 
   const filteredCourses = allCourses.filter(c => {
     if (!user) return false;
-    const currentTrack = user.isGuest ? guestSelectedTrack : user.track;
-    const matchesTrack = currentTrack === 'General' || !currentTrack || c.track === currentTrack;
+    
+    // Guest Mode logic: Must have a selected track to see any courses
+    if (user.isGuest) {
+      if (!guestSelectedTrack) return false;
+      return c.track === guestSelectedTrack;
+    }
+
+    // Logged-in user logic (unchanged)
+    const matchesTrack = user.track === 'General' || !user.track || c.track === user.track;
     const matchesSearch = c.title.includes(searchQuery) || c.code.includes(searchQuery);
     const matchesFilter = courseFilter === 'All' || c.type === courseFilter;
     return matchesTrack && matchesSearch && matchesFilter;
@@ -149,7 +178,9 @@ const App = () => {
       year: newReviewYear,
       date: new Date().toLocaleDateString('he-IL'),
       author: getAuthorDisplayName(user.name, newReviewIdentity),
-      identityType: newReviewIdentity
+      authorId: user.id,
+      identityType: newReviewIdentity,
+      likedBy: []
     };
     
     try {
@@ -160,6 +191,15 @@ const App = () => {
       });
       const savedReview = await res.json();
       setReviews([savedReview, ...reviews]);
+      setAllReviews([savedReview, ...allReviews]);
+      
+      // Update allCourses count
+      setAllCourses(allCourses.map(c => 
+        c.id === selectedCourse.id 
+          ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } 
+          : c
+      ));
+
       setNewReviewComment('');
       setIsReviewModalOpen(false);
       alert('הביקורת פורסמה בהצלחה!');
@@ -169,7 +209,6 @@ const App = () => {
   };
 
   const handlePostQuestion = async () => {
-    if (user?.isGuest) return;
     if (!newQuestionText) return;
     
     const newQ = {
@@ -199,7 +238,12 @@ const App = () => {
     if (!text) return;
 
     const question = questions.find(q => q.id === qId);
-    const updatedAnswers = [...question.answers, { text, date: new Date().toLocaleDateString('he-IL') }];
+    const updatedAnswers = [...question.answers, { 
+      text, 
+      date: new Date().toLocaleDateString('he-IL'),
+      authorId: user.id,
+      likedBy: []
+    }];
 
     try {
       const res = await fetch(`http://localhost:3000/questions/${qId}`, {
@@ -211,6 +255,67 @@ const App = () => {
       setQuestions(questions.map(q => q.id === qId ? updatedQ : q));
     } catch (err) {
       alert('שגיאה בפרסום התשובה');
+    }
+  };
+
+  const handleLikeReview = async (reviewId) => {
+    const review = reviews.find(r => r.id === reviewId);
+    if (!review || !user?.id) return;
+
+    // Prevent self-liking using authorId (most reliable) OR name match (for existing reviews without ID)
+    const userDisplayName = getAuthorDisplayName(user.name, review.identityType || 'full');
+    if (review.authorId === user.id || review.author === userDisplayName) {
+      alert('לא ניתן לעשות לייק לביקורת של עצמך');
+      return;
+    }
+
+    const likedBy = review.likedBy || [];
+    if (likedBy.includes(user.id)) return; // Already liked
+
+    const updatedLikedBy = [...likedBy, user.id];
+
+    try {
+      const res = await fetch(`http://localhost:3000/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ likedBy: updatedLikedBy })
+      });
+      const updatedReview = await res.json();
+      setReviews(reviews.map(r => r.id === reviewId ? updatedReview : r));
+    } catch (err) {
+      console.error('Error liking review:', err);
+    }
+  };
+
+  const handleLikeAnswer = async (qId, answerIndex) => {
+    const question = questions.find(q => q.id === qId);
+    if (!question || !user?.id) return;
+
+    const answer = question.answers[answerIndex];
+    if (answer.authorId === user.id) {
+      alert('לא ניתן לעשות לייק לתשובה של עצמך');
+      return;
+    }
+
+    const updatedAnswers = question.answers.map((a, i) => {
+      if (i === answerIndex) {
+        const likedBy = a.likedBy || [];
+        if (likedBy.includes(user.id)) return a;
+        return { ...a, likedBy: [...likedBy, user.id] };
+      }
+      return a;
+    });
+
+    try {
+      const res = await fetch(`http://localhost:3000/questions/${qId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: updatedAnswers })
+      });
+      const updatedQ = await res.json();
+      setQuestions(questions.map(q => q.id === qId ? updatedQ : q));
+    } catch (err) {
+      console.error('Error liking answer:', err);
     }
   };
 
@@ -276,56 +381,12 @@ const App = () => {
             </div>
           </div>
 
-          <div className="flex-1 max-w-xl mx-12 relative group">
-            {!user.isGuest && (
-              <>
-                <input
-                  type="text"
-                  placeholder="חפש קורס..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && suggestions.length > 0) {
-                      setSelectedCourse(suggestions[0]);
-                      setSearchQuery('');
-                      setShowSuggestions(false);
-                    }
-                  }}
-                  className="w-full bg-slate-100/50 border-2 border-transparent rounded-2xl py-3 px-12 focus:bg-white focus:border-indigo-500/20 focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none text-right font-medium"
-                />
-                <Search className="absolute right-4 top-3.5 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
-                    {suggestions.map(course => (
-                      <button
-                        key={course.id}
-                        onClick={() => {
-                          setSelectedCourse(course);
-                          setSearchQuery('');
-                          setShowSuggestions(false);
-                        }}
-                        className="w-full text-right px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group"
-                      >
-                        <div className="flex items-center gap-3">
-                           <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-lg group-hover:bg-white transition-colors">{course.code}</span>
-                           <span className="font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{course.title}</span>
-                        </div>
-                        <ChevronLeft className="h-4 w-4 text-slate-300 group-hover:text-indigo-500 group-hover:-translate-x-1 transition-all" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <div className="flex-1"></div>
 
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { setSelectedCourse(null); }}>
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { 
+            setSelectedCourse(null); 
+            if (user?.isGuest) setGuestTab('forum');
+          }}>
             <span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span>
             <div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform">
               <GraduationCap className="h-6 w-6 text-white" />
@@ -351,8 +412,12 @@ const App = () => {
               {filteredTracks.map(t => (
                 <button
                   key={t.id}
-                  onClick={() => handleChangeTrack(t.value)}
-                  className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${user.track === t.value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                  onClick={() => {
+                    // Explicit direct mapping to ensure no jumps
+                    const targetTrack = t.value;
+                    handleChangeTrack(targetTrack);
+                  }}
+                  className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${(user.isGuest ? guestSelectedTrack : user.track) === t.value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
                 >
                   {t.label}
                 </button>
@@ -382,7 +447,12 @@ const App = () => {
         )}
 
         {(user.isGuest && guestTab === 'forum') ? (
-          <CombinationForum user={user} onLogout={handleLogout} />
+          <CombinationForum 
+            user={user} 
+            onLogout={handleLogout} 
+            onTrackSelect={handleChangeTrack} 
+            STUDY_TRACKS={STUDY_TRACKS}
+          />
         ) : (
           !selectedCourse ? (
             <div className="max-w-7xl mx-auto">
@@ -420,9 +490,55 @@ const App = () => {
                   ))}
                 </div>
               </header>
+
+              {/* Course Search Bar */}
+              <div className="mb-12 relative max-w-2xl ml-auto group">
+                <input
+                  type="text"
+                  placeholder="חפש קורס..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && suggestions.length > 0) {
+                      setSelectedCourse(suggestions[0]);
+                      setSearchQuery('');
+                      setShowSuggestions(false);
+                    }
+                  }}
+                  className="w-full bg-white border-2 border-slate-200 rounded-[24px] py-4 px-12 focus:border-indigo-500 transition-all outline-none text-right font-medium shadow-sm"
+                />
+                <Search className="absolute right-5 top-4.5 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+                    {suggestions.map(course => (
+                      <button
+                        key={course.id}
+                        onClick={() => {
+                          setSelectedCourse(course);
+                          setSearchQuery('');
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full text-right px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group/item"
+                      >
+                        <div className="flex items-center gap-3">
+                           <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-lg group-hover/item:bg-white transition-colors">{course.code}</span>
+                           <span className="font-bold text-slate-700 group-hover/item:text-indigo-600 transition-colors">{course.title}</span>
+                        </div>
+                        <ChevronLeft className="h-4 w-4 text-slate-300 group-hover/item:text-indigo-500 group-hover/item:-translate-x-1 transition-all" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               
               <div className="space-y-16">
-                {(user.isGuest && user.track === 'General') ? (
+                {(user.isGuest && !guestSelectedTrack) ? (
                   <div className="relative">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 opacity-20 grayscale blur-[2px] pointer-events-none select-none">
                       {allCourses.slice(0, 6).map(course => (
@@ -434,12 +550,26 @@ const App = () => {
                         <Search className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
                         <h3 className="text-2xl font-black text-slate-900 mb-2">בואו נתחיל</h3>
                         <p className="text-slate-500 mb-8 font-medium">כדי לראות קורסים וביקורות, יש לבחור מסלול לימוד בתפריט למעלה</p>
-                        <button 
-                          onClick={() => setIsChangingTrack(true)}
-                          className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black hover:bg-indigo-700 transition-all"
-                        >
-                          בחירת מסלול
-                        </button>
+                        <div className="flex flex-col gap-3">
+                          <button 
+                            onClick={() => handleChangeTrack('Computer Science')}
+                            className="w-full bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
+                          >
+                            בחר חוג: מדעי המחשב
+                          </button>
+                          <button 
+                            onClick={() => handleChangeTrack('Business Administration')}
+                            className="w-full bg-white border-2 border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-black hover:border-indigo-500 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
+                          >
+                            בחר חוג: מנהל עסקים
+                          </button>
+                          <button 
+                            onClick={() => setIsChangingTrack(true)}
+                            className="text-xs font-black text-slate-400 uppercase tracking-widest mt-4 hover:text-indigo-600 transition-colors"
+                          >
+                            חוג אחר? לחץ כאן
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -522,6 +652,10 @@ const App = () => {
                       <div className="text-xs text-slate-400 font-black uppercase text-center">דירוג</div>
                     </div>
                     <div className="text-center">
+                      <div className="text-4xl font-black text-slate-700 mb-1">{selectedCourse.reviewCount || 0}</div>
+                      <div className="text-xs text-slate-400 font-black uppercase text-center">ביקורות</div>
+                    </div>
+                    <div className="text-center">
                       <div className="text-4xl font-black text-rose-500 mb-1">{selectedCourse.difficulty}</div>
                       <div className="text-xs text-slate-400 font-black uppercase text-center">קושי</div>
                     </div>
@@ -568,17 +702,27 @@ const App = () => {
                       </div>
 
                       {reviews.map(r => (
-                        <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right">
-                          <div className="flex justify-between items-center mb-6">
+                        <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right relative overflow-hidden">
+                          <div className="flex justify-between items-start mb-6">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black">
+                              <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black shrink-0">
                                 {r.author[0]}
                               </div>
-                              <div className="font-black text-slate-900">{r.author}</div>
+                              <div className="text-right">
+                                <div className="font-black text-slate-900">{r.author}</div>
+                                <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">מרצה: {selectedCourse.instructor}</div>
+                              </div>
                             </div>
                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
                           </div>
-                          <p className="text-slate-600 text-lg font-medium leading-relaxed italic mb-6">"{r.comment}"</p>
+                          
+                          <div className="space-y-4 mb-8 pr-4 border-r-2 border-indigo-50">
+                            {r.comment.split('\n\n').map((line, idx) => (
+                              <div key={idx} className="text-slate-600 text-lg font-medium leading-relaxed italic whitespace-pre-wrap">
+                                {line.startsWith('המבחן:') ? line.replace('המבחן:', 'המבחן היה הוגן:') : line}
+                              </div>
+                            ))}
+                          </div>
                           
                           <div className="flex items-center justify-between border-t border-slate-100 pt-6">
                             <div className="flex items-center gap-4">
@@ -586,6 +730,13 @@ const App = () => {
                                 {r.semester}, {r.year}
                               </div>
                             </div>
+                            <button 
+                              onClick={() => handleLikeReview(r.id)}
+                              className="flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors group/like"
+                            >
+                              <span className="text-xs font-black">{(r.likedBy?.length || 0)}</span>
+                              <Heart className={`h-5 w-5 ${(r.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : 'group-hover/like:fill-rose-500'}`} />
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -611,19 +762,30 @@ const App = () => {
                           </div>
                           <div className="p-8 space-y-6">
                             {q.answers.map((a, i) => (
-                              <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6">
+                              <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6 group/ans">
                                 <div className="h-10 w-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0"><User className="h-5 w-5" /></div>
-                                <p className="text-slate-700 font-medium">{a.text}</p>
+                                <div className="flex-1 flex justify-between items-start">
+                                  <p className="text-slate-700 font-medium">{a.text}</p>
+                                  <button 
+                                    onClick={() => handleLikeAnswer(q.id, i)}
+                                    className="flex items-center gap-1.5 text-slate-300 hover:text-rose-500 transition-colors"
+                                  >
+                                    <span className="text-[10px] font-black">{a.likedBy?.length || 0}</span>
+                                    <Heart className={`h-4 w-4 ${(a.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
+                                  </button>
+                                </div>
                               </div>
                             ))}
-                            <div className="pt-4 mr-16 flex gap-3">
-                              <input 
-                                type="text" 
-                                placeholder="תשובה..."
-                                onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
-                                className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
-                              />
-                            </div>
+                            {!user.isGuest && (
+                              <div className="pt-4 mr-16 flex gap-3">
+                                <input 
+                                  type="text" 
+                                  placeholder="תשובה..."
+                                  onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
+                                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -745,7 +907,12 @@ const App = () => {
       {isQuestionModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsQuestionModalOpen(false)}>
           <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <h3 className="text-3xl font-black mb-8 text-slate-900">שאל שאלה</h3>
+            <div className="flex items-center gap-4 mb-8">
+              <button onClick={() => setIsQuestionModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
+                <X className="h-8 w-8" />
+              </button>
+              <h3 className="text-3xl font-black text-slate-900">שאל שאלה</h3>
+            </div>
             <textarea 
               value={newQuestionText}
               onChange={(e) => setNewQuestionText(e.target.value)}
@@ -764,21 +931,26 @@ const App = () => {
       {isMaterialModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsMaterialModalOpen(false)}>
           <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-8 flex-row-reverse">
-              <h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3>
+            <div className="flex items-center gap-4 mb-8">
               <button onClick={() => setIsMaterialModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button>
+              <h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3>
             </div>
             <div className="space-y-6">
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת החומר</label>
-                <input type="text" value={newMaterialTitle} onChange={(e) => setNewMaterialTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: סיכום הרצאה 1-5" />
+                <input type="text" value={newMaterialTitle} onChange={(e) => setNewMaterialTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: מבחן מועד א 2023" />
               </div>
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג החומר</label>
                 <div className="grid grid-cols-2 gap-3">
                   {MATERIAL_CATEGORIES.map(cat => (
-                    <button key={cat.id} onClick={() => setNewMaterialCategory(cat.id)} className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm flex-row-reverse ${newMaterialCategory === cat.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}>
-                      <cat.icon className="h-4 w-4" /> {cat.label}
+                    <button 
+                      key={cat.id} 
+                      onClick={() => setNewMaterialCategory(cat.id)} 
+                      className={`flex items-center justify-start gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm ${newMaterialCategory === cat.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                    >
+                      <cat.icon className="h-4 w-4" />
+                      <span>{cat.label}</span>
                     </button>
                   ))}
                 </div>
