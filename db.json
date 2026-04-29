@@ -202,6 +202,17 @@
       "author": "איתי א.",
       "semester": "א",
       "year": "תשפ\"ד"
+    },
+    {
+      "courseId": "ba4",
+      "difficulty": 4,
+      "comment": "מרצה: מעולה\n\nרמת קושי: קל\n\nהשקעה נדרשת: הרבה \n\nהמבחן: לא",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "28.4.2026",
+      "author": "מ.",
+      "identityType": "initials",
+      "id": "3EDl1VQ"
     }
   ],
   "questions": [
@@ -228,6 +239,30 @@
       ],
       "date": "27.4.2026",
       "id": 2
+    },
+    {
+      "courseId": "cs4",
+      "question": "יש שיעורי בית?",
+      "answers": [
+        {
+          "text": "כן",
+          "date": "28.4.2026"
+        }
+      ],
+      "date": "28.4.2026",
+      "id": 3
+    },
+    {
+      "courseId": "ba4",
+      "question": "nv jxdxb",
+      "answers": [
+        {
+          "text": "mvnb",
+          "date": "28.4.2026"
+        }
+      ],
+      "date": "28.4.2026",
+      "id": 4
     }
   ],
   "materials": [],
