@@ -39,6 +39,14 @@
       "track": "Computer Science",
       "isGuest": false,
       "id": 5
+    },
+    {
+      "name": "שירה ",
+      "email": "shira.mutzafi@mail.huji.ac.il",
+      "password": "12345",
+      "track": "Business Administration",
+      "isGuest": false,
+      "id": 6
     }
   ],
   "courses": [
@@ -54,7 +62,8 @@
       "description": "יסודות התכנות בשפת Python, רקורסיה ואלגוריתמים.",
       "instructor": "פרופ' דוד לוי",
       "ta": "עידו כהן",
-      "track": "Computer Science"
+      "track": "Computer Science",
+      "attendanceMandatory": true
     },
     {
       "id": "cs2",
@@ -71,7 +80,8 @@
       "track": "Computer Science",
       "prerequisites": [
         "מבוא למדעי המחשב"
-      ]
+      ],
+      "attendanceMandatory": false
     },
     {
       "id": "cs3",
@@ -85,7 +95,8 @@
       "description": "מרחבים וקטוריים והעתקות ליניאריות.",
       "instructor": "ד\"ר רחל כהן",
       "ta": "יונתן ארז",
-      "track": "Computer Science"
+      "track": "Computer Science",
+      "attendanceMandatory": false
     },
     {
       "id": "cs4",
@@ -101,7 +112,8 @@
       "track": "Computer Science",
       "prerequisites": [
         "מבוא למדעי המחשב"
-      ]
+      ],
+      "attendanceMandatory": true
     },
     {
       "id": "ba1",
@@ -115,7 +127,8 @@
       "description": "ניתוח התנהגות צרכנים ויצרנים בשוק חופשי.",
       "instructor": "ד\"ר שמעון לוי",
       "ta": "דנה מילר",
-      "track": "Business Administration"
+      "track": "Business Administration",
+      "attendanceMandatory": false
     },
     {
       "id": "ba2",
@@ -132,7 +145,8 @@
       "track": "Business Administration",
       "prerequisites": [
         "מיקרו כלכלה"
-      ]
+      ],
+      "attendanceMandatory": false
     },
     {
       "id": "ba3",
@@ -146,7 +160,8 @@
       "description": "הערכת שווי נכסים, ניהול סיכונים ותזרים מזומנים.",
       "instructor": "ד\"ר עמית גולן",
       "ta": "קרן אור",
-      "track": "Business Administration"
+      "track": "Business Administration",
+      "attendanceMandatory": true
     },
     {
       "id": "ba4",
@@ -159,7 +174,9 @@
       "description": "אסטרטגיות שיווק, מיתוג והתנהגות צרכנים.",
       "instructor": "גב' דנה רון",
       "ta": "ליאור חן",
-      "track": "Business Administration"
+      "track": "Business Administration",
+      "attendanceMandatory": false,
+      "language": "אנגלית"
     },
     {
       "id": "ba5",
@@ -175,7 +192,8 @@
       "track": "Business Administration",
       "prerequisites": [
         "יסודות השיווק"
-      ]
+      ],
+      "attendanceMandatory": true
     },
     {
       "id": "ba6",
@@ -188,7 +206,8 @@
       "description": "פיתוח מודלים עסקיים והקמת סטרטאפים.",
       "instructor": "מר יוסי בר",
       "ta": "עדי סלע",
-      "track": "Business Administration"
+      "track": "Business Administration",
+      "attendanceMandatory": false
     }
   ],
   "reviews": [
@@ -204,15 +223,26 @@
       "year": "תשפ\"ד"
     },
     {
-      "courseId": "ba4",
+      "courseId": "ba1",
       "difficulty": 4,
-      "comment": "מרצה: מעולה\n\nרמת קושי: קל\n\nהשקעה נדרשת: הרבה \n\nהמבחן: לא",
+      "comment": "מרצה: מעולה\n\nרמת קושי: סבירה\n\nהשקעה נדרשת: יש תרגיל שבועי\n\nהמבחן: כן",
       "semester": "סמסטר א'",
       "year": "תשפ\"ד",
       "date": "28.4.2026",
-      "author": "מ.",
-      "identityType": "initials",
-      "id": "3EDl1VQ"
+      "author": "אנונימי/ת",
+      "identityType": "anon",
+      "id": "oI1zuvk"
+    },
+    {
+      "courseId": "ba3",
+      "difficulty": 4,
+      "comment": "מרצה: החומר מועבר בצורה טובה\n\nרמת קושי: סבבה לגמרי\n\nהשקעה נדרשת: לא הרבה, יש תרגיל כל כמה שבועות\n\nהמבחן: כן, ממוצע גבוה",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "28.4.2026",
+      "author": "שירה ",
+      "identityType": "full",
+      "id": "rs7kU4p"
     }
   ],
   "questions": [
@@ -241,28 +271,11 @@
       "id": 2
     },
     {
-      "courseId": "cs4",
-      "question": "יש שיעורי בית?",
-      "answers": [
-        {
-          "text": "כן",
-          "date": "28.4.2026"
-        }
-      ],
+      "courseId": "ba1",
+      "question": "האם נאכפת נוכחות?",
+      "answers": [],
       "date": "28.4.2026",
       "id": 3
-    },
-    {
-      "courseId": "ba4",
-      "question": "nv jxdxb",
-      "answers": [
-        {
-          "text": "mvnb",
-          "date": "28.4.2026"
-        }
-      ],
-      "date": "28.4.2026",
-      "id": 4
     }
   ],
   "materials": [],
@@ -290,6 +303,14 @@
       "date": "27.4.2026",
       "replies": 1,
       "id": 3
+    },
+    {
+      "majorA": "Business Administration",
+      "majorB": "Psychology",
+      "title": "מנהל עסקים + פסיכולוגיה",
+      "date": "28.4.2026",
+      "replies": 1,
+      "id": 4
     }
   ],
   "combinationQuestions": [
@@ -317,12 +338,27 @@
       "answers": []
     },
     {
+      "id": 2,
+      "combinationId": 1,
+      "question": "יש חפיפה בין קורסי המתמטיקה?",
+      "date": "25.4.2026",
+      "answers": []
+    },
+    {
       "combinationId": 3,
       "question": "האם זה שילוב מומלץ?",
       "answers": [],
       "date": "27.4.2026",
       "author": "אורח/ת",
       "id": 3
+    },
+    {
+      "combinationId": 4,
+      "question": "האם השילוב עמוס? כמה ימים בשבוע לומדים בממוצע?",
+      "answers": [],
+      "date": "28.4.2026",
+      "author": "אורח/ת",
+      "id": 4
     }
   ]
 }
