@@ -72,7 +72,8 @@
       "ta": "עידו כהן",
       "track": "Computer Science",
       "attendanceMandatory": true,
-      "assessmentType": "בחינה"
+      "assessmentType": "בחינה",
+      "language": "עברית"
     },
     {
       "id": "cs2",
@@ -87,11 +88,9 @@
       "instructor": "פרופ' אבי שחר",
       "ta": "מיכל לוי",
       "track": "Computer Science",
-      "prerequisites": [
-        "מבוא למדעי המחשב"
-      ],
       "attendanceMandatory": false,
-      "assessmentType": "בחינה"
+      "assessmentType": "בחינה",
+      "language": "עברית"
     },
     {
       "id": "cs3",
@@ -107,7 +106,8 @@
       "ta": "יונתן ארז",
       "track": "Computer Science",
       "attendanceMandatory": false,
-      "assessmentType": "בחינה"
+      "assessmentType": "בחינה",
+      "language": "עברית"
     },
     {
       "id": "cs4",
@@ -121,11 +121,9 @@
       "instructor": "ד\"ר משה כהן",
       "ta": "נועה אברהם",
       "track": "Computer Science",
-      "prerequisites": [
-        "מבוא למדעי המחשב"
-      ],
       "attendanceMandatory": true,
-      "assessmentType": "עבודה"
+      "assessmentType": "עבודה",
+      "language": "עברית"
     },
     {
       "id": "ba1",
@@ -141,7 +139,8 @@
       "ta": "דנה מילר",
       "track": "Business Administration",
       "attendanceMandatory": false,
-      "assessmentType": "בחינה"
+      "assessmentType": "בחינה",
+      "language": "עברית"
     },
     {
       "id": "ba2",
@@ -156,11 +155,9 @@
       "instructor": "פרופ' יפה כהן",
       "ta": "אורן שגיא",
       "track": "Business Administration",
-      "prerequisites": [
-        "מיקרו כלכלה"
-      ],
       "attendanceMandatory": false,
-      "assessmentType": "בחינה"
+      "assessmentType": "בחינה",
+      "language": "עברית"
     },
     {
       "id": "ba3",
@@ -176,7 +173,8 @@
       "ta": "קרן אור",
       "track": "Business Administration",
       "attendanceMandatory": true,
-      "assessmentType": "בחינה"
+      "assessmentType": "בחינה",
+      "language": "עברית"
     },
     {
       "id": "ba4",
@@ -190,9 +188,9 @@
       "instructor": "גב' דנה רון",
       "ta": "ליאור חן",
       "track": "Business Administration",
-      "attendanceMandatory": false,
       "language": "אנגלית",
-      "assessmentType": "עבודה"
+      "assessmentType": "עבודה",
+      "attendanceMandatory": false
     },
     {
       "id": "ba5",
@@ -206,11 +204,9 @@
       "instructor": "ד\"ר לימור ששון",
       "ta": "תומר גל",
       "track": "Business Administration",
-      "prerequisites": [
-        "יסודות השיווק"
-      ],
       "attendanceMandatory": true,
-      "assessmentType": "עבודה"
+      "assessmentType": "עבודה",
+      "language": "עברית"
     },
     {
       "id": "ba6",
@@ -225,7 +221,472 @@
       "ta": "עדי סלע",
       "track": "Business Administration",
       "attendanceMandatory": false,
-      "assessmentType": "עבודה"
+      "assessmentType": "עבודה",
+      "language": "עברית"
+    },
+    {
+      "id": "math1",
+      "title": "אינפי 1",
+      "code": "80131",
+      "credits": 7,
+      "avgRating": 3.5,
+      "difficulty": 4.8,
+      "type": "חובה",
+      "year": "א",
+      "track": "Mathematics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "חשבון דיפרנציאלי ואינטגרלי של פונקציות במשתנה אחד.",
+      "instructor": "פרופ' מיכאל זמל"
+    },
+    {
+      "id": "math2",
+      "title": "אינפי 2",
+      "code": "80132",
+      "credits": 7,
+      "avgRating": 3.2,
+      "difficulty": 5,
+      "type": "חובה",
+      "year": "א",
+      "track": "Mathematics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "המשך חשבון אינפיניטסימלי, סדרות וטורי פונקציות.",
+      "instructor": "ד\"ר גיא כהן"
+    },
+    {
+      "id": "math3",
+      "title": "תורת הקבוצות",
+      "code": "80101",
+      "credits": 4,
+      "avgRating": 4,
+      "difficulty": 4.2,
+      "type": "חובה",
+      "year": "א",
+      "track": "Mathematics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "אקסיומות תורת הקבוצות, עוצמות ומספרים סודרים.",
+      "instructor": "פרופ' איתי קפלן"
+    },
+    {
+      "id": "math4",
+      "title": "פונקציות מרוכבות",
+      "code": "80516",
+      "credits": 4,
+      "avgRating": 4.5,
+      "difficulty": 4.5,
+      "type": "בחירה",
+      "year": "ב",
+      "track": "Mathematics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "אנליזה מרוכבת, משפט השארית ומיפויים קונפורמיים.",
+      "instructor": "ד\"ר אלעד שחר"
+    },
+    {
+      "id": "ds1",
+      "title": "למידת מכונה",
+      "code": "67577",
+      "credits": 4,
+      "avgRating": 4.7,
+      "difficulty": 4.6,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Data Science",
+      "assessmentType": "עבודה",
+      "attendanceMandatory": true,
+      "language": "אנגלית",
+      "description": "אלגוריתמים ללמידה מונחית ובלתי מונחית.",
+      "instructor": "פרופ' שאי שליו-שוורץ"
+    },
+    {
+      "id": "ds2",
+      "title": "כריית נתונים",
+      "code": "67802",
+      "credits": 4,
+      "avgRating": 4.3,
+      "difficulty": 3.8,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Data Science",
+      "assessmentType": "עבודה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "חילוץ תבניות וידע ממאגרי נתונים גדולים.",
+      "instructor": "ד\"ר אמיר גלוברזון"
+    },
+    {
+      "id": "ds3",
+      "title": "ניתוח רשתות חברתיות",
+      "code": "67650",
+      "credits": 3,
+      "avgRating": 4.5,
+      "difficulty": 3,
+      "type": "בחירה",
+      "year": "ג",
+      "track": "Data Science",
+      "assessmentType": "עבודה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "מבנה ודינמיקה של רשתות חברתיות וגרפים.",
+      "instructor": "ד\"ר דפנה שחר"
+    },
+    {
+      "id": "ds4",
+      "title": "ויזואליזציה של נתונים",
+      "code": "67115",
+      "credits": 3,
+      "avgRating": 4.8,
+      "difficulty": 2.5,
+      "type": "בחירה",
+      "year": "ב",
+      "track": "Data Science",
+      "assessmentType": "עבודה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "ייצוג חזותי של נתונים מורכבים.",
+      "instructor": "מר יובל בר-און"
+    },
+    {
+      "id": "stat1",
+      "title": "הסתברות 1",
+      "code": "52101",
+      "credits": 4,
+      "avgRating": 3.8,
+      "difficulty": 4.2,
+      "type": "חובה",
+      "year": "א",
+      "track": "Statistics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "מרחבי הסתברות, משתנים מקריים והתפלגויות.",
+      "instructor": "פרופ' גל אלון"
+    },
+    {
+      "id": "stat2",
+      "title": "הסקה סטטיסטית",
+      "code": "52201",
+      "credits": 4,
+      "avgRating": 3.6,
+      "difficulty": 4.5,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Statistics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "אמידה, מבחני השערות ורווחי סמך.",
+      "instructor": "ד\"ר מיכל לוין"
+    },
+    {
+      "id": "stat3",
+      "title": "רגרסיה ומודלים ליניאריים",
+      "code": "52301",
+      "credits": 4,
+      "avgRating": 4.2,
+      "difficulty": 4,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Statistics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "מודלים ליניאריים וניתוח שונות.",
+      "instructor": "פרופ' אורי שלום"
+    },
+    {
+      "id": "stat4",
+      "title": "סטטיסטיקה בייסיאנית",
+      "code": "52501",
+      "credits": 3,
+      "avgRating": 4.4,
+      "difficulty": 4.3,
+      "type": "בחירה",
+      "year": "ג",
+      "track": "Statistics",
+      "assessmentType": "עבודה",
+      "attendanceMandatory": false,
+      "language": "אנגלית",
+      "description": "גישת בייס לניתוח נתונים וקבלת החלטות.",
+      "instructor": "ד\"ר רני דניאלי"
+    },
+    {
+      "id": "stat5",
+      "title": "חדו\"א א'",
+      "code": "80133",
+      "credits": 6,
+      "avgRating": 3.4,
+      "difficulty": 4.7,
+      "type": "חובה",
+      "year": "א",
+      "track": "Statistics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "יסודות החשבון הדיפרנציאלי והאינטגרלי.",
+      "instructor": "פרופ' שמעון גמר"
+    },
+    {
+      "id": "stat6",
+      "title": "חדו\"א ב'",
+      "code": "80134",
+      "credits": 6,
+      "avgRating": 3.2,
+      "difficulty": 4.9,
+      "type": "חובה",
+      "year": "א",
+      "track": "Statistics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "המשך חשבון אינפיניטסימלי במשתנה אחד.",
+      "instructor": "ד\"ר אבי כהן"
+    },
+    {
+      "id": "stat7",
+      "title": "יסודות ההסתברות",
+      "code": "52111",
+      "credits": 4,
+      "avgRating": 4.1,
+      "difficulty": 4,
+      "type": "חובה",
+      "year": "א",
+      "track": "Statistics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "מבוא להסתברות ומשתנים מקריים.",
+      "instructor": "פרופ' משה לוי"
+    },
+    {
+      "id": "stat8",
+      "title": "מבנה נתונים ואלגוריתמים",
+      "code": "52210",
+      "credits": 5,
+      "avgRating": 4.3,
+      "difficulty": 4.2,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Statistics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "מבני נתונים בסיסיים וניתוח אלגוריתמים לסטטיסטיקאים.",
+      "instructor": "ד\"ר יעל שחר"
+    },
+    {
+      "id": "bio1",
+      "title": "ביולוגיה של התא",
+      "code": "72101",
+      "credits": 5,
+      "avgRating": 4.2,
+      "difficulty": 4,
+      "type": "חובה",
+      "year": "א",
+      "track": "Biology",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "מבנה ותפקוד האברונים בתא האוקריוטי.",
+      "instructor": "פרופ' אורה כהן"
+    },
+    {
+      "id": "bio2",
+      "title": "גנטיקה כללית",
+      "code": "72301",
+      "credits": 4,
+      "avgRating": 4,
+      "difficulty": 4.2,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Biology",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "חוקי מנדל, מבנה ה-DNA ותורשה.",
+      "instructor": "ד\"ר ירון פרידמן"
+    },
+    {
+      "id": "bio3",
+      "title": "ביוכימיה",
+      "code": "72201",
+      "credits": 5,
+      "avgRating": 3.8,
+      "difficulty": 4.5,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Biology",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "מבנה חלבונים, אנזימים ומטבוליזם.",
+      "instructor": "פרופ' שרה לוי"
+    },
+    {
+      "id": "bio4",
+      "title": "אקולוגיה",
+      "code": "72501",
+      "credits": 3,
+      "avgRating": 4.6,
+      "difficulty": 2.8,
+      "type": "בחירה",
+      "year": "ג",
+      "track": "Biology",
+      "assessmentType": "עבודה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "יחסי גומלין בין אורגניזמים לסביבתם.",
+      "instructor": "ד\"ר דורון שגב"
+    },
+    {
+      "id": "acc1",
+      "title": "יסודות החשבונאות",
+      "code": "55101",
+      "credits": 4,
+      "avgRating": 3.9,
+      "difficulty": 4,
+      "type": "חובה",
+      "year": "א",
+      "track": "Accounting",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "כללי הרישום הכפול והכנת דוחות כספיים.",
+      "instructor": "רו\"ח יצחק כהן"
+    },
+    {
+      "id": "acc2",
+      "title": "חשבונאות פיננסית",
+      "code": "55201",
+      "credits": 5,
+      "avgRating": 3.7,
+      "difficulty": 4.3,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Accounting",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "דיווח כספי מתקדם לפי תקני IFRS.",
+      "instructor": "גב' רונית שחר"
+    },
+    {
+      "id": "acc3",
+      "title": "דיני תאגידים",
+      "code": "55301",
+      "credits": 3,
+      "avgRating": 4.2,
+      "difficulty": 3.5,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Accounting",
+      "assessmentType": "עבודה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "המסגרת המשפטית לפעילות חברות ושותפויות.",
+      "instructor": "עו\"ד מיכל ארז"
+    },
+    {
+      "id": "acc4",
+      "title": "ביקורת חשבונות",
+      "code": "55501",
+      "credits": 4,
+      "avgRating": 4,
+      "difficulty": 3.8,
+      "type": "בחירה",
+      "year": "ג",
+      "track": "Accounting",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "נהלי ביקורת וחוות דעת רואה חשבון.",
+      "instructor": "רו\"ח בני נחום"
+    },
+    {
+      "id": "comm1",
+      "title": "מבוא לתקשורת המונים",
+      "code": "50101",
+      "credits": 4,
+      "avgRating": 4.5,
+      "difficulty": 3,
+      "type": "חובה",
+      "year": "א",
+      "track": "Communication",
+      "assessmentType": "עבודה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "התפתחות אמצעי התקשורת והשפעתם על החברה.",
+      "instructor": "ד\"ר עמית רן"
+    },
+    {
+      "id": "comm2",
+      "title": "תיאוריות תקשורת",
+      "code": "50201",
+      "credits": 4,
+      "avgRating": 4.1,
+      "difficulty": 3.5,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Communication",
+      "assessmentType": "עבודה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "מודלים ותיאוריות מרכזיות בחקר התקשורת.",
+      "instructor": "פרופ' דנה שגב"
+    },
+    {
+      "id": "comm3",
+      "title": "ניו מדיה ורשתות חברתיות",
+      "code": "50301",
+      "credits": 3,
+      "avgRating": 4.8,
+      "difficulty": 2.5,
+      "type": "חובה",
+      "year": "ב",
+      "track": "Communication",
+      "assessmentType": "עבודה",
+      "attendanceMandatory": true,
+      "language": "עברית",
+      "description": "היבטים תרבותיים וחברתיים של התקשורת הדיגיטלית.",
+      "instructor": "גב' לירון חן"
+    },
+    {
+      "id": "comm4",
+      "title": "תקשורת פוליטית",
+      "code": "50501",
+      "credits": 3,
+      "avgRating": 4.3,
+      "difficulty": 3.2,
+      "type": "בחירה",
+      "year": "ג",
+      "track": "Communication",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "הקשר בין פוליטיקה, תקשורת ודעת קהל.",
+      "instructor": "ד\"ר גלעד דן"
+    },
+    {
+      "id": "ec1",
+      "title": "מבוא לסטטיסטיקה",
+      "code": "52101",
+      "credits": 4,
+      "avgRating": 4.1,
+      "difficulty": 3.5,
+      "type": "חובה",
+      "year": "א",
+      "track": "Economics",
+      "assessmentType": "בחינה",
+      "attendanceMandatory": false,
+      "language": "עברית",
+      "description": "הסתברות והסקה סטטיסטית.",
+      "instructor": "ד\"ר משה ישראלי"
     }
   ],
   "reviews": [
@@ -239,198 +700,68 @@
       "author": "איתי א.",
       "semester": "א",
       "year": "תשפ\"ד",
-      "likedBy": []
-    },
-    {
-      "courseId": "ba1",
-      "difficulty": 4,
-      "comment": "מרצה: מעולה\n\nרמת קושי: סבירה\n\nהשקעה נדרשת: יש תרגיל שבועי\n\nהמבחן: כן",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ד",
-      "date": "28.4.2026",
-      "author": "אנונימי/ת",
-      "identityType": "anon",
-      "id": "oI1zuvk",
-      "likes": 17,
       "likedBy": [
-        7
+        6
       ]
     },
     {
-      "courseId": "ba3",
+      "courseId": "ba4",
       "difficulty": 4,
-      "comment": "מרצה: החומר מועבר בצורה טובה\n\nרמת קושי: סבבה לגמרי\n\nהשקעה נדרשת: לא הרבה, יש תרגיל כל כמה שבועות\n\nהמבחן: כן, ממוצע גבוה",
+      "comment": "מרצה: המרצה ממש מעניין\n\nרמת קושי: קשה\n\nהשקעה נדרשת: יש תרגיל שבועי\n\nהמבחן היה הוגן: כן\n\nכללי: מומלץ ללכת עם חבר/ה כי יש עבודה בזוגות",
       "semester": "סמסטר א'",
       "year": "תשפ\"ד",
-      "date": "28.4.2026",
+      "date": "1.5.2026",
       "author": "שירה ",
+      "authorId": 6,
       "identityType": "full",
-      "id": "rs7kU4p",
-      "likedBy": []
-    },
-    {
-      "courseId": "ba1",
-      "difficulty": 4,
-      "comment": "מרצה: כן\n\nרמת קושי: קלה\n\nהשקעה נדרשת: הן ",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ד",
-      "date": "29.4.2026",
-      "author": "מאיה ",
-      "identityType": "full",
-      "id": "7V1j09r",
-      "likedBy": [
-        7,
-        6
-      ]
-    },
-    {
-      "courseId": "ba1",
-      "difficulty": 4,
-      "comment": "מרצה: געג\n\nרמת קושי: גכ",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ד",
-      "date": "29.4.2026",
-      "author": "מאיה ",
-      "authorId": 7,
-      "identityType": "full",
-      "likedBy": [
-        6
-      ],
-      "id": "SmCZ9by"
-    },
-    {
-      "courseId": "cs1",
-      "difficulty": 4,
-      "comment": "מרצה: גרוע\n\nרמת קושי: קשה ברמות על\n\nהשקעה נדרשת: המון השקעה, דם יזע ודמעות\n\nהמבחן היה הוגן: לא\n\nכללי: בהצלחה לכולם",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ד",
-      "date": "29.4.2026",
-      "author": "אנונימי/ת",
-      "authorId": 7,
-      "identityType": "anon",
       "likedBy": [],
-      "id": "oUVWEph"
+      "id": "oht1z2K"
     }
   ],
-  "questions": [
-    {
-      "courseId": "cs4",
-      "question": "afmkv",
-      "answers": [
-        {
-          "text": "kfngtgt",
-          "date": "26.4.2026",
-          "likedBy": []
-        }
-      ],
-      "date": "26.4.2026",
-      "id": 1
-    },
-    {
-      "courseId": "cs1",
-      "question": "האם חובת הנוכחות באמת נאכפת?",
-      "answers": [
-        {
-          "text": "לא",
-          "date": "27.4.2026",
-          "likedBy": []
-        }
-      ],
-      "date": "27.4.2026",
-      "id": 2
-    },
-    {
-      "courseId": "ba1",
-      "question": "האם נאכפת נוכחות?",
-      "answers": [
-        {
-          "text": "כן ",
-          "date": "29.4.2026",
-          "likedBy": [
-            7
-          ]
-        }
-      ],
-      "date": "28.4.2026",
-      "id": 3
-    }
-  ],
+  "questions": [],
   "materials": [],
   "combinations": [
     {
-      "id": 1,
       "majorA": "Computer Science",
       "majorB": "Business Administration",
       "title": "מדעי המחשב + מנהל עסקים",
-      "date": "27.4.2026",
-      "replies": 5
-    },
-    {
-      "id": 2,
-      "majorA": "Economics",
-      "majorB": "Business Administration",
-      "title": "כלכלה + מנהל עסקים",
-      "date": "26.4.2026",
-      "replies": 3
-    },
-    {
-      "majorA": "Computer Science",
-      "majorB": "Economics",
-      "title": "מדעי המחשב + כלכלה",
-      "date": "27.4.2026",
+      "date": "1.5.2026",
       "replies": 1,
-      "id": 3
+      "id": 1
     },
     {
-      "majorA": "Business Administration",
-      "majorB": "Psychology",
-      "title": "מנהל עסקים + פסיכולוגיה",
-      "date": "28.4.2026",
+      "majorA": "Psychology",
+      "majorB": "Biology",
+      "title": "פסיכולוגיה + ביולוגיה",
+      "date": "1.5.2026",
       "replies": 1,
-      "id": 4
+      "id": 2
     }
   ],
   "combinationQuestions": [
     {
-      "id": 1,
       "combinationId": 1,
-      "question": "עד כמה עמוס השילוב הזה בשנה א'?",
-      "date": "27.4.2026",
-      "answers": [
-        {
-          "text": "מאוד עמוס, בעיקר בגלל המטלות במדעי המחשב.",
-          "date": "27.4.2026",
-          "likedBy": []
-        },
-        {
-          "text": "אפשרי אם מנהלים את הזמן נכון.",
-          "date": "28.4.2026",
-          "likedBy": []
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "combinationId": 1,
-      "question": "יש חפיפה בין קורסי המתמטיקה?",
-      "date": "25.4.2026",
-      "answers": []
-    },
-    {
-      "id": 3,
-      "combinationId": 3,
-      "question": "האם זה שילוב מומלץ?",
+      "question": "האם המעבר בין הקמפוסים נוראי?",
       "answers": [],
-      "date": "27.4.2026",
-      "author": "אורח/ת"
+      "date": "1.5.2026",
+      "author": "אורח/ת",
+      "id": 1
     },
     {
-      "id": 4,
-      "combinationId": 4,
-      "question": "האם השילוב עמוס? כמה ימים בשבוע לומדים בממוצע?",
+      "combinationId": 2,
+      "question": "איך המסלול המשולב הזה מבחינה חברתית",
       "answers": [],
-      "date": "28.4.2026",
-      "author": "אורח/ת"
+      "date": "1.5.2026",
+      "author": "אורח/ת",
+      "id": 2
+    },
+    {
+      "combinationId": 2,
+      "question": "בשנה א' אפשר להצליח לקחת את כל קורסי החובה? נהוג לפרוס את התואר?",
+      "answers": [],
+      "date": "1.5.2026",
+      "author": "אורח/ת",
+      "id": 3
     }
   ]
 }

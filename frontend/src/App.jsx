@@ -49,6 +49,7 @@ const App = () => {
   const [allCourses, setAllCourses] = useState([]);
   const [guestTab, setGuestTab] = useState('forum'); // 'forum', 'courses'
   const [guestSelectedTrack, setGuestSelectedTrack] = useState('');
+  const [isGuestDrawerOpen, setIsGuestDrawerOpen] = useState(false);
 
   // Consolidated initial data fetching
   useEffect(() => {
@@ -396,8 +397,13 @@ const App = () => {
         
         {/* Searchable Track Selection Popover */}
         {isChangingTrack && (
-          <div className="absolute top-20 left-6 bg-white rounded-3xl shadow-2xl border border-slate-200 p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]">
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 px-2 text-right">חפש מסלול לימוד חדש</p>
+          <div className="absolute top-20 left-6 bg-white rounded-3xl shadow-2xl border border-slate-200 p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]" dir="rtl">
+            <div className="flex items-center gap-3 mb-3 px-2">
+              <button onClick={() => setIsChangingTrack(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">חפש מסלול לימוד חדש</p>
+            </div>
             <div className="relative mb-4">
               <input 
                 autoFocus
@@ -460,15 +466,16 @@ const App = () => {
                   <div className="text-right">
                     {user.isGuest ? (
                       <div className="space-y-4">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-2">בחר חוג:</label>
-                        <select 
-                          value={guestSelectedTrack}
-                          onChange={(e) => setGuestSelectedTrack(e.target.value)}
-                          className="w-full max-w-md bg-white border-2 border-slate-200 rounded-[24px] px-6 py-4 outline-none focus:border-indigo-500 transition-all font-bold text-right cursor-pointer shadow-sm"
+                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-2">מסלול לימוד:</label>
+                        <button 
+                          onClick={() => setIsGuestDrawerOpen(true)}
+                          className="flex items-center gap-4 bg-white border-2 border-slate-200 rounded-[24px] px-8 py-4 hover:border-indigo-500 transition-all shadow-sm group"
                         >
-                          <option value="">בחר חוג מהרשימה...</option>
-                          {STUDY_TRACKS.map(t => <option key={t.id} value={t.value}>{t.label}</option>)}
-                        </select>
+                          <span className="font-bold text-slate-700">
+                            {guestSelectedTrack ? STUDY_TRACKS.find(t => t.value === guestSelectedTrack)?.label : 'לחצו לבחירת חוג...'}
+                          </span>
+                          <Filter className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                        </button>
                       </div>
                     ) : (
                       <>
@@ -976,6 +983,59 @@ const App = () => {
       <footer className="bg-white border-t border-slate-200 py-16 mt-20 text-center">
         <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2026 COURSEMATE ISRAEL 🇮🇱 מיוצר על ידי סטודנטים</p>
       </footer>
+
+      {/* Guest Sidebar Drawer */}
+      <div 
+        className={`fixed inset-0 z-[110] transition-opacity duration-300 ${isGuestDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        dir="rtl"
+      >
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsGuestDrawerOpen(false)}></div>
+        <div className={`absolute top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out transform ${isGuestDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="p-8 h-full flex flex-col">
+            <div className="flex items-center gap-4 mb-8">
+              <button onClick={() => setIsGuestDrawerOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
+                <X className="h-8 w-8" />
+              </button>
+              <h2 className="text-2xl font-black text-slate-900">בחירת מסלול לימוד</h2>
+            </div>
+
+            <div className="relative mb-6">
+              <input 
+                type="text"
+                placeholder="חפש חוג/מסלול..."
+                value={trackSearch}
+                onChange={(e) => setTrackSearch(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl py-3 px-10 outline-none text-right font-bold transition-all"
+              />
+              <Search className="absolute right-3 top-3.5 h-4 w-4 text-slate-400" />
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              {filteredTracks.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    handleChangeTrack(t.value);
+                    setIsGuestDrawerOpen(false);
+                  }}
+                  className={`w-full text-right px-6 py-4 rounded-2xl font-bold transition-all ${guestSelectedTrack === t.value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+              {filteredTracks.length === 0 && (
+                <div className="text-center py-10">
+                  <p className="text-slate-400 font-bold">לא נמצאו מסלולים תואמים</p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+              <p className="text-xs text-slate-400 font-medium">לא מוצאים את החוג שלכם? <br/>נסו לחפש "אחר" או פנו אלינו.</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
