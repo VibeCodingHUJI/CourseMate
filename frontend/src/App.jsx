@@ -919,9 +919,10 @@ const App = () => {
               className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[32px] p-6 h-48 outline-none mb-8 text-right font-medium" 
               placeholder="מה השאלה?"
             ></textarea>
-            <div className="flex gap-4 flex-row-reverse">
-              <button onClick={handlePostQuestion} className="flex-1 bg-indigo-600 text-white py-5 rounded-[28px] font-black hover:bg-indigo-700 transition-all">פרסם שאלה</button>
-              <button onClick={() => setIsQuestionModalOpen(false)} className="px-8 bg-slate-100 rounded-[28px] font-black hover:bg-slate-200 transition-all">ביטול</button>
+            <div className="mt-8">
+              <button onClick={handlePostQuestion} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98]">
+                פרסם שאלה
+              </button>
             </div>
           </div>
         </div>
