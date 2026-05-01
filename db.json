@@ -758,7 +758,17 @@
     {
       "combinationId": 2,
       "question": "בשנה א' אפשר להצליח לקחת את כל קורסי החובה? נהוג לפרוס את התואר?",
-      "answers": [],
+      "answers": [
+        {
+          "text": "הרבה אנשים פורסים לעוד סמסטר",
+          "date": "1.5.2026",
+          "author": "אורח/ת",
+          "authorId": null,
+          "likedBy": [
+            "guest-qcnqyfwh0"
+          ]
+        }
+      ],
       "date": "1.5.2026",
       "author": "אורח/ת",
       "id": 3

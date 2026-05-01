@@ -139,14 +139,13 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   };
 
   const handlePostAnswer = async (qId, text) => {
-    if (user?.isGuest) return;
     if (!text) return;
     const question = combinationQuestions.find(q => q.id === qId);
     const updatedAnswers = [...question.answers, { 
       text, 
       date: new Date().toLocaleDateString('he-IL'), 
-      author: user.name,
-      authorId: user.id,
+      author: user.isGuest ? 'אורח/ת' : user.name,
+      authorId: user.isGuest ? null : user.id,
       likedBy: []
     }];
 
@@ -347,34 +346,32 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
                   </div>
                 </div>
 
-                {!user.isGuest && (
-                  <div className="p-6 border-b border-slate-100" style={{ backgroundColor: '#f0f2f5' }}>
-                    <div className="flex items-center gap-4" dir="rtl">
-                      <input 
-                        type="text" 
-                        placeholder="הוסף תגובה..."
-                        onKeyDown={(e) => { 
-                          if (e.key === 'Enter') { 
-                            handlePostAnswer(q.id, e.target.value); 
-                            e.target.value = ''; 
-                          } 
-                        }}
-                        className="flex-1 bg-white border border-slate-200 rounded-2xl py-3 px-6 outline-none text-right font-medium focus:border-indigo-500 transition-all"
-                        style={{ direction: 'rtl' }}
-                      />
-                      <button 
-                        onClick={(e) => {
-                          const input = e.currentTarget.previousSibling;
-                          handlePostAnswer(q.id, input.value);
-                          input.value = '';
-                        }}
-                        className="bg-indigo-600 text-white px-10 py-3 rounded-2xl font-black hover:bg-indigo-700 transition-all active:scale-95 shadow-md"
-                      >
-                        שלח
-                      </button>
-                    </div>
+                <div className="p-6 border-b border-slate-100" style={{ backgroundColor: '#f0f2f5' }}>
+                  <div className="flex items-center gap-4" dir="rtl">
+                    <input 
+                      type="text" 
+                      placeholder="הוסף תגובה..."
+                      onKeyDown={(e) => { 
+                        if (e.key === 'Enter') { 
+                          handlePostAnswer(q.id, e.target.value); 
+                          e.target.value = ''; 
+                        } 
+                      }}
+                      className="flex-1 bg-white border border-slate-200 rounded-2xl py-3 px-6 outline-none text-right font-medium focus:border-indigo-500 transition-all"
+                      style={{ direction: 'rtl' }}
+                    />
+                    <button 
+                      onClick={(e) => {
+                        const input = e.currentTarget.previousSibling;
+                        handlePostAnswer(q.id, input.value);
+                        input.value = '';
+                      }}
+                      className="bg-indigo-600 text-white px-10 py-3 rounded-2xl font-black hover:bg-indigo-700 transition-all active:scale-95 shadow-md"
+                    >
+                      שלח
+                    </button>
                   </div>
-                )}
+                </div>
                 
                 {expandedQuestions[q.id] && (
                   <div className="p-8 space-y-6 animate-in slide-in-from-top-2 duration-300">
