@@ -71,7 +71,8 @@
       "instructor": "פרופ' דוד לוי",
       "ta": "עידו כהן",
       "track": "Computer Science",
-      "attendanceMandatory": true
+      "attendanceMandatory": true,
+      "assessmentType": "בחינה"
     },
     {
       "id": "cs2",
@@ -89,7 +90,8 @@
       "prerequisites": [
         "מבוא למדעי המחשב"
       ],
-      "attendanceMandatory": false
+      "attendanceMandatory": false,
+      "assessmentType": "בחינה"
     },
     {
       "id": "cs3",
@@ -104,7 +106,8 @@
       "instructor": "ד\"ר רחל כהן",
       "ta": "יונתן ארז",
       "track": "Computer Science",
-      "attendanceMandatory": false
+      "attendanceMandatory": false,
+      "assessmentType": "בחינה"
     },
     {
       "id": "cs4",
@@ -121,7 +124,8 @@
       "prerequisites": [
         "מבוא למדעי המחשב"
       ],
-      "attendanceMandatory": true
+      "attendanceMandatory": true,
+      "assessmentType": "עבודה"
     },
     {
       "id": "ba1",
@@ -136,7 +140,8 @@
       "instructor": "ד\"ר שמעון לוי",
       "ta": "דנה מילר",
       "track": "Business Administration",
-      "attendanceMandatory": false
+      "attendanceMandatory": false,
+      "assessmentType": "בחינה"
     },
     {
       "id": "ba2",
@@ -154,7 +159,8 @@
       "prerequisites": [
         "מיקרו כלכלה"
       ],
-      "attendanceMandatory": false
+      "attendanceMandatory": false,
+      "assessmentType": "בחינה"
     },
     {
       "id": "ba3",
@@ -169,7 +175,8 @@
       "instructor": "ד\"ר עמית גולן",
       "ta": "קרן אור",
       "track": "Business Administration",
-      "attendanceMandatory": true
+      "attendanceMandatory": true,
+      "assessmentType": "בחינה"
     },
     {
       "id": "ba4",
@@ -184,7 +191,8 @@
       "ta": "ליאור חן",
       "track": "Business Administration",
       "attendanceMandatory": false,
-      "language": "אנגלית"
+      "language": "אנגלית",
+      "assessmentType": "עבודה"
     },
     {
       "id": "ba5",
@@ -201,7 +209,8 @@
       "prerequisites": [
         "יסודות השיווק"
       ],
-      "attendanceMandatory": true
+      "attendanceMandatory": true,
+      "assessmentType": "עבודה"
     },
     {
       "id": "ba6",
@@ -215,7 +224,8 @@
       "instructor": "מר יוסי בר",
       "ta": "עדי סלע",
       "track": "Business Administration",
-      "attendanceMandatory": false
+      "attendanceMandatory": false,
+      "assessmentType": "עבודה"
     }
   ],
   "reviews": [
@@ -269,7 +279,8 @@
       "identityType": "full",
       "id": "7V1j09r",
       "likedBy": [
-        7
+        7,
+        6
       ]
     },
     {
@@ -282,7 +293,9 @@
       "author": "מאיה ",
       "authorId": 7,
       "identityType": "full",
-      "likedBy": [],
+      "likedBy": [
+        6
+      ],
       "id": "SmCZ9by"
     },
     {

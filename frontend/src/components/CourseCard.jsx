@@ -1,33 +1,43 @@
 import React from 'react';
-import { Star, User, TrendingUp } from 'lucide-react';
+import { Star, User, TrendingUp, FileText, Pencil } from 'lucide-react';
 
 const CourseCard = ({ course, onClick }) => (
   <div 
     onClick={() => onClick(course)}
     className={`bg-white rounded-[32px] shadow-sm border p-8 hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer flex flex-col h-full ${course.type === 'חובה' ? 'border-rose-100 hover:border-rose-200' : 'border-slate-200 hover:border-indigo-200'}`}
   >
-    <div className="flex justify-between items-start mb-6">
-      <div className="flex flex-wrap gap-2">
-        <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-          {course.type}
-        </div>
-        <div className="bg-amber-50 text-amber-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-          {course.credits} נ"ז
-        </div>
-        <div className="bg-indigo-50 text-indigo-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-          {course.code} | {course.language || 'עברית'}
-        </div>
-        <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
-          {course.attendanceMandatory ? 'חובת נוכחות' : 'אין חובת נוכחות'}
-        </div>
+    <div className="flex flex-row-reverse justify-between items-start mb-6">
+      {/* 1st Child: Rating (will be on the LEFT because of flex-row-reverse) */}
+      <div className="flex items-center gap-1.5 text-amber-500 font-black pt-1">
+        <Star className="h-4 w-4 fill-current" />
+        <span>{course.avgRating}</span>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 text-slate-400 font-bold text-xs bg-slate-50 px-3 py-1 rounded-full">
-          <span>({course.reviewCount || 0})</span>
+
+      {/* 2nd Child: Badge Container (will be on the RIGHT) */}
+      <div className="flex flex-col items-end gap-2">
+        {/* Row 1: [Type] [Credits] [ID|Lang] from Left to Right (appears R to L in UI) */}
+        <div className="flex flex-row-reverse items-center gap-2">
+          <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+            {course.type}
+          </div>
+          <div className="bg-amber-50 text-amber-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+            {course.credits} נ"ז
+          </div>
+          <div className="bg-indigo-50 text-indigo-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+            {course.code} | {course.language || 'עברית'}
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 text-amber-500 font-black">
-          <Star className="h-4 w-4 fill-current" />
-          <span>{course.avgRating}</span>
+        
+        {/* Row 2: [Assessment] [Attendance] from Left to Right (appears R to L in UI) */}
+        <div className="flex flex-row-reverse items-center gap-2">
+          {course.assessmentType && (
+            <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.assessmentType === 'בחינה' ? 'bg-violet-50 text-violet-600' : 'bg-teal-50 text-teal-600'}`}>
+              {course.assessmentType}
+            </div>
+          )}
+          <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
+            {course.attendanceMandatory ? 'חובת נוכחות' : 'אין חובת נוכחות'}
+          </div>
         </div>
       </div>
     </div>

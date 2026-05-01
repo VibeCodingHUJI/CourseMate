@@ -2,10 +2,10 @@ import { useState } from 'react';
 import CourseCard from '../components/courses/CourseCard';
 
 const MOCK_COURSES = [
-  { id: '1', title: 'מבוא למדעי המחשב', code: '67101', avgRating: 4.5, difficulty: 4.8 },
-  { id: '2', title: 'אלגברה ליניארית 1', code: '80134', avgRating: 3.8, difficulty: 4.5 },
-  { id: '3', title: 'מבני נתונים', code: '67109', avgRating: 4.2, difficulty: 4.2 },
-  { id: '4', title: 'אינפי 1', code: '80131', avgRating: 3.2, difficulty: 5.0 },
+  { id: '1', title: 'מבוא למדעי המחשב', code: '67101', avgRating: 4.5, difficulty: 4.8, credits: 7, type: 'חובה', language: 'עברית' },
+  { id: '2', title: 'אלגברה ליניארית 1', code: '80134', avgRating: 3.8, difficulty: 4.5, credits: 6, type: 'חובה', language: 'עברית' },
+  { id: '3', title: 'מבני נתונים', code: '67109', avgRating: 4.2, difficulty: 4.2, credits: 4, type: 'חובה', language: 'עברית' },
+  { id: '4', title: 'אינפי 1', code: '80131', avgRating: 3.2, difficulty: 5.0, credits: 7, type: 'חובה', language: 'עברית' },
 ];
 
 const Home = () => {
