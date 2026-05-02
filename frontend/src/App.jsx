@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, GraduationCap, Star, MessageSquare, 
   BookOpen, TrendingUp, Send, FileText, 
@@ -53,6 +53,10 @@ const App = () => {
   const [guestSelectedTrack, setGuestSelectedTrack] = useState('');
   const [isGuestDrawerOpen, setIsGuestDrawerOpen] = useState(false);
 
+  // Sync selectedCourse with URL
+  const location = useLocation();
+  const navigate = useNavigate();
+
   // Consolidated initial data fetching
   useEffect(() => {
     const fetchData = async () => {
@@ -76,6 +80,24 @@ const App = () => {
     };
     fetchData();
   }, []);
+
+  // Sync selectedCourse based on URL path
+  useEffect(() => {
+    if (allCourses.length > 0) {
+      const match = location.pathname.match(/\/course\/([^/]+)/);
+      if (match) {
+        const courseId = match[1];
+        const course = allCourses.find(c => String(c.id) === String(courseId));
+        if (course) {
+          setSelectedCourse(course);
+        } else {
+          setSelectedCourse(null);
+        }
+      } else if (location.pathname === '/') {
+        setSelectedCourse(null);
+      }
+    }
+  }, [location.pathname, allCourses]);
 
   // Load reviews/questions/materials when course is selected
   useEffect(() => {
@@ -120,6 +142,7 @@ const App = () => {
     setUser(null);
     localStorage.removeItem('user');
     setSelectedCourse(null);
+    navigate('/');
   };
 
   const handleChangeTrack = (newTrack) => {
@@ -354,6 +377,439 @@ const App = () => {
     }
   };
 
+  const Dashboard = () => (
+    <div className="max-w-7xl mx-auto">
+      <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <div className="text-right">
+            {user.isGuest ? (
+              <div className="space-y-4">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-2">מסלול לימוד:</label>
+                <button 
+                  onClick={() => setIsGuestDrawerOpen(true)}
+                  className="flex items-center gap-4 bg-white border-2 border-slate-200 rounded-[24px] px-8 py-4 hover:border-indigo-500 transition-all shadow-sm group"
+                >
+                  <span className="font-bold text-slate-700">
+                    {guestSelectedTrack ? STUDY_TRACKS.find(t => t.value === guestSelectedTrack)?.label : 'לחצו לבחירת חוג...'}
+                  </span>
+                  <Filter className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight tracking-tight">שלום {user.name.split(' ')[0]}!</h1>
+                <p className="text-xl text-slate-500 font-medium">הנה הקורסים במסלול {STUDY_TRACKS.find(t => t.value === user.track)?.label || user.track} שלך</p>
+              </>
+            )}
+          </div>
+
+        <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit self-end">
+          {['All', 'חובה', 'בחירה'].map(f => (
+            <button
+              key={f}
+              onClick={() => setCourseFilter(f)}
+              className={`px-6 py-2.5 rounded-xl font-black text-xs transition-all ${courseFilter === f ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              {f === 'All' ? 'הכל' : f}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* Course Search Bar */}
+      <div className="mb-12 relative max-w-2xl ml-auto group">
+        <input
+          type="text"
+          placeholder="חפש קורס..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setShowSuggestions(true);
+          }}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && suggestions.length > 0) {
+              navigate(`/course/${suggestions[0].id}`);
+              setSearchQuery('');
+              setShowSuggestions(false);
+            }
+          }}
+          className="w-full bg-white border-2 border-slate-200 rounded-[24px] py-4 px-12 focus:border-indigo-500 transition-all outline-none text-right font-medium shadow-sm"
+        />
+        <Search className="absolute right-5 top-4.5 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
+            {suggestions.map(course => (
+              <button
+                key={course.id}
+                onClick={() => {
+                  navigate(`/course/${course.id}`);
+                  setSearchQuery('');
+                  setShowSuggestions(false);
+                }}
+                className="w-full text-right px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group/item"
+              >
+                <div className="flex items-center gap-3">
+                   <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-lg group-hover/item:bg-white transition-colors">{course.code}</span>
+                   <span className="font-bold text-slate-700 group-hover/item:text-indigo-600 transition-colors">{course.title}</span>
+                </div>
+                <ChevronLeft className="h-4 w-4 text-slate-300 group-hover/item:text-indigo-500 group-hover/item:-translate-x-1 transition-all" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      <div className="space-y-16">
+        {(user.isGuest && !guestSelectedTrack) ? (
+          <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 opacity-20 grayscale blur-[2px] pointer-events-none select-none">
+              {allCourses.slice(0, 6).map(course => (
+                <CourseCard key={course.id} course={course} onClick={() => {}} />
+              ))}
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-10">
+              <div className="bg-white rounded-[40px] p-10 shadow-2xl border border-slate-100 text-center max-w-sm">
+                <Search className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
+                <h3 className="text-2xl font-black text-slate-900 mb-2">בואו נתחיל</h3>
+                <p className="text-slate-500 mb-8 font-medium">כדי לראות קורסים וביקורות, יש לבחור מסלול לימוד בתפריט למעלה</p>
+                <div className="flex flex-col gap-3">
+                  <button 
+                    onClick={() => handleChangeTrack('Computer Science')}
+                    className="w-full bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
+                  >
+                    בחר חוג: מדעי המחשב
+                  </button>
+                  <button 
+                    onClick={() => handleChangeTrack('Business Administration')}
+                    className="w-full bg-white border-2 border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-black hover:border-indigo-500 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
+                  >
+                    בחר חוג: מנהל עסקים
+                  </button>
+                  <button 
+                    onClick={() => setIsChangingTrack(true)}
+                    className="text-xs font-black text-slate-400 uppercase tracking-widest mt-4 hover:text-indigo-600 transition-colors"
+                  >
+                    חוג אחר? לחץ כאן
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {['א', 'ב', 'ג'].map(year => {
+              const yearCourses = filteredCourses.filter(c => c.type === 'חובה' && c.year === year);
+              if (yearCourses.length === 0) return null;
+              return (
+                <div key={year} className="space-y-8">
+                  <div className="flex items-center gap-4 flex-row-reverse">
+                    <div className="h-px flex-1 bg-slate-200"></div>
+                    <h2 className="text-3xl font-black text-slate-800">קורסי חובה - שנה {year}</h2>
+                    <div className="h-px flex-1 bg-slate-200"></div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {yearCourses.map(course => (
+                      <CourseCard key={course.id} course={course} onClick={(c) => navigate(`/course/${c.id}`)} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {(() => {
+              const electiveCourses = filteredCourses.filter(c => c.type === 'בחירה');
+              if (electiveCourses.length === 0) return null;
+              return (
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 flex-row-reverse">
+                    <div className="h-px flex-1 bg-slate-200"></div>
+                    <h2 className="text-3xl font-black text-slate-800">קורסי בחירה</h2>
+                    <div className="h-px flex-1 bg-slate-200"></div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {electiveCourses.map(course => (
+                      <CourseCard key={course.id} course={course} onClick={(c) => navigate(`/course/${c.id}`)} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  const CourseDetail = () => {
+    if (!selectedCourse) return <div className="text-center py-20 animate-pulse text-2xl font-black text-slate-400">טוען נתונים...</div>;
+    return (
+      <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <button 
+          onClick={() => navigate('/')}
+          className="group mb-8 flex items-center gap-3 text-slate-500 font-black hover:text-indigo-600 transition-all"
+        >
+          <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200 group-hover:border-indigo-100">
+            <ChevronLeft className="h-4 w-4 rotate-180" />
+          </div>
+          <span>חזרה לכל הקורסים</span>
+        </button>
+
+        <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 p-10 mb-8 relative overflow-hidden text-right">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
+          <div className="relative z-10 flex flex-col md:flex-row justify-between items-start gap-8">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-4 justify-end">
+                <span className={`px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest ${selectedCourse.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                  {selectedCourse.type}
+                </span>
+                <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
+                  {selectedCourse.credits} נ"ז
+                </span>
+                <span className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
+                  {selectedCourse.code}
+                </span>
+              </div>
+              <h1 className="text-5xl font-black text-slate-900 mb-6 tracking-tight">{selectedCourse.title}</h1>
+              <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-2xl">{selectedCourse.description}</p>
+            </div>
+            <div className="bg-slate-50 p-6 rounded-[32px] flex md:flex-col gap-8 min-w-[180px]">
+              <div className="text-center">
+                <div className="text-4xl font-black text-indigo-600 mb-1">{selectedCourse.avgRating}</div>
+                <div className="text-xs text-slate-400 font-black uppercase text-center">דירוג</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-black text-slate-700 mb-1">{selectedCourse.reviewCount || 0}</div>
+                <div className="text-xs text-slate-400 font-black uppercase text-center">ביקורות</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-black text-rose-500 mb-1">{selectedCourse.difficulty}</div>
+                <div className="text-xs text-slate-400 font-black uppercase text-center">קושי</div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="mb-10" style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <div className="p-1.5 bg-slate-100 rounded-[28px] w-fit flex gap-2" style={{ direction: 'rtl' }}>
+            {[
+              { id: 'reviews', label: 'ביקורות', icon: Star },
+              { id: 'qna', label: 'שאלות ותשובות', icon: MessageSquare },
+              { id: 'materials', label: 'חומרי לימוד', icon: BookOpen }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-8 py-4 rounded-[22px] transition-all font-black text-sm flex items-center gap-3 ${
+                  activeTab === tab.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? 'fill-indigo-600' : ''}`} />
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <div className={`${user.isGuest ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6`}>
+            {activeTab === 'reviews' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-black text-slate-900 text-right">ביקורות ({reviews.length})</h2>
+                  {!user.isGuest && (
+                    <button 
+                      onClick={() => setIsReviewModalOpen(true)}
+                      className="bg-indigo-600 text-white px-6 py-2 rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center gap-2"
+                    >
+                      <Send className="h-4 w-4" />
+                      הוספת ביקורת
+                    </button>
+                  )}
+                </div>
+
+                {reviews.map(r => (
+                  <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black shrink-0">
+                          {r.author[0]}
+                        </div>
+                        <div className="text-right">
+                          <div className="font-black text-slate-900">{r.author}</div>
+                          <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">מרצה: {selectedCourse.instructor}</div>
+                        </div>
+                      </div>
+                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
+                    </div>
+                    
+                    <div className="space-y-4 mb-8 pr-4 border-r-2 border-indigo-50">
+                      {r.comment.split('\n\n').map((line, idx) => (
+                        <div key={idx} className="text-slate-600 text-lg font-medium leading-relaxed italic whitespace-pre-wrap">
+                          {line.startsWith('המבחן:') ? line.replace('המבחן:', 'המבחן היה הוגן:') : line}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-6">
+                      <div className="flex items-center gap-4">
+                        <div className="text-xs font-black text-slate-400 bg-slate-50 px-4 py-1.5 rounded-xl uppercase tracking-widest">
+                          {r.semester}, {r.year}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleLikeReview(r.id)}
+                        className="flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors group/like"
+                      >
+                        <span className="text-xs font-black">{(r.likedBy?.length || 0)}</span>
+                        <Heart className={`h-5 w-5 ${(r.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : 'group-hover/like:fill-rose-500'}`} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeTab === 'qna' && (
+              <div className="space-y-6 text-right">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-black text-slate-900">שאלות מהקהילה</h2>
+                  <button onClick={() => setIsQuestionModalOpen(true)} className="bg-white border-2 border-slate-200 px-6 py-2 rounded-2xl font-black text-sm hover:border-indigo-500 transition-all">שאל שאלה</button>
+                </div>
+                {questions.map(q => (
+                  <div key={q.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden text-right">
+                    <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <MessageSquare className="h-6 w-6 text-indigo-400" />
+                        <div className="text-xl font-bold text-right">{q.question}</div>
+                      </div>
+                      <div className="text-xs font-medium text-white/50 whitespace-nowrap">
+                        פורסם ב-{q.date}
+                      </div>
+                    </div>
+                    <div className="p-8 space-y-6">
+                      {q.answers.map((a, i) => (
+                        <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6 group/ans">
+                          <div className="h-10 w-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0"><User className="h-5 w-5" /></div>
+                          <div className="flex-1 flex justify-between items-start">
+                            <p className="text-slate-700 font-medium">{a.text}</p>
+                            <button 
+                              onClick={() => handleLikeAnswer(q.id, i)}
+                              className="flex items-center gap-1.5 text-slate-300 hover:text-rose-500 transition-colors"
+                            >
+                              <span className="text-[10px] font-black">{a.likedBy?.length || 0}</span>
+                              <Heart className={`h-4 w-4 ${(a.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {!user.isGuest && (
+                        <div className="pt-4 mr-16 flex gap-3">
+                          <input 
+                            type="text" 
+                            placeholder="תשובה..."
+                            onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
+                            className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeTab === 'materials' && (
+              <div className="space-y-10 text-right">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
+                  {!user.isGuest && (
+                    <button 
+                      onClick={() => setIsMaterialModalOpen(true)}
+                      className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      העלאת חומר לימוד
+                    </button>
+                  )}
+                </div>
+
+                {user.isGuest ? (
+                  <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-200 p-12 text-center">
+                    <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-400">
+                      <Lock className="h-10 w-10" />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 mb-2">חומרי הלימוד זמינים לסטודנטים רשומים בלבד</h3>
+                    <p className="text-slate-500 mb-8 font-medium">הירשמו עכשיו כדי לקבל גישה לסיכומים, מבחנים ודפי נוסחאות!</p>
+                    <button 
+                      onClick={handleLogout}
+                      className="bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all"
+                    >
+                      הירשמו עכשיו
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-12">
+                    {MATERIAL_CATEGORIES.map(category => {
+                      const categoryMaterials = materials.filter(m => m.category === category.id);
+                      return (
+                        <div key={category.id} className="space-y-4">
+                          <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-3">
+                            <category.icon className="h-6 w-6 text-indigo-600" />
+                            <h3 className="text-xl font-black text-slate-800">{category.label}</h3>
+                            <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black">{categoryMaterials.length}</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 gap-4">
+                            {categoryMaterials.length > 0 ? (
+                              categoryMaterials.map(m => (
+                                <div key={m.id} className="flex items-center justify-between p-6 bg-white rounded-[32px] border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all group">
+                                  <div className="flex items-center gap-6">
+                                    <div className="h-14 w-14 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all"><FileText className="h-6 w-6" /></div>
+                                    <div className="text-right">
+                                      <h4 className="font-black text-slate-900 text-lg">{m.title}</h4>
+                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{m.type} • {m.author} • {m.date}</span>
+                                    </div>
+                                  </div>
+                                  <button className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all"><Download className="h-5 w-5" /></button>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="py-8 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 text-slate-400 font-bold">
+                                אין חומרים בקטגוריה זו עדיין
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {user.isGuest && (
+            <div className="lg:col-span-1">
+              <div className="bg-slate-900 text-white rounded-[40px] p-8 sticky top-28 shadow-2xl shadow-slate-900/20 text-center">
+                <Award className="h-12 w-12 text-indigo-400 mx-auto mb-4" />
+                <h3 className="text-2xl font-black mb-4">רוצה להשפיע?</h3>
+                <p className="text-slate-400 font-medium mb-8 leading-relaxed">כדי להוסיף ביקורות, לשאול שאלות ולשתף סיכומים, עליך להצטרף לקהילה שלנו.</p>
+                <button 
+                  onClick={handleLogout}
+                  className="w-full bg-indigo-600 text-white py-4 rounded-3xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/10"
+                >
+                  הרשמה בחינם
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   if (!user) return <AuthPage onLogin={handleLogin} />;
 
   return (
@@ -441,461 +897,36 @@ const App = () => {
       <main className="flex-grow container mx-auto px-6 py-12">
         <Routes>
           <Route path="/lecturer/:id" element={<LecturerProfile />} />
+          <Route path="/course/:id" element={<CourseDetail />} />
           <Route path="/" element={
             <>
-        {user.isGuest && (
-          <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500">
-            <button 
-              onClick={() => setGuestTab('forum')}
-              className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-            >
-              פורום שילובים
-            </button>
-            <button 
-              onClick={() => setGuestTab('courses')}
-              className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-            >
-              צפייה בקורסים
-            </button>
-          </div>
-        )}
-
-        {(user.isGuest && guestTab === 'forum') ? (
-          <CombinationForum 
-            user={user} 
-            onLogout={handleLogout} 
-            onTrackSelect={handleChangeTrack} 
-            STUDY_TRACKS={STUDY_TRACKS}
-          />
-        ) : (
-          !selectedCourse ? (
-            <div className="max-w-7xl mx-auto">
-              <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
-                  <div className="text-right">
-                    {user.isGuest ? (
-                      <div className="space-y-4">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-2">מסלול לימוד:</label>
-                        <button 
-                          onClick={() => setIsGuestDrawerOpen(true)}
-                          className="flex items-center gap-4 bg-white border-2 border-slate-200 rounded-[24px] px-8 py-4 hover:border-indigo-500 transition-all shadow-sm group"
-                        >
-                          <span className="font-bold text-slate-700">
-                            {guestSelectedTrack ? STUDY_TRACKS.find(t => t.value === guestSelectedTrack)?.label : 'לחצו לבחירת חוג...'}
-                          </span>
-                          <Filter className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight tracking-tight">שלום {user.name.split(' ')[0]}!</h1>
-                        <p className="text-xl text-slate-500 font-medium">הנה הקורסים במסלול {STUDY_TRACKS.find(t => t.value === user.track)?.label || user.track} שלך</p>
-                      </>
-                    )}
-                  </div>
-
-                <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit self-end">
-                  {['All', 'חובה', 'בחירה'].map(f => (
-                    <button
-                      key={f}
-                      onClick={() => setCourseFilter(f)}
-                      className={`px-6 py-2.5 rounded-xl font-black text-xs transition-all ${courseFilter === f ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                    >
-                      {f === 'All' ? 'הכל' : f}
-                    </button>
-                  ))}
+              {user.isGuest && (
+                <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500">
+                  <button 
+                    onClick={() => setGuestTab('forum')}
+                    className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    פורום שילובים
+                  </button>
+                  <button 
+                    onClick={() => setGuestTab('courses')}
+                    className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    צפייה בקורסים
+                  </button>
                 </div>
-              </header>
+              )}
 
-              {/* Course Search Bar */}
-              <div className="mb-12 relative max-w-2xl ml-auto group">
-                <input
-                  type="text"
-                  placeholder="חפש קורס..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && suggestions.length > 0) {
-                      setSelectedCourse(suggestions[0]);
-                      setSearchQuery('');
-                      setShowSuggestions(false);
-                    }
-                  }}
-                  className="w-full bg-white border-2 border-slate-200 rounded-[24px] py-4 px-12 focus:border-indigo-500 transition-all outline-none text-right font-medium shadow-sm"
+              {(user.isGuest && guestTab === 'forum') ? (
+                <CombinationForum 
+                  user={user} 
+                  onLogout={handleLogout} 
+                  onTrackSelect={handleChangeTrack} 
+                  STUDY_TRACKS={STUDY_TRACKS}
                 />
-                <Search className="absolute right-5 top-4.5 h-5 w-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2 duration-200">
-                    {suggestions.map(course => (
-                      <button
-                        key={course.id}
-                        onClick={() => {
-                          setSelectedCourse(course);
-                          setSearchQuery('');
-                          setShowSuggestions(false);
-                        }}
-                        className="w-full text-right px-6 py-4 hover:bg-slate-50 transition-colors flex items-center justify-between group/item"
-                      >
-                        <div className="flex items-center gap-3">
-                           <span className="text-xs font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-lg group-hover/item:bg-white transition-colors">{course.code}</span>
-                           <span className="font-bold text-slate-700 group-hover/item:text-indigo-600 transition-colors">{course.title}</span>
-                        </div>
-                        <ChevronLeft className="h-4 w-4 text-slate-300 group-hover/item:text-indigo-500 group-hover/item:-translate-x-1 transition-all" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-16">
-                {(user.isGuest && !guestSelectedTrack) ? (
-                  <div className="relative">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 opacity-20 grayscale blur-[2px] pointer-events-none select-none">
-                      {allCourses.slice(0, 6).map(course => (
-                        <CourseCard key={course.id} course={course} onClick={() => {}} />
-                      ))}
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-10">
-                      <div className="bg-white rounded-[40px] p-10 shadow-2xl border border-slate-100 text-center max-w-sm">
-                        <Search className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
-                        <h3 className="text-2xl font-black text-slate-900 mb-2">בואו נתחיל</h3>
-                        <p className="text-slate-500 mb-8 font-medium">כדי לראות קורסים וביקורות, יש לבחור מסלול לימוד בתפריט למעלה</p>
-                        <div className="flex flex-col gap-3">
-                          <button 
-                            onClick={() => handleChangeTrack('Computer Science')}
-                            className="w-full bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
-                          >
-                            בחר חוג: מדעי המחשב
-                          </button>
-                          <button 
-                            onClick={() => handleChangeTrack('Business Administration')}
-                            className="w-full bg-white border-2 border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-black hover:border-indigo-500 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
-                          >
-                            בחר חוג: מנהל עסקים
-                          </button>
-                          <button 
-                            onClick={() => setIsChangingTrack(true)}
-                            className="text-xs font-black text-slate-400 uppercase tracking-widest mt-4 hover:text-indigo-600 transition-colors"
-                          >
-                            חוג אחר? לחץ כאן
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {['א', 'ב', 'ג'].map(year => {
-                      const yearCourses = filteredCourses.filter(c => c.type === 'חובה' && c.year === year);
-                      if (yearCourses.length === 0) return null;
-                      return (
-                        <div key={year} className="space-y-8">
-                          <div className="flex items-center gap-4 flex-row-reverse">
-                            <div className="h-px flex-1 bg-slate-200"></div>
-                            <h2 className="text-3xl font-black text-slate-800">קורסי חובה - שנה {year}</h2>
-                            <div className="h-px flex-1 bg-slate-200"></div>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {yearCourses.map(course => (
-                              <CourseCard key={course.id} course={course} onClick={setSelectedCourse} />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {(() => {
-                      const electiveCourses = filteredCourses.filter(c => c.type === 'בחירה');
-                      if (electiveCourses.length === 0) return null;
-                      return (
-                        <div className="space-y-8">
-                          <div className="flex items-center gap-4 flex-row-reverse">
-                            <div className="h-px flex-1 bg-slate-200"></div>
-                            <h2 className="text-3xl font-black text-slate-800">קורסי בחירה</h2>
-                            <div className="h-px flex-1 bg-slate-200"></div>
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {electiveCourses.map(course => (
-                              <CourseCard key={course.id} course={course} onClick={setSelectedCourse} />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <button 
-                onClick={() => setSelectedCourse(null)}
-                className="group mb-8 flex items-center gap-3 text-slate-500 font-black hover:text-indigo-600 transition-all"
-              >
-                <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200 group-hover:border-indigo-100">
-                  <ChevronLeft className="h-4 w-4 rotate-180" />
-                </div>
-                <span>חזרה לכל הקורסים</span>
-              </button>
-
-              <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 p-10 mb-8 relative overflow-hidden text-right">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start gap-8">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-4 justify-end">
-                      <span className={`px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest ${selectedCourse.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                        {selectedCourse.type}
-                      </span>
-                      <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
-                        {selectedCourse.credits} נ"ז
-                      </span>
-                      <span className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
-                        {selectedCourse.code}
-                      </span>
-                    </div>
-                    <h1 className="text-5xl font-black text-slate-900 mb-6 tracking-tight">{selectedCourse.title}</h1>
-                    <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-2xl">{selectedCourse.description}</p>
-                  </div>
-                  <div className="bg-slate-50 p-6 rounded-[32px] flex md:flex-col gap-8 min-w-[180px]">
-                    <div className="text-center">
-                      <div className="text-4xl font-black text-indigo-600 mb-1">{selectedCourse.avgRating}</div>
-                      <div className="text-xs text-slate-400 font-black uppercase text-center">דירוג</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-4xl font-black text-slate-700 mb-1">{selectedCourse.reviewCount || 0}</div>
-                      <div className="text-xs text-slate-400 font-black uppercase text-center">ביקורות</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-4xl font-black text-rose-500 mb-1">{selectedCourse.difficulty}</div>
-                      <div className="text-xs text-slate-400 font-black uppercase text-center">קושי</div>
-                    </div>
-                  </div>
-                </div>
-              </header>
-
-              <div className="mb-10" style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                <div className="p-1.5 bg-slate-100 rounded-[28px] w-fit flex gap-2" style={{ direction: 'rtl' }}>
-                  {[
-                    { id: 'reviews', label: 'ביקורות', icon: Star },
-                    { id: 'qna', label: 'שאלות ותשובות', icon: MessageSquare },
-                    { id: 'materials', label: 'חומרי לימוד', icon: BookOpen }
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`px-8 py-4 rounded-[22px] transition-all font-black text-sm flex items-center gap-3 ${
-                        activeTab === tab.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'
-                      }`}
-                    >
-                      <tab.icon className={`h-4 w-4 ${activeTab === tab.id ? 'fill-indigo-600' : ''}`} />
-                      <span>{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                <div className={`${user.isGuest ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6`}>
-                  {activeTab === 'reviews' && (
-                    <div className="space-y-6">
-                      <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-2xl font-black text-slate-900 text-right">ביקורות ({reviews.length})</h2>
-                        {!user.isGuest && (
-                          <button 
-                            onClick={() => setIsReviewModalOpen(true)}
-                            className="bg-indigo-600 text-white px-6 py-2 rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center gap-2"
-                          >
-                            <Send className="h-4 w-4" />
-                            הוספת ביקורת
-                          </button>
-                        )}
-                      </div>
-
-                      {reviews.map(r => (
-                        <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right relative overflow-hidden">
-                          <div className="flex justify-between items-start mb-6">
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black shrink-0">
-                                {r.author[0]}
-                              </div>
-                              <div className="text-right">
-                                <div className="font-black text-slate-900">{r.author}</div>
-                                <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">מרצה: {selectedCourse.instructor}</div>
-                              </div>
-                            </div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
-                          </div>
-                          
-                          <div className="space-y-4 mb-8 pr-4 border-r-2 border-indigo-50">
-                            {r.comment.split('\n\n').map((line, idx) => (
-                              <div key={idx} className="text-slate-600 text-lg font-medium leading-relaxed italic whitespace-pre-wrap">
-                                {line.startsWith('המבחן:') ? line.replace('המבחן:', 'המבחן היה הוגן:') : line}
-                              </div>
-                            ))}
-                          </div>
-                          
-                          <div className="flex items-center justify-between border-t border-slate-100 pt-6">
-                            <div className="flex items-center gap-4">
-                              <div className="text-xs font-black text-slate-400 bg-slate-50 px-4 py-1.5 rounded-xl uppercase tracking-widest">
-                                {r.semester}, {r.year}
-                              </div>
-                            </div>
-                            <button 
-                              onClick={() => handleLikeReview(r.id)}
-                              className="flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors group/like"
-                            >
-                              <span className="text-xs font-black">{(r.likedBy?.length || 0)}</span>
-                              <Heart className={`h-5 w-5 ${(r.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : 'group-hover/like:fill-rose-500'}`} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {activeTab === 'qna' && (
-                    <div className="space-y-6 text-right">
-                      <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-2xl font-black text-slate-900">שאלות מהקהילה</h2>
-                        <button onClick={() => setIsQuestionModalOpen(true)} className="bg-white border-2 border-slate-200 px-6 py-2 rounded-2xl font-black text-sm hover:border-indigo-500 transition-all">שאל שאלה</button>
-                      </div>
-                      {questions.map(q => (
-                        <div key={q.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden text-right">
-                          <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
-                            <div className="flex items-center gap-4">
-                              <MessageSquare className="h-6 w-6 text-indigo-400" />
-                              <div className="text-xl font-bold text-right">{q.question}</div>
-                            </div>
-                            <div className="text-xs font-medium text-white/50 whitespace-nowrap">
-                              פורסם ב-{q.date}
-                            </div>
-                          </div>
-                          <div className="p-8 space-y-6">
-                            {q.answers.map((a, i) => (
-                              <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6 group/ans">
-                                <div className="h-10 w-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0"><User className="h-5 w-5" /></div>
-                                <div className="flex-1 flex justify-between items-start">
-                                  <p className="text-slate-700 font-medium">{a.text}</p>
-                                  <button 
-                                    onClick={() => handleLikeAnswer(q.id, i)}
-                                    className="flex items-center gap-1.5 text-slate-300 hover:text-rose-500 transition-colors"
-                                  >
-                                    <span className="text-[10px] font-black">{a.likedBy?.length || 0}</span>
-                                    <Heart className={`h-4 w-4 ${(a.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                            {!user.isGuest && (
-                              <div className="pt-4 mr-16 flex gap-3">
-                                <input 
-                                  type="text" 
-                                  placeholder="תשובה..."
-                                  onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
-                                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {activeTab === 'materials' && (
-                    <div className="space-y-10 text-right">
-                      <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
-                        {!user.isGuest && (
-                          <button 
-                            onClick={() => setIsMaterialModalOpen(true)}
-                            className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-2"
-                          >
-                            <Upload className="h-4 w-4" />
-                            העלאת חומר לימוד
-                          </button>
-                        )}
-                      </div>
-
-                      {user.isGuest ? (
-                        <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-200 p-12 text-center">
-                          <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-400">
-                            <Lock className="h-10 w-10" />
-                          </div>
-                          <h3 className="text-2xl font-black text-slate-900 mb-2">חומרי הלימוד זמינים לסטודנטים רשומים בלבד</h3>
-                          <p className="text-slate-500 mb-8 font-medium">הירשמו עכשיו כדי לקבל גישה לסיכומים, מבחנים ודפי נוסחאות!</p>
-                          <button 
-                            onClick={handleLogout}
-                            className="bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all"
-                          >
-                            הירשמו עכשיו
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="space-y-12">
-                          {MATERIAL_CATEGORIES.map(category => {
-                            const categoryMaterials = materials.filter(m => m.category === category.id);
-                            return (
-                              <div key={category.id} className="space-y-4">
-                                <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-3">
-                                  <category.icon className="h-6 w-6 text-indigo-600" />
-                                  <h3 className="text-xl font-black text-slate-800">{category.label}</h3>
-                                  <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black">{categoryMaterials.length}</span>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 gap-4">
-                                  {categoryMaterials.length > 0 ? (
-                                    categoryMaterials.map(m => (
-                                      <div key={m.id} className="flex items-center justify-between p-6 bg-white rounded-[32px] border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all group">
-                                        <div className="flex items-center gap-6">
-                                          <div className="h-14 w-14 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all"><FileText className="h-6 w-6" /></div>
-                                          <div className="text-right">
-                                            <h4 className="font-black text-slate-900 text-lg">{m.title}</h4>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{m.type} • {m.author} • {m.date}</span>
-                                          </div>
-                                        </div>
-                                        <button className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all"><Download className="h-5 w-5" /></button>
-                                      </div>
-                                    ))
-                                  ) : (
-                                    <div className="py-8 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 text-slate-400 font-bold">
-                                      אין חומרים בקטגוריה זו עדיין
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {user.isGuest && (
-                  <div className="lg:col-span-1">
-                    <div className="bg-slate-900 text-white rounded-[40px] p-8 sticky top-28 shadow-2xl shadow-slate-900/20 text-center">
-                      <Award className="h-12 w-12 text-indigo-400 mx-auto mb-4" />
-                      <h3 className="text-2xl font-black mb-4">רוצה להשפיע?</h3>
-                      <p className="text-slate-400 font-medium mb-8 leading-relaxed">כדי להוסיף ביקורות, לשאול שאלות ולשתף סיכומים, עליך להצטרף לקהילה שלנו.</p>
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full bg-indigo-600 text-white py-4 rounded-3xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/10"
-                      >
-                        הרשמה בחינם
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )
-        )}
+              ) : (
+                <Dashboard />
+              )}
             </>
           } />
         </Routes>
