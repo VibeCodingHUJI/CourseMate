@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { 
   Search, GraduationCap, Star, MessageSquare, 
   BookOpen, TrendingUp, Send, FileText, 
@@ -12,6 +13,7 @@ import AuthPage from './components/AuthPage';
 import CourseCard from './components/CourseCard';
 import ReviewForm from './components/ReviewForm';
 import CombinationForum from './components/CombinationForum';
+import LecturerProfile from './pages/LecturerProfile';
 
 // Data
 import projectData from './data.json';
@@ -437,6 +439,10 @@ const App = () => {
       </nav>
       
       <main className="flex-grow container mx-auto px-6 py-12">
+        <Routes>
+          <Route path="/lecturer/:id" element={<LecturerProfile />} />
+          <Route path="/" element={
+            <>
         {user.isGuest && (
           <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500">
             <button 
@@ -890,6 +896,9 @@ const App = () => {
             </div>
           )
         )}
+            </>
+          } />
+        </Routes>
       </main>
 
       {/* Review Modal */}

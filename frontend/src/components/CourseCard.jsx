@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Star, User, TrendingUp, FileText, Pencil } from 'lucide-react';
 
 const CourseCard = ({ course, onClick }) => (
@@ -68,7 +69,11 @@ const CourseCard = ({ course, onClick }) => (
           <User className="h-5 w-5" />
         </div>
         <div className="flex flex-col text-right">
-          <span className="text-xs text-slate-700 font-black">מרצה: {course.instructor}</span>
+          <span className="text-xs text-slate-700 font-black">
+            מרצה: <Link to={`/lecturer/${course.lecturerId}`} onClick={(e) => e.stopPropagation()} className="hover:text-indigo-600 hover:underline transition-all">
+              {course.instructor}
+            </Link>
+          </span>
           {course.ta && (
             <span className="text-[10px] text-slate-500 font-bold mt-0.5">מתרגל/ת: {course.ta}</span>
           )}
