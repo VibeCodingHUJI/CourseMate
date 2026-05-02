@@ -20,11 +20,12 @@
       { "id": "math3", "title": "תורת הקבוצות", "code": "80101", "credits": 4, "avgRating": 4.0, "difficulty": 4.2, "type": "חובה", "year": "א", "track": "Mathematics", "assessmentType": "בחינה", "attendanceMandatory": true, "language": "עברית", "description": "אקסיומות תורת הקבוצות, עוצמות ומספרים סודרים.", "instructor": "פרופ' איתי קפלן" },
       { "id": "math4", "title": "פונקציות מרוכבות", "code": "80516", "credits": 4, "avgRating": 4.5, "difficulty": 4.5, "type": "בחירה", "year": "ב", "track": "Mathematics", "assessmentType": "בחינה", "attendanceMandatory": false, "language": "עברית", "description": "אנליזה מרוכבת, משפט השארית ומיפויים קונפורמיים.", "instructor": "ד\"ר אלעד שחר" }
     ],
-    "Data Science": [
-      { "id": "ds1", "title": "למידת מכונה", "code": "67577", "credits": 4, "avgRating": 4.7, "difficulty": 4.6, "type": "חובה", "year": "ב", "track": "Data Science", "assessmentType": "עבודה", "attendanceMandatory": true, "language": "אנגלית", "description": "אלגוריתמים ללמידה מונחית ובלתי מונחית.", "instructor": "פרופ' שאי שליו-שוורץ" },
-      { "id": "ds2", "title": "כריית נתונים", "code": "67802", "credits": 4, "avgRating": 4.3, "difficulty": 3.8, "type": "חובה", "year": "ב", "track": "Data Science", "assessmentType": "עבודה", "attendanceMandatory": false, "language": "עברית", "description": "חילוץ תבניות וידע ממאגרי נתונים גדולים.", "instructor": "ד\"ר אמיר גלוברזון" },
-      { "id": "ds3", "title": "ניתוח רשתות חברתיות", "code": "67650", "credits": 3, "avgRating": 4.5, "difficulty": 3.0, "type": "בחירה", "year": "ג", "track": "Data Science", "assessmentType": "עבודה", "attendanceMandatory": true, "language": "עברית", "description": "מבנה ודינמיקה של רשתות חברתיות וגרפים.", "instructor": "ד\"ר דפנה שחר" },
-      { "id": "ds4", "title": "ויזואליזציה של נתונים", "code": "67115", "credits": 3, "avgRating": 4.8, "difficulty": 2.5, "type": "בחירה", "year": "ב", "track": "Data Science", "assessmentType": "עבודה", "attendanceMandatory": false, "language": "עברית", "description": "ייצוג חזותי של נתונים מורכבים.", "instructor": "מר יובל בר-און" }
+    "מט\"ר": [
+      { "id": "ds1", "title": "למידת מכונה", "code": "67577", "credits": 4, "avgRating": 4.7, "difficulty": 4.6, "type": "חובה", "year": "ב", "track": "מט\"ר", "assessmentType": "עבודה", "attendanceMandatory": true, "language": "אנגלית", "description": "אלגוריתמים ללמידה מונחית ובלתי מונחית.", "instructor": "פרופ' שאי שליו-שוורץ" },
+      { "id": "ds2", "title": "כריית נתונים", "code": "67802", "credits": 4, "avgRating": 4.3, "difficulty": 3.8, "type": "חובה", "year": "ב", "track": "מט\"ר", "assessmentType": "עבודה", "attendanceMandatory": false, "language": "עברית", "description": "חילוץ תבניות וידע ממאגרי נתונים גדולים.", "instructor": "ד\"ר אמיר גלוברזון" },
+      { "id": "ds3", "title": "ניתוח רשתות חברתיות", "code": "67650", "credits": 3, "avgRating": 4.5, "difficulty": 3.0, "type": "בחירה", "year": "ג", "track": "מט\"ר", "assessmentType": "עבודה", "attendanceMandatory": true, "language": "עברית", "description": "מבנה ודינמיקה של רשתות חברתיות וגרפים.", "instructor": "ד\"ר דפנה שחר" },
+      { "id": "ds4", "title": "ויזואליזציה של נתונים", "code": "67115", "credits": 3, "avgRating": 4.8, "difficulty": 2.5, "type": "בחירה", "year": "ב", "track": "מט\"ר", "assessmentType": "עבודה", "attendanceMandatory": false, "language": "עברית", "description": "ייצוג חזותי של נתונים מורכבים.", "instructor": "מר יובל בר-און" },
+      { "id": "67562", "title": "רשתות, המונים ושווקים", "code": "67562", "type": "חובה", "year": "א", "credits": 4, "avgRating": 5.0, "difficulty": 3.5, "track": "מט\"ר", "instructor": "פרופ' קתרינה ליגט", "description": "חקר המבנה והדינמיקה של עולמנו המקושר, שילוב של טכנולוגיה, כלכלה ומדיניות." }
     ],
     "Statistics": [
       { "id": "stat1", "title": "הסתברות 1", "code": "52101", "credits": 4, "avgRating": 3.8, "difficulty": 4.2, "type": "חובה", "year": "א", "track": "Statistics", "assessmentType": "בחינה", "attendanceMandatory": false, "language": "עברית", "description": "מרחבי הסתברות, משתנים מקריים והתפלגויות.", "instructor": "פרופ' גל אלון" },
@@ -64,7 +65,7 @@
     { "id": "eco", "label": "כלכלה", "value": "Economics" },
     { "id": "psy", "label": "פסיכולוגיה", "value": "Psychology" },
     { "id": "math", "label": "מתמטיקה", "value": "Mathematics" },
-    { "id": "ds", "label": "מדע הנתונים", "value": "Data Science" },
+    { "id": "ds", "label": "מט\"ר", "value": "מט\"ר" },
     { "id": "stat", "label": "סטטיסטיקה", "value": "Statistics" },
     { "id": "bio", "label": "ביולוגיה", "value": "Biology" },
     { "id": "acc", "label": "חשבונאות", "value": "Accounting" },

@@ -64,7 +64,7 @@ const CourseCard = ({ course, onClick }) => (
     )}
     
     <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between flex-row-reverse">
-      <div className="flex items-center gap-3 flex-row-reverse">
+      <div className="flex items-center gap-3 flex-row-reverse" dir="rtl">
         <div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 shrink-0">
           <User className="h-5 w-5" />
         </div>
