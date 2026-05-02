@@ -18,36 +18,70 @@ const LecturerProfile = () => {
   const [newComment, setNewComment] = useState('');
   const [identityType, setIdentityType] = useState('anon'); // 'full', 'initials', 'anon'
 
-  const handleAddReview = () => {
+  const handleAddReview = async () => {
     if (!newComment.trim()) return alert('נא להוסיף תוכן לביקורת');
     
     // Get user info from localStorage
     const savedUser = localStorage.getItem('user');
-    const user = savedUser ? JSON.parse(savedUser) : { name: 'אורח/ת' };
+    const user = savedUser ? JSON.parse(savedUser) : { name: 'אורח/ת', id: 'guest' };
 
     let displayName = 'סטודנט/ית אנונימי/ת';
     if (identityType === 'full') {
       displayName = user.name;
     } else if (identityType === 'initials') {
-      displayName = user.name.split(' ').map(n => n[0] + '.').join('');
+      const parts = user.name.trim().split(/\s+/);
+      if (parts.length > 1) {
+        displayName = `${parts[0][0]}.${parts[parts.length - 1][0]}`;
+      } else if (parts.length === 1 && parts[0]) {
+        displayName = `${parts[0][0]}.`;
+      }
     }
 
     const newReview = {
-      id: Date.now().toString(),
+      lecturerId: id, // Linking review directly to lecturer ID
+      courseId: courses[0]?.id || 'general',
       author: displayName,
+      authorId: user.id,
       rating: newRating,
       comment: newComment,
       date: new Date().toLocaleDateString('he-IL'),
-      courseId: courses[0]?.id, // Default to first course if available
-      isUserReview: true, // Flag to prevent liking own review
-      likes: 0
+      likes: 0,
+      likedBy: []
     };
 
-    setReviews([newReview, ...reviews]);
-    setIsModalOpen(false);
-    setNewComment('');
-    setNewRating(5);
-    setIdentityType('anon');
+    try {
+      console.log('Sending review to server:', newReview);
+      const res = await fetch('http://localhost:3000/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newReview)
+      });
+
+      if (!res.ok) throw new Error('Failed to save review');
+
+      const savedReview = await res.json();
+      console.log('Review saved successfully:', savedReview);
+
+      // Refresh reviews list from server
+      const reviewsRes = await fetch(`http://localhost:3000/reviews?lecturerId=${id}`);
+      const updatedReviews = await reviewsRes.json();
+      
+      // If server-side filtering isn't perfect, we can also filter locally
+      // But for now, we'll trust the query param or manually filter
+      const lecturerCourses = courses.map(c => c.id);
+      const filteredReviews = updatedReviews.filter(r => 
+        String(r.lecturerId) === String(id) || lecturerCourses.includes(r.courseId)
+      );
+
+      setReviews(filteredReviews);
+      setIsModalOpen(false);
+      setNewComment('');
+      setNewRating(5);
+      setIdentityType('anon');
+    } catch (err) {
+      console.error('Error saving review:', err);
+      alert('שגיאה בשמירת הביקורת. אנא נסו שוב.');
+    }
   };
 
   const handleLikeReview = (reviewId) => {
