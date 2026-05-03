@@ -185,6 +185,8 @@ const LecturerProfile = ({ onDepartmentClick }) => {
     ? (courses.reduce((acc, c) => acc + (c.avgRating || 0), 0) / courses.length).toFixed(1)
     : '0.0';
 
+  const textReviews = reviews.filter(r => r.comment && r.comment.trim() !== '');
+
   return (
     <div dir="rtl" className="min-h-screen bg-[#f8fafc]">
       <div className="max-w-4xl mx-auto py-12 px-6">
@@ -326,8 +328,8 @@ const LecturerProfile = ({ onDepartmentClick }) => {
           </div>
 
           <div className="space-y-6">
-            {reviews.length > 0 ? (
-              reviews.map(review => (
+            {textReviews.length > 0 ? (
+              textReviews.map(review => (
                 <div key={review.id} className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm text-right relative overflow-hidden">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-3">

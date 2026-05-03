@@ -206,6 +206,7 @@ const CourseDetail = ({
   reviews, 
   user, 
   setIsReviewModalOpen, 
+  setIsRatingModalOpen,
   handleLogout, 
   handleLikeReview, 
   questions, 
@@ -221,6 +222,13 @@ const CourseDetail = ({
   const enforcementRate = attendanceReviews.length > 0
     ? Math.round((attendanceReviews.filter(r => r.attendanceEnforced).length / attendanceReviews.length) * 100)
     : null;
+
+  const difficultyReviews = reviews.filter(r => r.difficulty !== undefined);
+  const avgDifficulty = difficultyReviews.length > 0
+    ? (difficultyReviews.reduce((sum, r) => sum + r.difficulty, 0) / difficultyReviews.length).toFixed(1)
+    : selectedCourse.difficulty;
+
+  const textReviews = reviews.filter(r => r.comment && r.comment.trim() !== '');
 
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -275,17 +283,26 @@ const CourseDetail = ({
                 {enforcementRate !== null && (
                   <span className="bg-indigo-900 text-white px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
                     <CheckCircle className="h-3 w-3" />
-                    אכיפה בפועל: {enforcementRate}%
+                    אכיפה בפועל: {enforcementRate}% ({attendanceReviews.length} הצבעות)
                   </span>
                 )}
               </div>
             </div>
           </div>
-          <div className="bg-slate-50 p-6 rounded-[32px] flex md:flex-col gap-8 min-w-[180px]">
+          <div className="bg-slate-50 p-6 rounded-[32px] flex md:flex-col items-center gap-4 min-w-[180px]">
             <div className="text-center">
-              <div className="text-4xl font-black text-rose-500 mb-1">{selectedCourse.difficulty}</div>
-              <div className="text-xs text-slate-400 font-black uppercase text-center">קושי</div>
+              <div className="text-4xl font-black text-rose-500 mb-1">{avgDifficulty}</div>
+              <div className="text-[10px] text-slate-400 font-black uppercase text-center">קושי ממוצע</div>
+              <div className="text-[10px] text-slate-400 font-bold text-center mt-1">({difficultyReviews.length || 0} הצבעות)</div>
             </div>
+            {!user.isGuest && (
+              <button 
+                onClick={() => setIsRatingModalOpen(true)}
+                className="bg-white border-2 border-rose-100 text-rose-500 px-4 py-2 rounded-xl font-black text-[10px] uppercase hover:bg-rose-50 transition-all shadow-sm"
+              >
+                דרג קושי
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -316,7 +333,7 @@ const CourseDetail = ({
           {activeTab === 'reviews' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-black text-slate-900 text-right">ביקורות ({reviews.length})</h2>
+                <h2 className="text-2xl font-black text-slate-900 text-right">ביקורות ({textReviews.length})</h2>
                 {!user.isGuest && (
                   <button 
                     onClick={() => setIsReviewModalOpen(true)}
@@ -328,7 +345,7 @@ const CourseDetail = ({
                 )}
               </div>
 
-              {reviews.map(r => (
+              {textReviews.map(r => (
                 <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right relative overflow-hidden">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-3">
@@ -598,6 +615,7 @@ const App = () => {
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ד');
   const [newReviewIdentity, setNewReviewIdentity] = useState('full'); // 'full', 'initials', 'anon'
   const [newReviewAttendance, setNewReviewAttendance] = useState(false);
+  const [newReviewDifficulty, setNewReviewDifficulty] = useState(5);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -654,9 +672,10 @@ const App = () => {
   });
 
   const getAuthorDisplayName = (fullName, type) => {
+    if (!fullName) return 'אורח/ת';
     if (type === 'anon') return 'אנונימי/ת';
     if (type === 'initials') {
-      return fullName.split(' ').map(n => n[0] + '.').join(' ');
+      return fullName.trim().split(/\s+/).map(n => n[0] + '.').join(' ');
     }
     return fullName;
   };
@@ -667,7 +686,7 @@ const App = () => {
     
     const newReview = {
       courseId: selectedCourse.id,
-      difficulty: 4,
+      difficulty: newReviewDifficulty,
       comment: newReviewComment,
       semester: newReviewSemester,
       year: newReviewYear,
@@ -698,6 +717,7 @@ const App = () => {
 
       setNewReviewComment('');
       setNewReviewAttendance(false);
+      setNewReviewDifficulty(5);
       setIsReviewModalOpen(false);
       alert('הביקורת פורסמה בהצלחה!');
     } catch (err) {
@@ -821,33 +841,53 @@ const App = () => {
     // For now, let's keep it separate if necessary
   };
 
-  const handlePostMaterial = async () => {
-    if (user?.isGuest) return;
-    if (!newMaterialTitle || !newMaterialFile) return alert('נא למלא כותרת ולבחור קובץ');
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
 
-    const newMat = {
+  const handlePostRating = async () => {
+    if (user?.isGuest || !selectedCourse) return;
+    
+    const newRating = {
       courseId: selectedCourse.id,
-      title: newMaterialTitle,
-      category: newMaterialCategory,
-      type: newMaterialFile.name.split('.').pop().toUpperCase(),
-      author: user.name,
-      date: new Date().toLocaleDateString('he-IL')
+      rating: 5, // Default rating since UI only shows difficulty
+      difficulty: newReviewDifficulty,
+      attendanceEnforced: newReviewAttendance,
+      comment: "", // Empty comment for quick rating
+      semester: newReviewSemester,
+      year: newReviewYear,
+      date: new Date().toLocaleDateString('he-IL'),
+      author: getAuthorDisplayName(user.name, newReviewIdentity),
+      authorId: user.id,
+      identityType: newReviewIdentity,
+      likedBy: []
     };
-
+    
     try {
-      const res = await fetch('http://localhost:3000/materials', {
+      const res = await fetch('http://localhost:3000/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newMat)
+        body: JSON.stringify(newRating)
       });
-      const savedMat = await res.json();
-      setMaterials([savedMat, ...materials]);
-      setNewMaterialTitle('');
-      setNewMaterialFile(null);
-      setIsMaterialModalOpen(false);
-      alert('החומר הועלה בהצלחה!');
+      
+      if (!res.ok) throw new Error('Failed to post rating');
+      
+      const savedRating = await res.json();
+      setReviews([savedRating, ...reviews]);
+      setAllReviews([savedRating, ...allReviews]);
+      
+      // Update allCourses count
+      setAllCourses(allCourses.map(c => 
+        c.id === selectedCourse.id 
+          ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } 
+          : c
+      ));
+
+      setNewReviewAttendance(false);
+      setNewReviewDifficulty(5);
+      setIsRatingModalOpen(false);
+      alert('הדירוג נשלח בהצלחה!');
     } catch (err) {
-      alert('שגיאה בהעלאת החומר');
+      console.error('Rating submission error:', err);
+      alert('שגיאה בשליחת הדירוג');
     }
   };
 
@@ -954,6 +994,7 @@ const App = () => {
               reviews={reviews}
               user={user}
               setIsReviewModalOpen={setIsReviewModalOpen}
+              setIsRatingModalOpen={setIsRatingModalOpen}
               handleLogout={handleLogout}
               handleLikeReview={handleLikeReview}
               questions={questions}
@@ -1012,6 +1053,65 @@ const App = () => {
         </Routes>
       </main>
 
+      {/* Rating Modal (Difficulty Only) */}
+      {isRatingModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsRatingModalOpen(false)}>
+          <div className="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-4 mb-8">
+              <button onClick={() => setIsRatingModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
+                <X className="h-8 w-8" />
+              </button>
+              <h3 className="text-3xl font-black text-slate-900">דירוג קורס מהיר</h3>
+            </div>
+
+            <div className="space-y-8">
+              <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
+                <label className="text-sm font-black text-slate-700 mb-4 block">רמת קושי הקורס (1-10)</label>
+                <div className="flex items-center gap-6">
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="10" 
+                    step="1"
+                    value={newReviewDifficulty}
+                    onChange={(e) => setNewReviewDifficulty(parseInt(e.target.value))}
+                    className="flex-1 h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                  />
+                  <div className="h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0">
+                    {newReviewDifficulty}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
+                <label className="flex items-center gap-4 cursor-pointer group">
+                  <div className="relative">
+                    <input 
+                      type="checkbox" 
+                      checked={newReviewAttendance}
+                      onChange={(e) => setNewReviewAttendance(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <div className="h-7 w-12 bg-slate-200 rounded-full peer-checked:bg-indigo-600 transition-all"></div>
+                    <div className="absolute top-1 left-1 h-5 w-5 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-black text-slate-700 block">בדיקת נוכחות חובה?</span>
+                  </div>
+                </label>
+              </div>
+
+              <button 
+                onClick={handlePostRating}
+                className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all"
+              >
+                שלח דירוג
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Review Modal */}
       {isReviewModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsReviewModalOpen(false)}>
@@ -1022,11 +1122,13 @@ const App = () => {
               year={newReviewYear}
               identityType={newReviewIdentity}
               attendanceEnforced={newReviewAttendance}
+              difficulty={newReviewDifficulty}
               onCommentChange={setNewReviewComment}
               onSemesterChange={setNewReviewSemester}
               onYearChange={setNewReviewYear}
               onIdentityChange={setNewReviewIdentity}
               onAttendanceChange={setNewReviewAttendance}
+              onDifficultyChange={setNewReviewDifficulty}
               onSubmit={handlePostReview}
               onClose={() => setIsReviewModalOpen(false)}
             />

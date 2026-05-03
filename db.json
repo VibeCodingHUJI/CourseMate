@@ -63,6 +63,14 @@
       "track": "Business Administration",
       "isGuest": false,
       "id": 8
+    },
+    {
+      "name": "מאיה",
+      "email": "trytry@mail.huji.ac.il",
+      "password": "123",
+      "track": "Computer Science",
+      "isGuest": false,
+      "id": 9
     }
   ],
   "courses": [
@@ -933,6 +941,63 @@
       "identityType": "full",
       "likedBy": [],
       "id": "W4K-lIz"
+    },
+    {
+      "courseId": "ba1",
+      "difficulty": 9,
+      "attendanceEnforced": true,
+      "comment": "",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "3.5.2026",
+      "author": "מאיה",
+      "authorId": 8,
+      "identityType": "full",
+      "likedBy": [],
+      "id": "QumD9uo"
+    },
+    {
+      "courseId": "ba1",
+      "difficulty": 9,
+      "attendanceEnforced": false,
+      "comment": "",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "3.5.2026",
+      "author": "מאיה",
+      "authorId": 8,
+      "identityType": "full",
+      "likedBy": [],
+      "id": "lr1xGjs"
+    },
+    {
+      "courseId": "cs3",
+      "difficulty": 8,
+      "attendanceEnforced": false,
+      "comment": "",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "3.5.2026",
+      "author": "מאיה",
+      "authorId": 9,
+      "identityType": "full",
+      "likedBy": [],
+      "id": "Q8Ggb1q"
+    },
+    {
+      "courseId": "cs1",
+      "rating": 5,
+      "difficulty": 9,
+      "attendanceEnforced": false,
+      "comment": "",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "3.5.2026",
+      "author": "מאיה",
+      "authorId": 9,
+      "identityType": "full",
+      "likedBy": [],
+      "id": "tvsyAmk"
     }
   ],
   "questions": [],

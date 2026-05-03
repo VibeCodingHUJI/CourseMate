@@ -2,8 +2,8 @@ import React from 'react';
 import { Send, X, User, UserCircle, Ghost } from 'lucide-react';
 
 const ReviewForm = ({ 
-  comment, semester, year, identityType, attendanceEnforced,
-  onCommentChange, onSemesterChange, onYearChange, onIdentityChange, onAttendanceChange,
+  comment, semester, year, identityType, attendanceEnforced, difficulty,
+  onCommentChange, onSemesterChange, onYearChange, onIdentityChange, onAttendanceChange, onDifficultyChange,
   onSubmit, onClose 
 }) => {
   // Parsing the existing comment if it was already partially filled
@@ -60,9 +60,9 @@ const ReviewForm = ({
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 h-[75vh] max-h-[75vh] relative overflow-hidden" style={{ direction: 'rtl' }}>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative" style={{ direction: 'rtl' }}>
       {/* Right Column: Static Info */}
-      <div className="flex flex-col h-full lg:border-l lg:border-slate-100 lg:pl-12 text-right overflow-hidden">
+      <div className="flex flex-col text-right">
         <div className="flex items-center gap-4 mb-2">
           <button 
             onClick={onClose} 
@@ -77,7 +77,7 @@ const ReviewForm = ({
         </div>
         <p className="text-slate-500 font-bold mb-8 text-lg mr-12">שתפו את החוויה שלכם</p>
 
-        <div className="space-y-8 flex-grow overflow-y-auto pr-1">
+        <div className="space-y-8 pr-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-black uppercase tracking-widest text-slate-400 mb-2 block">סמסטר</label>
@@ -121,6 +121,28 @@ const ReviewForm = ({
             </div>
           </div>
 
+          <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 mb-4">
+            <label className="text-sm font-black text-slate-700 mb-4 block">רמת קושי הקורס (1-10)</label>
+            <div className="flex items-center gap-6">
+              <input 
+                type="range" 
+                min="1" 
+                max="10" 
+                step="1"
+                value={difficulty}
+                onChange={(e) => onDifficultyChange(parseInt(e.target.value))}
+                className="flex-1 h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
+              />
+              <div className="h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0">
+                {difficulty}
+              </div>
+            </div>
+            <div className="flex justify-between mt-2 px-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">קל מאוד</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">קשה מאוד</span>
+            </div>
+          </div>
+
           <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
             <label className="flex items-center gap-4 cursor-pointer group">
               <div className="relative">
@@ -141,7 +163,7 @@ const ReviewForm = ({
           </div>
         </div>
 
-        <div className="pt-6 mt-6 border-t border-slate-50 hidden lg:block shrink-0">
+        <div className="pt-6 mt-6 border-t border-slate-50 hidden lg:block">
           <button 
             onClick={onSubmit}
             className="w-full bg-indigo-600 text-white py-6 rounded-[32px] font-black text-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-4"
@@ -152,8 +174,8 @@ const ReviewForm = ({
         </div>
       </div>
 
-      {/* Left Column: Scrollable Questions */}
-      <div className="space-y-8 overflow-y-auto pr-4 custom-scrollbar py-2">
+      {/* Left Column: Questions */}
+      <div className="space-y-8 py-2">
         {QUESTIONS.map(q => (
           <div key={q.id}>
             <label className="text-sm font-black text-slate-700 mb-3 block">{q.label}</label>
