@@ -216,6 +216,12 @@ const CourseDetail = ({
   materials 
 }) => {
   if (!selectedCourse) return <div className="text-center py-20 animate-pulse text-2xl font-black text-slate-400">טוען נתונים...</div>;
+  
+  const attendanceReviews = reviews.filter(r => r.attendanceEnforced !== undefined);
+  const enforcementRate = attendanceReviews.length > 0
+    ? Math.round((attendanceReviews.filter(r => r.attendanceEnforced).length / attendanceReviews.length) * 100)
+    : null;
+
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <button 
@@ -266,6 +272,12 @@ const CourseDetail = ({
                 <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${selectedCourse.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
                   {selectedCourse.attendanceMandatory ? 'חובת נוכחות' : 'אין חובת נוכחות'}
                 </span>
+                {enforcementRate !== null && (
+                  <span className="bg-indigo-900 text-white px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                    <CheckCircle className="h-3 w-3" />
+                    אכיפה בפועל: {enforcementRate}%
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -585,6 +597,7 @@ const App = () => {
   const [newReviewSemester, setNewReviewSemester] = useState("סמסטר א'");
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ד');
   const [newReviewIdentity, setNewReviewIdentity] = useState('full'); // 'full', 'initials', 'anon'
+  const [newReviewAttendance, setNewReviewAttendance] = useState(false);
 
   const handleLogin = (userData) => {
     setUser(userData);
@@ -658,6 +671,7 @@ const App = () => {
       comment: newReviewComment,
       semester: newReviewSemester,
       year: newReviewYear,
+      attendanceEnforced: newReviewAttendance,
       date: new Date().toLocaleDateString('he-IL'),
       author: getAuthorDisplayName(user.name, newReviewIdentity),
       authorId: user.id,
@@ -683,6 +697,7 @@ const App = () => {
       ));
 
       setNewReviewComment('');
+      setNewReviewAttendance(false);
       setIsReviewModalOpen(false);
       alert('הביקורת פורסמה בהצלחה!');
     } catch (err) {
@@ -1006,10 +1021,12 @@ const App = () => {
               semester={newReviewSemester}
               year={newReviewYear}
               identityType={newReviewIdentity}
+              attendanceEnforced={newReviewAttendance}
               onCommentChange={setNewReviewComment}
               onSemesterChange={setNewReviewSemester}
               onYearChange={setNewReviewYear}
               onIdentityChange={setNewReviewIdentity}
+              onAttendanceChange={setNewReviewAttendance}
               onSubmit={handlePostReview}
               onClose={() => setIsReviewModalOpen(false)}
             />

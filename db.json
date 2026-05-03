@@ -55,6 +55,14 @@
       "track": "Business Administration",
       "isGuest": false,
       "id": 7
+    },
+    {
+      "name": "מאיה",
+      "email": "maya!@mail.huji.ac.il",
+      "password": "1234",
+      "track": "Business Administration",
+      "isGuest": false,
+      "id": 8
     }
   ],
   "courses": [
@@ -911,6 +919,20 @@
       "likes": 0,
       "likedBy": [],
       "id": "SRs7Klu"
+    },
+    {
+      "courseId": "ba1",
+      "difficulty": 4,
+      "comment": "כללי: אחלה קורס",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "attendanceEnforced": true,
+      "date": "3.5.2026",
+      "author": "מאיה",
+      "authorId": 8,
+      "identityType": "full",
+      "likedBy": [],
+      "id": "W4K-lIz"
     }
   ],
   "questions": [],

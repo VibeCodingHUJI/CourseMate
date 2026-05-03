@@ -2,8 +2,8 @@ import React from 'react';
 import { Send, X, User, UserCircle, Ghost } from 'lucide-react';
 
 const ReviewForm = ({ 
-  comment, semester, year, identityType,
-  onCommentChange, onSemesterChange, onYearChange, onIdentityChange,
+  comment, semester, year, identityType, attendanceEnforced,
+  onCommentChange, onSemesterChange, onYearChange, onIdentityChange, onAttendanceChange,
   onSubmit, onClose 
 }) => {
   // Parsing the existing comment if it was already partially filled
@@ -119,6 +119,25 @@ const ReviewForm = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
+            <label className="flex items-center gap-4 cursor-pointer group">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  checked={attendanceEnforced}
+                  onChange={(e) => onAttendanceChange(e.target.checked)}
+                  className="peer sr-only"
+                />
+                <div className="h-7 w-12 bg-slate-200 rounded-full peer-checked:bg-indigo-600 transition-all"></div>
+                <div className="absolute top-1 left-1 h-5 w-5 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
+              </div>
+              <div className="text-right">
+                <span className="text-sm font-black text-slate-700 block">בדיקת נוכחות חובה?</span>
+                <span className="text-xs text-slate-400 font-medium">האם המרצה אכף נוכחות בקורס?</span>
+              </div>
+            </label>
           </div>
         </div>
 
