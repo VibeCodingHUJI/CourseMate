@@ -2,7 +2,7 @@
 
 \## Problem
 
-Students struggle to make informed course registration decisions and rely mainly on the Shnaton, which provides dry and limited information.  
+Students struggle to make informed course registration decisions and rely mainly on the Shnaton, which provides dry and limited information.
 
 There is a lack of high-quality, experience-based insights about university courses.
 
@@ -77,6 +77,4 @@ For verified Hebrew University students.
 &#x20; - Rate courses
 
 &#x20; - Contribute to forums and answer questions
-
-
 

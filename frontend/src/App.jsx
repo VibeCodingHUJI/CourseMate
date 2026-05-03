@@ -469,31 +469,21 @@ const App = () => {
                 <CourseCard key={course.id} course={course} onClick={() => {}} />
               ))}
             </div>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-auto z-10">
-              <div className="bg-white rounded-[40px] p-10 shadow-2xl border border-slate-100 text-center max-w-sm">
-                <Search className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
-                <h3 className="text-2xl font-black text-slate-900 mb-2">בואו נתחיל</h3>
-                <p className="text-slate-500 mb-8 font-medium">כדי לראות קורסים וביקורות, יש לבחור מסלול לימוד בתפריט למעלה</p>
-                <div className="flex flex-col gap-3">
-                  <button 
-                    onClick={() => handleChangeTrack('Computer Science')}
-                    className="w-full bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
-                  >
-                    בחר חוג: מדעי המחשב
-                  </button>
-                  <button 
-                    onClick={() => handleChangeTrack('Business Administration')}
-                    className="w-full bg-white border-2 border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-black hover:border-indigo-500 hover:text-indigo-600 transition-all shadow-sm active:scale-95"
-                  >
-                    בחר חוג: מנהל עסקים
-                  </button>
-                  <button 
-                    onClick={() => setIsChangingTrack(true)}
-                    className="text-xs font-black text-slate-400 uppercase tracking-widest mt-4 hover:text-indigo-600 transition-colors"
-                  >
-                    חוג אחר? לחץ כאן
-                  </button>
+            {/* Square Pop-up for Guest Start */}
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-white w-full max-w-sm aspect-square rounded-[40px] p-12 shadow-2xl border border-slate-100 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-200">
+                <div className="bg-indigo-50 w-20 h-20 rounded-3xl flex items-center justify-center mb-8 text-indigo-600">
+                  <Search className="h-10 w-10" />
                 </div>
+                <h3 className="text-4xl font-black text-slate-900 mb-4">Let's get started</h3>
+                <p className="text-slate-500 mb-10 font-bold text-lg">בואו נתחיל! כדי לראות קורסים וביקורות, יש לבחור מסלול לימוד</p>
+                <button 
+                  onClick={() => setIsGuestDrawerOpen(true)}
+                  className="w-full bg-indigo-600 text-white px-8 py-5 rounded-[28px] font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 active:scale-95 flex items-center justify-center gap-3 text-lg"
+                >
+                  <span>בחר חוג</span>
+                  <ChevronDown className="h-6 w-6" />
+                </button>
               </div>
             </div>
           </div>
@@ -559,30 +549,38 @@ const App = () => {
         <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 p-10 mb-8 relative overflow-hidden text-right">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
           <div className="relative z-10 flex flex-col md:flex-row justify-between items-start gap-8">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-4 justify-end">
-                <span className={`px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest ${selectedCourse.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                  {selectedCourse.type}
-                </span>
-                <span className="bg-amber-100 text-amber-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
-                  {selectedCourse.credits} נ"ז
-                </span>
-                <span className="bg-indigo-100 text-indigo-700 px-4 py-1.5 rounded-2xl text-xs font-black uppercase tracking-widest">
-                  {selectedCourse.code}
-                </span>
+            <div className="flex-1 flex flex-col items-start text-right">
+              <h1 className="text-5xl font-black text-slate-900 mb-6 tracking-tight w-full">{selectedCourse.title}</h1>
+              <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-2xl mb-8 w-full">{selectedCourse.description}</p>
+              
+              <div className="flex flex-col items-start gap-2">
+                {/* Row 1: [Type] [Credits] [ID|Lang] */}
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${selectedCourse.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                    {selectedCourse.type}
+                  </span>
+                  <span className="bg-amber-50 text-amber-700 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">
+                    {selectedCourse.credits} נ"ז
+                  </span>
+                  <span className="bg-indigo-50 text-indigo-700 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">
+                    {selectedCourse.code} | {selectedCourse.language || 'עברית'}
+                  </span>
+                </div>
+                
+                {/* Row 2: [Assessment] [Attendance] */}
+                <div className="flex flex-row-reverse items-center gap-2">
+                  {selectedCourse.assessmentType && (
+                    <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${selectedCourse.assessmentType === 'בחינה' ? 'bg-violet-50 text-violet-600' : 'bg-teal-50 text-teal-600'}`}>
+                      {selectedCourse.assessmentType}
+                    </span>
+                  )}
+                  <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${selectedCourse.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
+                    {selectedCourse.attendanceMandatory ? 'חובת נוכחות' : 'אין חובת נוכחות'}
+                  </span>
+                </div>
               </div>
-              <h1 className="text-5xl font-black text-slate-900 mb-6 tracking-tight">{selectedCourse.title}</h1>
-              <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-2xl">{selectedCourse.description}</p>
             </div>
             <div className="bg-slate-50 p-6 rounded-[32px] flex md:flex-col gap-8 min-w-[180px]">
-              <div className="text-center">
-                <div className="text-4xl font-black text-indigo-600 mb-1">{selectedCourse.avgRating}</div>
-                <div className="text-xs text-slate-400 font-black uppercase text-center">דירוג</div>
-              </div>
-              <div className="text-center">
-                <div className="text-4xl font-black text-slate-700 mb-1">{selectedCourse.reviewCount || 0}</div>
-                <div className="text-xs text-slate-400 font-black uppercase text-center">ביקורות</div>
-              </div>
               <div className="text-center">
                 <div className="text-4xl font-black text-rose-500 mb-1">{selectedCourse.difficulty}</div>
                 <div className="text-xs text-slate-400 font-black uppercase text-center">קושי</div>
@@ -612,8 +610,8 @@ const App = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className={`${user.isGuest ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6`}>
+        <div className="space-y-6">
+          <div className="space-y-6">
             {activeTab === 'reviews' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center mb-4">
@@ -789,22 +787,6 @@ const App = () => {
               </div>
             )}
           </div>
-
-          {user.isGuest && (
-            <div className="lg:col-span-1">
-              <div className="bg-slate-900 text-white rounded-[40px] p-8 sticky top-28 shadow-2xl shadow-slate-900/20 text-center">
-                <Award className="h-12 w-12 text-indigo-400 mx-auto mb-4" />
-                <h3 className="text-2xl font-black mb-4">רוצה להשפיע?</h3>
-                <p className="text-slate-400 font-medium mb-8 leading-relaxed">כדי להוסיף ביקורות, לשאול שאלות ולשתף סיכומים, עליך להצטרף לקהילה שלנו.</p>
-                <button 
-                  onClick={handleLogout}
-                  className="w-full bg-indigo-600 text-white py-4 rounded-3xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/10"
-                >
-                  הרשמה בחינם
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     );
