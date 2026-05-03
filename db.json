@@ -63,6 +63,7 @@
       "title": "מבוא למדעי המחשב",
       "code": "67101",
       "credits": 7,
+      "semester": "א",
       "avgRating": 4.5,
       "difficulty": 4.8,
       "type": "חובה",
@@ -92,7 +93,8 @@
       "attendanceMandatory": false,
       "assessmentType": "בחינה",
       "language": "עברית",
-      "lecturerId": 3
+      "lecturerId": 3,
+      "semester": "ב"
     },
     {
       "id": "cs3",
@@ -110,7 +112,8 @@
       "attendanceMandatory": false,
       "assessmentType": "בחינה",
       "language": "עברית",
-      "lecturerId": 4
+      "lecturerId": 4,
+      "semester": "א וב"
     },
     {
       "id": "cs4",
@@ -127,7 +130,8 @@
       "attendanceMandatory": true,
       "assessmentType": "עבודה",
       "language": "עברית",
-      "lecturerId": 5
+      "lecturerId": 5,
+      "semester": "א"
     },
     {
       "id": "ba1",
@@ -145,7 +149,8 @@
       "attendanceMandatory": false,
       "assessmentType": "בחינה",
       "language": "עברית",
-      "lecturerId": 6
+      "lecturerId": 6,
+      "semester": "ב"
     },
     {
       "id": "ba2",
@@ -163,7 +168,8 @@
       "attendanceMandatory": false,
       "assessmentType": "בחינה",
       "language": "עברית",
-      "lecturerId": 1
+      "lecturerId": 1,
+      "semester": "א וב"
     },
     {
       "id": "ba3",
@@ -181,7 +187,8 @@
       "attendanceMandatory": true,
       "assessmentType": "בחינה",
       "language": "עברית",
-      "lecturerId": 7
+      "lecturerId": 7,
+      "semester": "א"
     },
     {
       "id": "ba4",
@@ -198,7 +205,8 @@
       "language": "אנגלית",
       "assessmentType": "עבודה",
       "attendanceMandatory": false,
-      "lecturerId": 8
+      "lecturerId": 8,
+      "semester": "ב"
     },
     {
       "id": "ba5",
@@ -215,7 +223,8 @@
       "attendanceMandatory": true,
       "assessmentType": "עבודה",
       "language": "עברית",
-      "lecturerId": 9
+      "lecturerId": 9,
+      "semester": "א וב"
     },
     {
       "id": "ba6",
@@ -232,7 +241,8 @@
       "attendanceMandatory": false,
       "assessmentType": "עבודה",
       "language": "עברית",
-      "lecturerId": 10
+      "lecturerId": 10,
+      "semester": "א"
     },
     {
       "id": "math1",
@@ -249,7 +259,8 @@
       "language": "עברית",
       "description": "חשבון דיפרנציאלי ואינטגרלי של פונקציות במשתנה אחד.",
       "instructor": "פרופ' מיכאל זמל",
-      "lecturerId": 11
+      "lecturerId": 11,
+      "semester": "ב"
     },
     {
       "id": "math2",
@@ -266,7 +277,8 @@
       "language": "עברית",
       "description": "המשך חשבון אינפיניטסימלי, סדרות וטורי פונקציות.",
       "instructor": "ד\"ר גיא כהן",
-      "lecturerId": 12
+      "lecturerId": 12,
+      "semester": "א וב"
     },
     {
       "id": "math3",
@@ -283,7 +295,8 @@
       "language": "עברית",
       "description": "אקסיומות תורת הקבוצות, עוצמות ומספרים סודרים.",
       "instructor": "פרופ' איתי קפלן",
-      "lecturerId": 13
+      "lecturerId": 13,
+      "semester": "א"
     },
     {
       "id": "math4",
@@ -300,7 +313,8 @@
       "language": "עברית",
       "description": "אנליזה מרוכבת, משפט השארית ומיפויים קונפורמיים.",
       "instructor": "ד\"ר אלעד שחר",
-      "lecturerId": 14
+      "lecturerId": 14,
+      "semester": "ב"
     },
     {
       "id": "ds1",
@@ -317,7 +331,8 @@
       "language": "אנגלית",
       "description": "אלגוריתמים ללמידה מונחית ובלתי מונחית.",
       "instructor": "פרופ' שאי שליו-שוורץ",
-      "lecturerId": 15
+      "lecturerId": 15,
+      "semester": "א וב"
     },
     {
       "id": "ds2",
@@ -334,7 +349,8 @@
       "language": "עברית",
       "description": "חילוץ תבניות וידע ממאגרי נתונים גדולים.",
       "instructor": "ד\"ר אמיר גלוברזון",
-      "lecturerId": 16
+      "lecturerId": 16,
+      "semester": "א"
     },
     {
       "id": "ds3",
@@ -351,7 +367,8 @@
       "language": "עברית",
       "description": "מבנה ודינמיקה של רשתות חברתיות וגרפים.",
       "instructor": "ד\"ר דפנה שחר",
-      "lecturerId": 17
+      "lecturerId": 17,
+      "semester": "ב"
     },
     {
       "id": "ds4",
@@ -368,7 +385,8 @@
       "language": "עברית",
       "description": "ייצוג חזותי של נתונים מורכבים.",
       "instructor": "מר יובל בר-און",
-      "lecturerId": 18
+      "lecturerId": 18,
+      "semester": "א וב"
     },
     {
       "id": "67562",
@@ -382,7 +400,8 @@
       "track": "מט\"ר",
       "instructor": "פרופ' קתרינה ליגט",
       "lecturerId": 41,
-      "description": "חקר המבנה והדינמיקה של עולמנו המקושר, שילוב של טכנולוגיה, כלכלה ומדיניות."
+      "description": "חקר המבנה והדינמיקה של עולמנו המקושר, שילוב של טכנולוגיה, כלכלה ומדיניות.",
+      "semester": "א"
     },
     {
       "id": "stat1",
@@ -399,7 +418,8 @@
       "language": "עברית",
       "description": "מרחבי הסתברות, משתנים מקריים והתפלגויות.",
       "instructor": "פרופ' גל אלון",
-      "lecturerId": 19
+      "lecturerId": 19,
+      "semester": "ב"
     },
     {
       "id": "stat2",
@@ -416,7 +436,8 @@
       "language": "עברית",
       "description": "אמידה, מבחני השערות ורווחי סמך.",
       "instructor": "ד\"ר מיכל לוין",
-      "lecturerId": 20
+      "lecturerId": 20,
+      "semester": "א וב"
     },
     {
       "id": "stat3",
@@ -433,7 +454,8 @@
       "language": "עברית",
       "description": "מודלים ליניאריים וניתוח שונות.",
       "instructor": "פרופ' אורי שלום",
-      "lecturerId": 21
+      "lecturerId": 21,
+      "semester": "א"
     },
     {
       "id": "stat4",
@@ -450,7 +472,8 @@
       "language": "אנגלית",
       "description": "גישת בייס לניתוח נתונים וקבלת החלטות.",
       "instructor": "ד\"ר רני דניאלי",
-      "lecturerId": 22
+      "lecturerId": 22,
+      "semester": "ב"
     },
     {
       "id": "stat5",
@@ -467,7 +490,8 @@
       "language": "עברית",
       "description": "יסודות החשבון הדיפרנציאלי והאינטגרלי.",
       "instructor": "פרופ' שמעון גמר",
-      "lecturerId": 23
+      "lecturerId": 23,
+      "semester": "א וב"
     },
     {
       "id": "stat6",
@@ -484,7 +508,8 @@
       "language": "עברית",
       "description": "המשך חשבון אינפיניטסימלי במשתנה אחד.",
       "instructor": "ד\"ר אבי כהן",
-      "lecturerId": 24
+      "lecturerId": 24,
+      "semester": "א"
     },
     {
       "id": "stat7",
@@ -501,7 +526,8 @@
       "language": "עברית",
       "description": "מבוא להסתברות ומשתנים מקריים.",
       "instructor": "פרופ' משה לוי",
-      "lecturerId": 25
+      "lecturerId": 25,
+      "semester": "ב"
     },
     {
       "id": "stat8",
@@ -518,7 +544,8 @@
       "language": "עברית",
       "description": "מבני נתונים בסיסיים וניתוח אלגוריתמים לסטטיסטיקאים.",
       "instructor": "ד\"ר יעל שחר",
-      "lecturerId": 26
+      "lecturerId": 26,
+      "semester": "א וב"
     },
     {
       "id": "bio1",
@@ -535,7 +562,8 @@
       "language": "עברית",
       "description": "מבנה ותפקוד האברונים בתא האוקריוטי.",
       "instructor": "פרופ' אורה כהן",
-      "lecturerId": 27
+      "lecturerId": 27,
+      "semester": "א"
     },
     {
       "id": "bio2",
@@ -552,7 +580,8 @@
       "language": "עברית",
       "description": "חוקי מנדל, מבנה ה-DNA ותורשה.",
       "instructor": "ד\"ר ירון פרידמן",
-      "lecturerId": 28
+      "lecturerId": 28,
+      "semester": "ב"
     },
     {
       "id": "bio3",
@@ -569,7 +598,8 @@
       "language": "עברית",
       "description": "מבנה חלבונים, אנזימים ומטבוליזם.",
       "instructor": "פרופ' שרה לוי",
-      "lecturerId": 29
+      "lecturerId": 29,
+      "semester": "א וב"
     },
     {
       "id": "bio4",
@@ -586,7 +616,8 @@
       "language": "עברית",
       "description": "יחסי גומלין בין אורגניזמים לסביבתם.",
       "instructor": "ד\"ר דורון שגב",
-      "lecturerId": 30
+      "lecturerId": 30,
+      "semester": "א"
     },
     {
       "id": "acc1",
@@ -603,7 +634,8 @@
       "language": "עברית",
       "description": "כללי הרישום הכפול והכנת דוחות כספיים.",
       "instructor": "רו\"ח יצחק כהן",
-      "lecturerId": 31
+      "lecturerId": 31,
+      "semester": "ב"
     },
     {
       "id": "acc2",
@@ -620,7 +652,8 @@
       "language": "עברית",
       "description": "דיווח כספי מתקדם לפי תקני IFRS.",
       "instructor": "גב' רונית שחר",
-      "lecturerId": 32
+      "lecturerId": 32,
+      "semester": "א וב"
     },
     {
       "id": "acc3",
@@ -637,7 +670,8 @@
       "language": "עברית",
       "description": "המסגרת המשפטית לפעילות חברות ושותפויות.",
       "instructor": "עו\"ד מיכל ארז",
-      "lecturerId": 33
+      "lecturerId": 33,
+      "semester": "א"
     },
     {
       "id": "acc4",
@@ -654,7 +688,8 @@
       "language": "עברית",
       "description": "נהלי ביקורת וחוות דעת רואה חשבון.",
       "instructor": "רו\"ח בני נחום",
-      "lecturerId": 34
+      "lecturerId": 34,
+      "semester": "ב"
     },
     {
       "id": "comm1",
@@ -671,7 +706,8 @@
       "language": "עברית",
       "description": "התפתחות אמצעי התקשורת והשפעתם על החברה.",
       "instructor": "ד\"ר עמית רן",
-      "lecturerId": 35
+      "lecturerId": 35,
+      "semester": "א וב"
     },
     {
       "id": "comm2",
@@ -688,7 +724,8 @@
       "language": "עברית",
       "description": "מודלים ותיאוריות מרכזיות בחקר התקשורת.",
       "instructor": "פרופ' דנה שגב",
-      "lecturerId": 36
+      "lecturerId": 36,
+      "semester": "א"
     },
     {
       "id": "comm3",
@@ -705,7 +742,8 @@
       "language": "עברית",
       "description": "היבטים תרבותיים וחברתיים של התקשורת הדיגיטלית.",
       "instructor": "גב' לירון חן",
-      "lecturerId": 37
+      "lecturerId": 37,
+      "semester": "ב"
     },
     {
       "id": "comm4",
@@ -722,7 +760,8 @@
       "language": "עברית",
       "description": "הקשר בין פוליטיקה, תקשורת ודעת קהל.",
       "instructor": "ד\"ר גלעד דן",
-      "lecturerId": 38
+      "lecturerId": 38,
+      "semester": "א וב"
     },
     {
       "id": "game1",
@@ -738,7 +777,8 @@
       "lecturerId": 6,
       "assessmentType": "בחינה",
       "attendanceMandatory": false,
-      "language": "עברית"
+      "language": "עברית",
+      "semester": "א"
     },
     {
       "id": "ec1",
@@ -755,7 +795,8 @@
       "language": "עברית",
       "description": "הסתברות והסקה סטטיסטית.",
       "instructor": "ד\"ר משה ישראלי",
-      "lecturerId": 39
+      "lecturerId": 39,
+      "semester": "ב"
     }
   ],
   "reviews": [
