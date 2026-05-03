@@ -237,7 +237,7 @@ const CourseDetail = ({
             
             <div className="flex flex-col items-start gap-2">
               {/* Row 1: [Type] [Credits] [ID|Lang] */}
-              <div className="flex flex-row-reverse items-center gap-2">
+              <div className="flex items-center gap-2">
                 <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${selectedCourse.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
                   {selectedCourse.type}
                 </span>
@@ -249,8 +249,15 @@ const CourseDetail = ({
                 </span>
               </div>
               
-              {/* Row 2: [Assessment] [Attendance] */}
-              <div className="flex flex-row-reverse items-center gap-2">
+              {/* Row 2: [Semester] [Assessment] [Attendance] */}
+              <div className="flex items-center gap-2">
+                {selectedCourse.semester && (
+                  <span className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">
+                    {selectedCourse.semester === 'א' ? 'סמסטר א׳' : 
+                     selectedCourse.semester === 'ב' ? 'סמסטר ב׳' : 
+                     selectedCourse.semester === 'א וב' ? 'סמסטר א׳ וב׳' : `סמסטר ${selectedCourse.semester}`}
+                  </span>
+                )}
                 {selectedCourse.assessmentType && (
                   <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${selectedCourse.assessmentType === 'בחינה' ? 'bg-violet-50 text-violet-600' : 'bg-teal-50 text-teal-600'}`}>
                     {selectedCourse.assessmentType}
@@ -603,6 +610,7 @@ const App = () => {
     setIsChangingTrack(false);
     setTrackSearch('');
     setSelectedCourse(null);
+    navigate('/'); // ALWAYS navigate to home after track change
   };
 
   const filteredTracks = STUDY_TRACKS.filter(t => t.label.includes(trackSearch));
@@ -914,7 +922,14 @@ const App = () => {
       
       <main className="flex-grow container mx-auto px-6 py-12">
         <Routes>
-          <Route path="/lecturer/:id" element={<LecturerProfile />} />
+          <Route path="/lecturer/:id" element={
+            <LecturerProfile onDepartmentClick={(dept) => {
+              // Find the track value that matches the department label
+              const targetTrack = STUDY_TRACKS.find(t => t.label === dept || t.value === dept)?.value || dept;
+              handleChangeTrack(targetTrack);
+              navigate('/');
+            }} />
+          } />
           <Route path="/course/:id" element={
             <CourseDetail 
               selectedCourse={selectedCourse}

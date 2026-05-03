@@ -15,6 +15,8 @@ const CoursePage = () => {
     id,
     title: 'מבוא למדעי המחשב',
     code: '67101',
+    credits: 7,
+    semester: 'א',
     avgRating: 4.5,
     difficulty: 4.8,
     description: 'קורס המבוא הראשון למדעי המחשב, עוסק ביסודות התכנות בשפת Python, רקורסיה, אלגוריתמים ומבני נתונים בסיסיים.'
@@ -27,11 +29,18 @@ const CoursePage = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <header className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-8">
+    <div className="max-w-4xl mx-auto" dir="rtl">
+      <header className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-8 text-right">
         <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-          <div>
-            <div className="flex gap-2 items-center mb-2">
+          <div className="w-full">
+            <div className="flex gap-2 items-center mb-2 justify-start">
+              {course.semester && (
+                <span className="bg-orange-50 text-orange-600 px-3 py-1 rounded-full text-xs font-bold inline-block">
+                  {course.semester === 'א' ? 'סמסטר א׳' : 
+                   course.semester === 'ב' ? 'סמסטר ב׳' : 
+                   course.semester === 'א וב' ? 'סמסטר א׳ וב׳' : `סמסטר ${course.semester}`}
+                </span>
+              )}
               <span className="bg-primary-50 text-primary-600 px-3 py-1 rounded-full text-xs font-bold inline-block">
                 {course.code}
               </span>

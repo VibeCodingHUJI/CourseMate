@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ChevronRight, Star, BookOpen, GraduationCap, AlertCircle, MessageSquare, Plus, X, Heart, Ghost, UserCircle, User } from 'lucide-react';
 
-const LecturerProfile = () => {
+const LecturerProfile = ({ onDepartmentClick }) => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [lecturer, setLecturer] = useState(null);
@@ -16,10 +16,19 @@ const LecturerProfile = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
+  const [selectedReviewCourseId, setSelectedReviewCourseId] = useState('');
   const [identityType, setIdentityType] = useState('anon'); // 'full', 'initials', 'anon'
+
+  // Initialize selectedReviewCourseId when courses are loaded
+  useEffect(() => {
+    if (courses.length > 0 && !selectedReviewCourseId) {
+      setSelectedReviewCourseId(courses[0].id);
+    }
+  }, [courses]);
 
   const handleAddReview = async () => {
     if (!newComment.trim()) return alert('נא להוסיף תוכן לביקורת');
+    if (!selectedReviewCourseId) return alert('נא לבחור קורס רלוונטי');
     
     // Get user info from localStorage
     const savedUser = localStorage.getItem('user');
@@ -38,8 +47,8 @@ const LecturerProfile = () => {
     }
 
     const newReview = {
-      lecturerId: id, // Linking review directly to lecturer ID
-      courseId: courses[0]?.id || 'general',
+      lecturerId: id, 
+      courseId: selectedReviewCourseId,
       author: displayName,
       authorId: user.id,
       rating: newRating,
@@ -182,7 +191,18 @@ const LecturerProfile = () => {
         {/* Back Button */}
         <div className="flex justify-start mb-8">
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (lecturer && lecturer.department) {
+                const dept = Array.isArray(lecturer.department) ? lecturer.department[0] : lecturer.department;
+                if (onDepartmentClick) {
+                  onDepartmentClick(dept);
+                } else {
+                  navigate('/');
+                }
+              } else {
+                navigate(-1);
+              }
+            }}
             className="group flex items-center gap-2 text-indigo-600 font-black hover:bg-indigo-50 px-4 py-2 rounded-2xl transition-all"
           >
             <ChevronRight className="h-5 w-5" />
@@ -195,9 +215,30 @@ const LecturerProfile = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
           <div className="relative z-10">
             <h1 className="text-5xl font-black text-slate-900 mb-4 tracking-tight">{lecturer.name}</h1>
-            <div className="flex items-center gap-2 text-xl text-slate-500 font-medium justify-start mb-6">
-              <GraduationCap className="h-6 w-6 text-indigo-400" />
-              <span>המחלקה ל{lecturer.department}</span>
+            <div className="flex items-start gap-3 justify-start mb-6">
+              <div className="bg-indigo-50 p-1.5 rounded-xl">
+                <GraduationCap className="h-6 w-6 text-indigo-400" />
+              </div>
+              <div className="flex flex-wrap gap-2 justify-start">
+                {Array.isArray(lecturer.department) ? (
+                  lecturer.department.map((dept, index) => (
+                    <button 
+                      key={index} 
+                      onClick={() => onDepartmentClick && onDepartmentClick(dept)}
+                      className="bg-white border border-slate-200 text-slate-600 px-4 py-1 rounded-2xl text-sm font-bold shadow-sm hover:border-indigo-500 hover:text-indigo-600 transition-all cursor-pointer"
+                    >
+                      {dept}
+                    </button>
+                  ))
+                ) : (
+                  <button 
+                    onClick={() => onDepartmentClick && onDepartmentClick(lecturer.department)}
+                    className="bg-white border border-slate-200 text-slate-600 px-4 py-1 rounded-2xl text-sm font-bold shadow-sm hover:border-indigo-500 hover:text-indigo-600 transition-all cursor-pointer"
+                  >
+                    {lecturer.department}
+                  </button>
+                )}
+              </div>
             </div>
             {lecturer.bio && (
               <p className="text-slate-600 leading-relaxed max-w-2xl text-lg font-medium italic">
@@ -209,23 +250,23 @@ const LecturerProfile = () => {
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-6 mb-12">
-          <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm flex items-center justify-start gap-6">
+            <div className="bg-amber-50 p-4 rounded-2xl">
+              <Star className="h-8 w-8 text-amber-500 fill-amber-500" />
+            </div>
             <div className="text-right">
               <div className="text-3xl font-black text-slate-900">{avgRating}</div>
               <div className="text-xs font-black text-slate-400 uppercase tracking-widest">דירוג ממוצע</div>
             </div>
-            <div className="bg-amber-50 p-4 rounded-2xl">
-              <Star className="h-8 w-8 text-amber-500 fill-amber-500" />
-            </div>
           </div>
           
-          <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm flex items-center justify-start gap-6">
+            <div className="bg-indigo-50 p-4 rounded-2xl">
+              <BookOpen className="h-8 w-8 text-indigo-600" />
+            </div>
             <div className="text-right">
               <div className="text-3xl font-black text-slate-900">{courses.length}</div>
               <div className="text-xs font-black text-slate-400 uppercase tracking-widest">מספר קורסים</div>
-            </div>
-            <div className="bg-indigo-50 p-4 rounded-2xl">
-              <BookOpen className="h-8 w-8 text-indigo-600" />
             </div>
           </div>
         </div>
@@ -314,6 +355,11 @@ const LecturerProfile = () => {
                   
                   <div className="flex items-center justify-between border-t border-slate-50 pt-6">
                     <div className="flex items-center gap-2">
+                      {review.courseId && (
+                        <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-1 rounded-full uppercase tracking-widest">
+                          {courses.find(c => String(c.id) === String(review.courseId))?.title || 'קורס כללי'}
+                        </span>
+                      )}
                       <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">
                         {review.semester && `${review.semester}, `}{review.year && `${review.year}`}
                       </span>
@@ -401,6 +447,19 @@ const LecturerProfile = () => {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">בחר קורס רלוונטי</label>
+              <select 
+                value={selectedReviewCourseId}
+                onChange={(e) => setSelectedReviewCourseId(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[22px] px-5 py-3 outline-none text-right font-bold text-sm appearance-none cursor-pointer"
+              >
+                {courses.map(course => (
+                  <option key={course.id} value={course.id}>{course.title}</option>
+                ))}
+              </select>
             </div>
 
             <div className="mb-8">
