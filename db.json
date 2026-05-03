@@ -998,6 +998,36 @@
       "identityType": "full",
       "likedBy": [],
       "id": "tvsyAmk"
+    },
+    {
+      "courseId": "cs1",
+      "rating": 5,
+      "difficulty": 7,
+      "attendanceEnforced": null,
+      "comment": "",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "3.5.2026",
+      "author": "מאיה",
+      "authorId": 9,
+      "identityType": "full",
+      "likedBy": [],
+      "id": "Z4IKe_m"
+    },
+    {
+      "courseId": "cs1",
+      "rating": 5,
+      "difficulty": 5,
+      "attendanceEnforced": true,
+      "comment": "",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "3.5.2026",
+      "author": "מאיה",
+      "authorId": 9,
+      "identityType": "full",
+      "likedBy": [],
+      "id": "pA4A4dF"
     }
   ],
   "questions": [],

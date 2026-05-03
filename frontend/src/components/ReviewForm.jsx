@@ -144,22 +144,27 @@ const ReviewForm = ({
           </div>
 
           <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
-            <label className="flex items-center gap-4 cursor-pointer group">
-              <div className="relative">
-                <input 
-                  type="checkbox" 
-                  checked={attendanceEnforced}
-                  onChange={(e) => onAttendanceChange(e.target.checked)}
-                  className="peer sr-only"
-                />
-                <div className="h-7 w-12 bg-slate-200 rounded-full peer-checked:bg-indigo-600 transition-all"></div>
-                <div className="absolute top-1 left-1 h-5 w-5 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
-              </div>
-              <div className="text-right">
-                <span className="text-sm font-black text-slate-700 block">בדיקת נוכחות חובה?</span>
-                <span className="text-xs text-slate-400 font-medium">האם המרצה אכף נוכחות בקורס?</span>
-              </div>
-            </label>
+            <label className="text-sm font-black text-slate-700 mb-4 block">האם נבדקה נוכחות?</label>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { id: true, label: 'כן', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+                { id: false, label: 'לא', color: 'bg-rose-50 text-rose-600 border-rose-100' },
+                { id: null, label: 'לא יודע/ת', color: 'bg-slate-100 text-slate-500 border-slate-200' }
+              ].map(option => (
+                <button
+                  key={String(option.id)}
+                  onClick={() => onAttendanceChange(option.id)}
+                  className={`py-3 rounded-xl font-black text-[10px] border-2 transition-all ${
+                    attendanceEnforced === option.id 
+                      ? `${option.id === true ? 'bg-emerald-600' : option.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md` 
+                      : `${option.color} hover:shadow-sm`
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-400 font-bold mt-4 text-center">האם המרצה אכף נוכחות בקורס?</p>
           </div>
         </div>
 

@@ -218,9 +218,9 @@ const CourseDetail = ({
 }) => {
   if (!selectedCourse) return <div className="text-center py-20 animate-pulse text-2xl font-black text-slate-400">טוען נתונים...</div>;
   
-  const attendanceReviews = reviews.filter(r => r.attendanceEnforced !== undefined);
+  const attendanceReviews = reviews.filter(r => r.attendanceEnforced !== undefined && r.attendanceEnforced !== null);
   const enforcementRate = attendanceReviews.length > 0
-    ? Math.round((attendanceReviews.filter(r => r.attendanceEnforced).length / attendanceReviews.length) * 100)
+    ? Math.round((attendanceReviews.filter(r => r.attendanceEnforced === true).length / attendanceReviews.length) * 100)
     : null;
 
   const difficultyReviews = reviews.filter(r => r.difficulty !== undefined);
@@ -614,7 +614,7 @@ const App = () => {
   const [newReviewSemester, setNewReviewSemester] = useState("סמסטר א'");
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ד');
   const [newReviewIdentity, setNewReviewIdentity] = useState('full'); // 'full', 'initials', 'anon'
-  const [newReviewAttendance, setNewReviewAttendance] = useState(false);
+  const [newReviewAttendance, setNewReviewAttendance] = useState(null); // null means not selected
   const [newReviewDifficulty, setNewReviewDifficulty] = useState(5);
 
   const handleLogin = (userData) => {
@@ -881,7 +881,7 @@ const App = () => {
           : c
       ));
 
-      setNewReviewAttendance(false);
+      setNewReviewAttendance(null);
       setNewReviewDifficulty(5);
       setIsRatingModalOpen(false);
       alert('הדירוג נשלח בהצלחה!');
@@ -1084,21 +1084,26 @@ const App = () => {
               </div>
 
               <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
-                <label className="flex items-center gap-4 cursor-pointer group">
-                  <div className="relative">
-                    <input 
-                      type="checkbox" 
-                      checked={newReviewAttendance}
-                      onChange={(e) => setNewReviewAttendance(e.target.checked)}
-                      className="peer sr-only"
-                    />
-                    <div className="h-7 w-12 bg-slate-200 rounded-full peer-checked:bg-indigo-600 transition-all"></div>
-                    <div className="absolute top-1 left-1 h-5 w-5 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-black text-slate-700 block">בדיקת נוכחות חובה?</span>
-                  </div>
-                </label>
+                <label className="text-sm font-black text-slate-700 mb-4 block">האם נבדקה נוכחות?</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { id: true, label: 'כן', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
+                    { id: false, label: 'לא', color: 'bg-rose-50 text-rose-600 border-rose-100' },
+                    { id: null, label: 'לא יודע/ת', color: 'bg-slate-100 text-slate-500 border-slate-200' }
+                  ].map(option => (
+                    <button
+                      key={String(option.id)}
+                      onClick={() => setNewReviewAttendance(option.id)}
+                      className={`py-3 rounded-xl font-black text-sm border-2 transition-all ${
+                        newReviewAttendance === option.id 
+                          ? `${option.id === true ? 'bg-emerald-600' : option.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md` 
+                          : `${option.color} hover:shadow-sm`
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <button 
