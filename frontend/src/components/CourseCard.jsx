@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, User, TrendingUp, FileText, Pencil } from 'lucide-react';
+import { User, TrendingUp, FileText, Pencil } from 'lucide-react';
 
 const CourseCard = ({ course, onClick }) => (
   <div 
@@ -8,13 +8,7 @@ const CourseCard = ({ course, onClick }) => (
     className={`bg-white rounded-[32px] shadow-sm border p-8 hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer flex flex-col h-full ${course.type === 'חובה' ? 'border-rose-100 hover:border-rose-200' : 'border-slate-200 hover:border-indigo-200'}`}
   >
     <div className="flex flex-row-reverse justify-between items-start mb-6">
-      {/* 1st Child: Rating (will be on the LEFT because of flex-row-reverse) */}
-      <div className="flex items-center gap-1.5 text-amber-500 font-black pt-1">
-        <Star className="h-4 w-4 fill-current" />
-        <span>{course.avgRating}</span>
-      </div>
-
-      {/* 2nd Child: Badge Container (will be on the RIGHT) */}
+      {/* Badge Container (will be on the RIGHT) */}
       <div className="flex flex-col items-end gap-2">
         {/* Row 1: [Type] [Credits] [ID|Lang] from Left to Right (appears R to L in UI) */}
         <div className="flex flex-row-reverse items-center gap-2">
