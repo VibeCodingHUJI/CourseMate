@@ -833,6 +833,19 @@
       "likes": 0,
       "likedBy": [],
       "id": "cbO3z0o"
+    },
+    {
+      "courseId": "ba2",
+      "difficulty": 4,
+      "comment": "מרצה: מעביר את החומר ממש מעניין\n\nרמת קושי: קשה\n\nהשקעה נדרשת: תרגיל שבועי שלוקח כשעתיים בשבוע\n\nהמבחן היה הוגן: מבחן הוגן",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "date": "3.5.2026",
+      "author": "אנונימי/ת",
+      "authorId": 6,
+      "identityType": "anon",
+      "likedBy": [],
+      "id": "II8b7X4"
     }
   ],
   "questions": [],

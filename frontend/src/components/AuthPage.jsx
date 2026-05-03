@@ -194,16 +194,7 @@ const AuthPage = ({ onLogin }) => {
               </div>
             )}
 
-            {authMode === 'login' && (
-              <div className="flex items-center gap-2 justify-start mt-2">
-                <input 
-                  type="checkbox" 
-                  id="rememberMe"
-                  className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                />
-                <label htmlFor="rememberMe" className="text-xs font-bold text-slate-500 cursor-pointer">זכור אותי</label>
-              </div>
-            )}
+
 
             <button 
               type="submit"
