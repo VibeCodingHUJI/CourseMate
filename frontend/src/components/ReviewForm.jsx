@@ -9,7 +9,6 @@ const ReviewForm = ({
   // Parsing the existing comment if it was already partially filled
   // but usually this is a fresh state. We'll add local state for the parts.
   const [parts, setParts] = React.useState({
-    lecturer: '',
     difficulty: '',
     investment: '',
     exam: '',
@@ -22,7 +21,6 @@ const ReviewForm = ({
     
     // Combine all non-empty parts into a single string
     const combined = [
-      newParts.lecturer && `מרצה: ${newParts.lecturer}`,
       newParts.difficulty && `רמת קושי: ${newParts.difficulty}`,
       newParts.investment && `השקעה נדרשת: ${newParts.investment}`,
       newParts.exam && `המבחן היה הוגן: ${newParts.exam}`,
@@ -52,7 +50,6 @@ const ReviewForm = ({
   ];
 
   const QUESTIONS = [
-    { id: 'lecturer', label: 'מה דעתך על המרצה?', placeholder: 'מעביר/ה את החומר בצורה מעניינת?' },
     { id: 'difficulty', label: 'מה רמת הקושי של הקורס?', placeholder: 'האם החומר מורכב להבנה?' },
     { id: 'investment', label: 'כמה השקעה הקורס דורש?', placeholder: 'יש הרבה עבודות/תרגילים?' },
     { id: 'exam', label: 'האם המבחן/העבודה היה הוגן?', placeholder: 'האם המבחן/העבודה היה הוגן?' },
@@ -75,7 +72,7 @@ const ReviewForm = ({
             <h3 className="text-4xl font-black text-slate-900 leading-tight">הוספת ביקורת</h3>
           </div>
         </div>
-        <p className="text-slate-500 font-bold mb-8 text-lg mr-12">שתפו את החוויה שלכם</p>
+        <p className="text-slate-500 font-bold mb-8 text-lg mr-12">ספרו על הקורס מהחוויה שלכם בצורה בונה ומלמדת</p>
 
         <div className="space-y-8 pr-1">
           <div className="grid grid-cols-2 gap-4">

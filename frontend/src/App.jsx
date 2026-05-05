@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, GraduationCap, Star, MessageSquare, 
   BookOpen, TrendingUp, Send, FileText, 
   Download, Upload, User, ChevronLeft,
   Filter, Award, Clock, X, CheckCircle, Lock,
-  Camera, Heart, ChevronDown
+  Camera, Heart, ChevronDown, Link as LinkIcon, ExternalLink, Share2, HardDrive
 } from 'lucide-react';
 
 // Components
@@ -21,6 +21,7 @@ import projectData from './data.json';
 const STUDY_TRACKS = projectData.tracks;
 
 const MATERIAL_CATEGORIES = [
+  { id: 'links', label: 'קישורים שימושיים', icon: LinkIcon },
   { id: 'summaries', label: 'סיכומים', icon: FileText },
   { id: 'tests', label: 'מבחנים', icon: GraduationCap },
   { id: 'homework', label: 'מטלות בית', icon: BookOpen },
@@ -213,7 +214,8 @@ const CourseDetail = ({
   setIsQuestionModalOpen, 
   handlePostAnswer, 
   handleLikeAnswer, 
-  setIsMaterialModalOpen, 
+  setIsMaterialModalOpen,
+  setIsLinkModalOpen,
   materials 
 }) => {
   if (!selectedCourse) return <div className="text-center py-20 animate-pulse text-2xl font-black text-slate-400">טוען נתונים...</div>;
@@ -229,6 +231,15 @@ const CourseDetail = ({
     : selectedCourse.difficulty;
 
   const textReviews = reviews.filter(r => r.comment && r.comment.trim() !== '');
+
+  const getMaterialIcon = (m) => {
+    if (m.isLink) {
+      if (m.type === 'WHATSAPP') return <Share2 className="h-6 w-6" />;
+      if (m.type === 'DRIVE') return <HardDrive className="h-6 w-6" />;
+      return <LinkIcon className="h-6 w-6" />;
+    }
+    return <FileText className="h-6 w-6" />;
+  };
 
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -438,8 +449,10 @@ const CourseDetail = ({
 
           {activeTab === 'materials' && (
             <div className="space-y-10 text-right">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
+              <div className="flex justify-between items-start mb-6">
+                <div className="text-right">
+                  <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
+                </div>
                 {!user.isGuest && (
                   <button 
                     onClick={() => setIsMaterialModalOpen(true)}
@@ -471,10 +484,21 @@ const CourseDetail = ({
                     const categoryMaterials = materials.filter(m => m.category === category.id);
                     return (
                       <div key={category.id} className="space-y-4">
-                        <div className="flex items-center gap-3 border-b-2 border-slate-100 pb-3">
-                          <category.icon className="h-6 w-6 text-indigo-600" />
-                          <h3 className="text-xl font-black text-slate-800">{category.label}</h3>
-                          <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black">{categoryMaterials.length}</span>
+                        <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
+                          <div className="flex items-center gap-3">
+                            <category.icon className="h-6 w-6 text-indigo-600" />
+                            <h3 className="text-xl font-black text-slate-800">{category.label}</h3>
+                            <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black">{categoryMaterials.length}</span>
+                          </div>
+                          {category.id === 'links' && !user.isGuest && (
+                            <button 
+                              onClick={() => setIsLinkModalOpen(true)}
+                              className="text-indigo-600 hover:text-indigo-700 font-black text-xs flex items-center gap-1.5 transition-all px-3 py-1.5 bg-indigo-50 rounded-xl"
+                            >
+                              <LinkIcon className="h-3 w-3" />
+                              הוספת קישור
+                            </button>
+                          )}
                         </div>
                         
                         <div className="grid grid-cols-1 gap-4">
@@ -482,13 +506,23 @@ const CourseDetail = ({
                             categoryMaterials.map(m => (
                               <div key={m.id} className="flex items-center justify-between p-6 bg-white rounded-[32px] border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all group">
                                 <div className="flex items-center gap-6">
-                                  <div className="h-14 w-14 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all"><FileText className="h-6 w-6" /></div>
+                                  <div className="h-14 w-14 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                    {getMaterialIcon(m)}
+                                  </div>
                                   <div className="text-right">
                                     <h4 className="font-black text-slate-900 text-lg">{m.title}</h4>
                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{m.type} • {m.author} • {m.date}</span>
                                   </div>
                                 </div>
-                                <button className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all"><Download className="h-5 w-5" /></button>
+                                {m.isLink ? (
+                                  <a href={m.url} target="_blank" rel="noopener noreferrer" className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all">
+                                    <ExternalLink className="h-5 w-5" />
+                                  </a>
+                                ) : (
+                                  <button className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all">
+                                    <Download className="h-5 w-5" />
+                                  </button>
+                                )}
                               </div>
                             ))
                           ) : (
@@ -604,7 +638,12 @@ const App = () => {
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
 
+  const fileInputRef = useRef(null);
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [newLinkTitle, setNewLinkTitle] = useState('');
+  const [newLinkUrl, setNewLinkUrl] = useState('');
+  const [newLinkType, setNewLinkType] = useState('drive'); // 'drive', 'whatsapp', 'other'
   const [newMaterialTitle, setNewMaterialTitle] = useState('');
   const [newMaterialCategory, setNewMaterialCategory] = useState('summaries');
   const [newMaterialFile, setNewMaterialFile] = useState(null);
@@ -891,6 +930,70 @@ const App = () => {
     }
   };
 
+  const handlePostMaterial = async () => {
+    if (user?.isGuest || !selectedCourse) return;
+    if (!newMaterialTitle || !newMaterialFile) return alert('נא למלא את כל הפרטים ולבחור קובץ');
+
+    const newMaterial = {
+      courseId: selectedCourse.id,
+      title: newMaterialTitle,
+      category: newMaterialCategory,
+      type: newMaterialFile.name.split('.').pop().toUpperCase(),
+      author: user.name,
+      date: new Date().toLocaleDateString('he-IL'),
+      likedBy: []
+    };
+
+    try {
+      const res = await fetch('http://localhost:3000/materials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMaterial)
+      });
+      const savedM = await res.json();
+      setMaterials([savedM, ...materials]);
+      setNewMaterialTitle('');
+      setNewMaterialFile(null);
+      setIsMaterialModalOpen(false);
+      alert('חומר הלימוד הועלה בהצלחה!');
+    } catch (err) {
+      alert('שגיאה בהעלאת חומר הלימוד');
+    }
+  };
+
+  const handlePostLink = async () => {
+    if (user?.isGuest || !selectedCourse) return;
+    if (!newLinkTitle || !newLinkUrl) return alert('נא למלא את כל הפרטים');
+
+    const newLink = {
+      courseId: selectedCourse.id,
+      title: newLinkTitle,
+      url: newLinkUrl,
+      category: 'links',
+      type: newLinkType.toUpperCase(),
+      author: user.name,
+      date: new Date().toLocaleDateString('he-IL'),
+      isLink: true,
+      likedBy: []
+    };
+
+    try {
+      const res = await fetch('http://localhost:3000/materials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLink)
+      });
+      const savedL = await res.json();
+      setMaterials([savedL, ...materials]);
+      setNewLinkTitle('');
+      setNewLinkUrl('');
+      setIsLinkModalOpen(false);
+      alert('הקישור נוסף בהצלחה!');
+    } catch (err) {
+      alert('שגיאה בהוספת הקישור');
+    }
+  };
+
   if (!user) return <AuthPage onLogin={handleLogin} />;
 
   return (
@@ -1002,6 +1105,7 @@ const App = () => {
               handlePostAnswer={handlePostAnswer}
               handleLikeAnswer={handleLikeAnswer}
               setIsMaterialModalOpen={setIsMaterialModalOpen}
+              setIsLinkModalOpen={setIsLinkModalOpen}
               materials={materials}
             />
           } />
@@ -1145,11 +1249,18 @@ const App = () => {
       {isQuestionModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsQuestionModalOpen(false)}>
           <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-4 mb-8">
-              <button onClick={() => setIsQuestionModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
+            <div className="flex justify-between items-start mb-8 gap-4">
+              <button 
+                onClick={() => setIsQuestionModalOpen(false)} 
+                className="p-2 text-slate-400 hover:text-rose-500 transition-colors shrink-0 -mt-2 -mr-2"
+                title="סגור"
+              >
                 <X className="h-8 w-8" />
               </button>
-              <h3 className="text-3xl font-black text-slate-900">שאל שאלה</h3>
+              <div className="text-right flex-1">
+                <h3 className="text-3xl font-black text-slate-900">שאל שאלה</h3>
+                <p className="text-slate-500 font-bold text-sm mt-1">תשאלו שאלה קצרה וקולעת שיכולה לעזור לסטודנטים נוספים ותשימו לב שזאת שאלה שלא נשאלה כבר.</p>
+              </div>
             </div>
             <textarea 
               value={newQuestionText}
@@ -1170,9 +1281,12 @@ const App = () => {
       {isMaterialModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsMaterialModalOpen(false)}>
           <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-4 mb-8">
-              <button onClick={() => setIsMaterialModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button>
-              <h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3>
+            <div className="flex flex-col gap-1 mb-8">
+              <div className="flex items-center gap-4">
+                <button onClick={() => setIsMaterialModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button>
+                <h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3>
+              </div>
+              <p className="text-slate-500 font-bold text-sm mt-1 pr-12">כאן תמצאו חומרים שיכולים לעזור לכם בקורס. יש לכם חומר שיכול לעזור? העלו אותו כדי שהמאגר ימשיך לגדול.</p>
             </div>
             <div className="space-y-6">
               <div>
@@ -1182,7 +1296,7 @@ const App = () => {
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג החומר</label>
                 <div className="grid grid-cols-2 gap-3">
-                  {MATERIAL_CATEGORIES.map(cat => (
+                  {MATERIAL_CATEGORIES.filter(cat => cat.id !== 'links').map(cat => (
                     <button 
                       key={cat.id} 
                       onClick={() => setNewMaterialCategory(cat.id)} 
@@ -1196,8 +1310,13 @@ const App = () => {
               </div>
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">בחירת קובץ</label>
-                <div onClick={() => document.getElementById('materialFile').click()} className={`border-2 border-dashed rounded-[32px] p-8 text-center cursor-pointer transition-all ${newMaterialFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 hover:border-indigo-200 bg-slate-50'}`}>
-                  <input id="materialFile" type="file" className="hidden" onChange={(e) => setNewMaterialFile(e.target.files[0])} />
+                <div onClick={() => fileInputRef.current?.click()} className={`border-2 border-dashed rounded-[32px] p-8 text-center cursor-pointer transition-all ${newMaterialFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 hover:border-indigo-200 bg-slate-50'}`}>
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    className="hidden" 
+                    onChange={(e) => setNewMaterialFile(e.target.files[0])} 
+                  />
                   {newMaterialFile ? (
                     <div className="flex flex-col items-center text-emerald-600 font-bold"><CheckCircle className="h-10 w-10 mb-2" /><span className="text-sm truncate w-full px-4">{newMaterialFile.name}</span></div>
                   ) : (
@@ -1206,6 +1325,48 @@ const App = () => {
                 </div>
               </div>
               <button onClick={handlePostMaterial} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">פרסם חומר לימוד</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Link Modal */}
+      {isLinkModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsLinkModalOpen(false)}>
+          <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-4 mb-8">
+              <button onClick={() => setIsLinkModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button>
+              <h3 className="text-3xl font-black text-slate-900">הוספת קישור</h3>
+            </div>
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת הקישור</label>
+                <input type="text" value={newLinkTitle} onChange={(e) => setNewLinkTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: קבוצת וואטסאפ של הקורס" />
+              </div>
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כתובת הקישור (URL)</label>
+                <input type="text" value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="https://..." />
+              </div>
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג הקישור</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { id: 'drive', label: 'Google Drive', icon: LinkIcon },
+                    { id: 'whatsapp', label: 'WhatsApp', icon: Share2 },
+                    { id: 'other', label: 'אחר', icon: ExternalLink }
+                  ].map(type => (
+                    <button 
+                      key={type.id} 
+                      onClick={() => setNewLinkType(type.id)} 
+                      className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all font-bold text-xs ${newLinkType === type.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                    >
+                      <type.icon className="h-5 w-5" />
+                      <span>{type.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button onClick={handlePostLink} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">הוסף קישור</button>
             </div>
           </div>
         </div>
