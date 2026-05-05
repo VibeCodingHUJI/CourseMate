@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { User, TrendingUp, FileText, Pencil } from 'lucide-react';
+import { User, FileText, Pencil } from 'lucide-react';
 
 const CourseCard = ({ course, onClick }) => (
   <div 
@@ -65,7 +65,7 @@ const CourseCard = ({ course, onClick }) => (
       </div>
     )}
     
-    <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between">
+    <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-start">
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 shrink-0">
           <User className="h-5 w-5" />
@@ -80,10 +80,6 @@ const CourseCard = ({ course, onClick }) => (
             <span className="text-[10px] text-slate-500 font-bold mt-0.5">מתרגל/ת: {course.ta}</span>
           )}
         </div>
-      </div>
-      <div className={`flex items-center gap-1.5 text-xs font-black ${course.difficulty > 4 ? 'text-rose-500' : 'text-emerald-500'}`}>
-        <TrendingUp className="h-4 w-4" />
-        קושי {course.difficulty}/5
       </div>
     </div>
   </div>

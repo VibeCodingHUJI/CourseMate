@@ -232,6 +232,24 @@ const CourseDetail = ({
 
   const textReviews = reviews.filter(r => r.comment && r.comment.trim() !== '');
 
+  const hasUserRated = reviews.some(r => r.authorId === user.id);
+
+  const handleOpenRatingModal = () => {
+    if (hasUserRated) {
+      alert('כבר דירגת את הקורס הזה, תודה על העזרה!');
+    } else {
+      setIsRatingModalOpen(true);
+    }
+  };
+
+  const handleOpenReviewModal = () => {
+    if (hasUserRated) {
+      alert('כבר דירגת את הקורס הזה, תודה על העזרה!');
+    } else {
+      setIsReviewModalOpen(true);
+    }
+  };
+
   const getMaterialIcon = (m) => {
     if (m.isLink) {
       if (m.type === 'WHATSAPP') return <Share2 className="h-6 w-6" />;
@@ -585,10 +603,24 @@ const App = () => {
         const reviewsData = await reviewsRes.json();
         
         setAllReviews(reviewsData);
-        const coursesWithCounts = courses.map(c => ({
-          ...c,
-          reviewCount: reviewsData.filter(r => r.courseId === c.id).length
-        }));
+        const coursesWithCounts = courses.map(c => {
+          const courseReviews = reviewsData.filter(r => r.courseId === c.id);
+          const difficultyReviews = courseReviews.filter(r => r.difficulty !== undefined);
+          
+          let avgDiff;
+          if (difficultyReviews.length > 0) {
+            avgDiff = (difficultyReviews.reduce((sum, r) => sum + r.difficulty, 0) / difficultyReviews.length);
+          } else {
+            // Standardize existing 1-5 scale data to 1-10
+            avgDiff = c.difficulty * 2;
+          }
+          
+          return {
+            ...c,
+            reviewCount: courseReviews.length,
+            difficulty: avgDiff
+          };
+        });
         setAllCourses(coursesWithCounts);
       } catch (err) {
         console.error('Error fetching initial data:', err);
