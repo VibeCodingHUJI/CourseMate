@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ChevronRight, Star, BookOpen, GraduationCap, AlertCircle, MessageSquare, Plus, X, Heart, Ghost, UserCircle, User } from 'lucide-react';
 
-const LecturerProfile = ({ onDepartmentClick }) => {
+const LecturerProfile = ({ user, onDepartmentClick }) => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [lecturer, setLecturer] = useState(null);
@@ -18,6 +18,8 @@ const LecturerProfile = ({ onDepartmentClick }) => {
   const [newComment, setNewComment] = useState('');
   const [selectedReviewCourseId, setSelectedReviewCourseId] = useState('');
   const [identityType, setIdentityType] = useState('anon'); // 'full', 'initials', 'anon'
+  const [newSemester, setNewSemester] = useState("סמסטר א'");
+  const [newYear, setNewYear] = useState('תשפ"ד');
 
   // Initialize selectedReviewCourseId when courses are loaded
   useEffect(() => {
@@ -27,13 +29,10 @@ const LecturerProfile = ({ onDepartmentClick }) => {
   }, [courses]);
 
   const handleAddReview = async () => {
+    if (user?.isGuest) return alert('אורחים אינם יכולים להוסיף ביקורות');
     if (!newComment.trim()) return alert('נא להוסיף תוכן לביקורת');
     if (!selectedReviewCourseId) return alert('נא לבחור קורס רלוונטי');
     
-    // Get user info from localStorage
-    const savedUser = localStorage.getItem('user');
-    const user = savedUser ? JSON.parse(savedUser) : { name: 'אורח/ת', id: 'guest' };
-
     let displayName = 'סטודנט/ית אנונימי/ת';
     if (identityType === 'full') {
       displayName = user.name;
@@ -47,20 +46,18 @@ const LecturerProfile = ({ onDepartmentClick }) => {
     }
 
     const newReview = {
-      lecturerId: id, 
-      courseId: selectedReviewCourseId,
+      course_id: selectedReviewCourseId,
       author: displayName,
-      authorId: user.id,
+      author_id: user.id,
       rating: newRating,
       comment: newComment,
       date: new Date().toLocaleDateString('he-IL'),
-      likes: 0,
-      likedBy: []
+      semester: newSemester,
+      year: newYear
     };
 
     try {
-      console.log('Sending review to server:', newReview);
-      const res = await fetch('http://localhost:3000/reviews', {
+      const res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newReview)
@@ -69,20 +66,7 @@ const LecturerProfile = ({ onDepartmentClick }) => {
       if (!res.ok) throw new Error('Failed to save review');
 
       const savedReview = await res.json();
-      console.log('Review saved successfully:', savedReview);
-
-      // Refresh reviews list from server
-      const reviewsRes = await fetch(`http://localhost:3000/reviews?lecturerId=${id}`);
-      const updatedReviews = await reviewsRes.json();
-      
-      // If server-side filtering isn't perfect, we can also filter locally
-      // But for now, we'll trust the query param or manually filter
-      const lecturerCourses = courses.map(c => c.id);
-      const filteredReviews = updatedReviews.filter(r => 
-        String(r.lecturerId) === String(id) || lecturerCourses.includes(r.courseId)
-      );
-
-      setReviews(filteredReviews);
+      setReviews([savedReview, ...reviews]);
       setIsModalOpen(false);
       setNewComment('');
       setNewRating(5);
@@ -113,36 +97,22 @@ const LecturerProfile = ({ onDepartmentClick }) => {
     const fetchLecturerData = async () => {
       try {
         setLoading(true);
-        console.log('Current ID from URL:', id);
-
-        // Fetch ALL lecturers
-        const lectsRes = await fetch(`http://localhost:3000/lecturers`);
-        const allLecturers = await lectsRes.json();
         
-        const foundLecturer = allLecturers.find(l => String(l.id) === String(id));
+        const [lecturerRes, coursesRes, reviewsRes] = await Promise.all([
+          fetch(`http://localhost:5000/api/lecturers/${id}`),
+          fetch(`http://localhost:5000/api/lecturers/${id}/courses`),
+          fetch(`http://localhost:5000/api/lecturers/${id}/reviews`)
+        ]);
 
-        if (!foundLecturer) {
-           setError('מרצה לא נמצא');
-           setLoading(false);
-           return;
-        }
+        if (!lecturerRes.ok) throw new Error('Lecturer not found');
 
-        // Fetch ALL courses to filter manually (more reliable than query params in some setups)
-        const coursesRes = await fetch(`http://localhost:3000/courses`);
-        const allCourses = await coursesRes.json();
-        const lecturerCourses = allCourses.filter(c => String(c.lecturerId) === String(foundLecturer.id));
+        const lecturerData = await lecturerRes.json();
+        const coursesData = await coursesRes.json();
+        const reviewsData = await reviewsRes.json();
 
-        // Fetch ALL reviews to find those related to this lecturer's courses
-        const reviewsRes = await fetch(`http://localhost:3000/reviews`);
-        const allReviews = await reviewsRes.json();
-        
-        // Link reviews to lecturer via course IDs
-        const courseIds = lecturerCourses.map(c => c.id);
-        const lecturerReviews = allReviews.filter(r => courseIds.includes(r.courseId));
-
-        setLecturer(foundLecturer);
-        setCourses(lecturerCourses);
-        setReviews(lecturerReviews);
+        setLecturer(lecturerData);
+        setCourses(coursesData);
+        setReviews(reviewsData);
         setError(null);
       } catch (err) {
         console.error('Fetch error:', err);
@@ -317,13 +287,15 @@ const LecturerProfile = ({ onDepartmentClick }) => {
                 <div className="absolute bottom-0 right-0 w-24 h-1.5 bg-indigo-600 rounded-full"></div>
               </h2>
             </div>
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 active:scale-95 transition-all flex items-center gap-2 mb-4"
-            >
-              <Plus className="h-4 w-4" />
-              הוספת ביקורת
-            </button>
+            {!user?.isGuest && (
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 active:scale-95 transition-all flex items-center gap-2 mb-4"
+              >
+                <Plus className="h-4 w-4" />
+                הוספת ביקורת
+              </button>
+            )}
             <div className="absolute bottom-0 right-0 left-0 h-px bg-slate-200 -z-10"></div>
           </div>
 
@@ -357,9 +329,9 @@ const LecturerProfile = ({ onDepartmentClick }) => {
                   
                   <div className="flex items-center justify-between border-t border-slate-50 pt-6">
                     <div className="flex items-center gap-2">
-                      {review.courseId && (
+                      {review.course_id && (
                         <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-1 rounded-full uppercase tracking-widest">
-                          {courses.find(c => String(c.id) === String(review.courseId))?.title || 'קורס כללי'}
+                          {courses.find(c => String(c.id) === String(review.course_id))?.title || 'קורס כללי'}
                         </span>
                       )}
                       <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">
@@ -462,6 +434,35 @@ const LecturerProfile = ({ onDepartmentClick }) => {
                   <option key={course.id} value={course.id}>{course.title}</option>
                 ))}
               </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">סמסטר</label>
+                <select 
+                  value={newSemester}
+                  onChange={(e) => setNewSemester(e.target.value)}
+                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[22px] px-5 py-3 outline-none text-right font-bold text-sm appearance-none cursor-pointer"
+                >
+                  <option value="סמסטר א'">סמסטר א'</option>
+                  <option value="סמסטר ב'">סמסטר ב'</option>
+                  <option value="שנתי">שנתי</option>
+                  <option value="קיץ">קיץ</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">שנה</label>
+                <select 
+                  value={newYear}
+                  onChange={(e) => setNewYear(e.target.value)}
+                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[22px] px-5 py-3 outline-none text-right font-bold text-sm appearance-none cursor-pointer"
+                >
+                  <option value='תשפ"ד'>תשפ"ד</option>
+                  <option value='תשפ"ג'>תשפ"ג</option>
+                  <option value='תשפ"ב'>תשפ"ב</option>
+                  <option value='תשפ"א'>תשפ"א</option>
+                </select>
+              </div>
             </div>
 
             <div className="mb-8">

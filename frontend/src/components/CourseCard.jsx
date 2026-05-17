@@ -2,26 +2,44 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { User, FileText, Pencil } from 'lucide-react';
 
-const CourseCard = ({ course, onClick }) => (
-  <div 
-    onClick={() => onClick(course)}
-    dir="rtl"
-    className={`bg-white rounded-[32px] shadow-sm border p-8 hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer flex flex-col h-full text-right ${course.type === 'חובה' ? 'border-rose-100 hover:border-rose-200' : 'border-slate-200 hover:border-indigo-200'}`}
-  >
-    <div className="flex justify-start items-start mb-6">
-      {/* Badge Container */}
-      <div className="flex flex-col items-start gap-2">
-        {/* Row 1: [Type] [Credits] [ID|Lang] */}
-        <div className="flex items-center gap-2">
-          <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-            {course.type}
-          </div>
+const CourseCard = ({ course, onClick }) => {
+  const getTypeStyles = (type) => {
+    switch (type) {
+      case 'חובה': return { badge: 'bg-rose-50 text-rose-600', border: 'border-rose-100 hover:border-rose-200' };
+      case 'בחירה': return { badge: 'bg-emerald-50 text-emerald-600', border: 'border-slate-200 hover:border-indigo-200' };
+      case 'קורסי יסוד': return { badge: 'bg-blue-50 text-blue-600', border: 'border-blue-100 hover:border-blue-200' };
+      case 'חובת בחירה': return { badge: 'bg-amber-50 text-amber-600', border: 'border-amber-100 hover:border-amber-200' };
+      default: return { badge: 'bg-slate-50 text-slate-600', border: 'border-slate-200 hover:border-indigo-200' };
+    }
+  };
+
+  const styles = getTypeStyles(course.type);
+
+  return (
+    <div 
+      onClick={() => onClick(course)}
+      dir="rtl"
+      className={`bg-white rounded-[32px] shadow-sm border p-8 hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer flex flex-col h-full text-right ${styles.border}`}
+    >
+      <div className="flex justify-start items-start mb-6">
+        {/* Badge Container */}
+        <div className="flex flex-col items-start gap-2">
+          {/* Row 1: [Type] [Credits] [ID|Lang] */}
+          <div className="flex items-center gap-2">
+            <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${styles.badge}`}>
+              {course.type}
+            </div>
           <div className="bg-amber-50 text-amber-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
             {course.credits} נ"ז
           </div>
           <div className="bg-indigo-50 text-indigo-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
             {course.code} | {course.language || 'עברית'}
           </div>
+          {course.campus && (
+            <div className="bg-slate-50 text-slate-400 px-3 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border border-slate-100">
+              {course.campus}
+            </div>
+          )}
         </div>
         
         {/* Row 2: [Semester] [Assessment] [Attendance] */}
@@ -39,7 +57,7 @@ const CourseCard = ({ course, onClick }) => (
             </div>
           )}
           <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
-            {course.attendanceMandatory ? 'חובת נוכחות' : 'אין חובת נוכחות'}
+            נוכחות: {course.attendanceValue || (course.attendanceMandatory ? 'חובה' : 'אין')}
           </div>
         </div>
       </div>
@@ -71,11 +89,23 @@ const CourseCard = ({ course, onClick }) => (
           <User className="h-5 w-5" />
         </div>
         <div className="flex flex-col">
-          <span className="text-xs text-slate-700 font-black">
-            מרצה: <Link to={`/lecturer/${course.lecturerId}`} onClick={(e) => e.stopPropagation()} className="hover:text-indigo-600 hover:underline transition-all">
-              {course.instructor}
-            </Link>
-          </span>
+          <div className="text-xs text-slate-700 font-black flex flex-wrap gap-1">
+            <span>מרצה:</span>
+            {course.instructors && course.instructors.length > 0 ? (
+              course.instructors.map((inst, idx) => (
+                <Link 
+                  key={inst.id} 
+                  to={`/lecturer/${inst.id}`} 
+                  onClick={(e) => e.stopPropagation()} 
+                  className="hover:text-indigo-600 hover:underline transition-all"
+                >
+                  {inst.name}{idx < course.instructors.length - 1 ? ',' : ''}
+                </Link>
+              ))
+            ) : (
+              <span>{course.instructor || 'לא ידוע'}</span>
+            )}
+          </div>
           {course.ta && (
             <span className="text-[10px] text-slate-500 font-bold mt-0.5">מתרגל/ת: {course.ta}</span>
           )}
@@ -83,6 +113,7 @@ const CourseCard = ({ course, onClick }) => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export default CourseCard;

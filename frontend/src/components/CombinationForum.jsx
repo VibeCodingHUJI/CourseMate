@@ -1,7 +1,80 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  MessageSquare, ChevronLeft, X, Send, User, BookOpen, Search, Heart, Pencil, Check, RotateCcw
+  MessageSquare, ChevronLeft, X, Send, User, BookOpen, Search, Heart, Pencil, Check, RotateCcw, ChevronDown
 } from 'lucide-react';
+
+const SearchableSelect = ({ options, value, onChange, placeholder, label }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const dropdownRef = useRef(null);
+
+  const filtered = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
+  const selectedLabel = options.find(o => o.value === value)?.label || '';
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="flex-1 w-full text-right relative" ref={dropdownRef}>
+      <label className="text-xs font-black text-slate-400 mb-3 block">{label}</label>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 flex items-center justify-between cursor-pointer hover:bg-white transition-all font-bold text-right"
+      >
+        <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <div className="flex-1 text-right overflow-hidden">
+          {isOpen ? (
+            <input 
+              autoFocus
+              type="text"
+              placeholder="חפש..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-transparent outline-none w-full text-right font-bold"
+            />
+          ) : (
+            <span className={`truncate block ${selectedLabel ? 'text-slate-900' : 'text-slate-400'}`}>
+              {selectedLabel || placeholder}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="max-h-60 overflow-y-auto custom-scrollbar">
+            {filtered.length > 0 ? (
+              filtered.map(o => (
+                <div 
+                  key={o.value}
+                  onClick={() => {
+                    onChange(o.value);
+                    setSearch('');
+                    setIsOpen(false);
+                  }}
+                  className="px-6 py-4 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-colors group"
+                >
+                  {value === o.value && <Check className="h-4 w-4 text-indigo-600 shrink-0" />}
+                  <span className={`font-bold text-right flex-1 text-sm ${value === o.value ? 'text-indigo-600' : 'text-slate-700 group-hover:text-indigo-600'}`}>
+                    {o.label}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="px-6 py-4 text-slate-400 text-sm text-center font-bold">לא נמצאו תוצאות</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   const [combinations, setCombinations] = useState([]);
@@ -72,8 +145,9 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   const handlePostCombination = async () => {
     if (!majorA || !majorB || !initialQuestion) return alert('נא למלא את כל השדות');
     
-    const labelA = STUDY_TRACKS.find(t => t.value === majorA)?.label || majorA;
-    const labelB = STUDY_TRACKS.find(t => t.value === majorB)?.label || majorB;
+    const safeTracks = STUDY_TRACKS || [];
+    const labelA = safeTracks.find(t => t.value === majorA)?.label || majorA;
+    const labelB = safeTracks.find(t => t.value === majorB)?.label || majorB;
 
     const newComb = {
       majorA, majorB,
@@ -210,31 +284,23 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
 
           {/* Filters Bar */}
           <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1 w-full text-right">
-              <label className="text-xs font-black text-slate-400 mb-3 block">חוג א'</label>
-              <select 
-                value={filterA}
-                onChange={(e) => setFilterA(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 outline-none focus:bg-white transition-all font-bold text-right cursor-pointer"
-              >
-                <option value="">הכל...</option>
-                {STUDY_TRACKS.map(t => <option key={t.id} value={t.value}>{t.label}</option>)}
-              </select>
-            </div>
+            <SearchableSelect 
+              label="חוג א'"
+              placeholder="הכל..."
+              options={STUDY_TRACKS || []}
+              value={filterA}
+              onChange={setFilterA}
+            />
             <div className="bg-indigo-50 h-12 w-12 rounded-2xl flex items-center justify-center text-indigo-600 shrink-0">
               <X className="h-6 w-6 rotate-45" />
             </div>
-            <div className="flex-1 w-full text-right">
-              <label className="text-xs font-black text-slate-400 mb-3 block">חוג ב'</label>
-              <select 
-                value={filterB}
-                onChange={(e) => setFilterB(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 outline-none focus:bg-white transition-all font-bold text-right cursor-pointer"
-              >
-                <option value="">הכל...</option>
-                {STUDY_TRACKS.map(t => <option key={t.id} value={t.value}>{t.label}</option>)}
-              </select>
-            </div>
+            <SearchableSelect 
+              label="חוג ב'"
+              placeholder="הכל..."
+              options={STUDY_TRACKS || []}
+              value={filterB}
+              onChange={setFilterB}
+            />
             <button 
               onClick={() => setIsNewCombModalOpen(true)}
               className="md:self-end bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black hover:bg-indigo-700 shadow-xl active:scale-95 transition-all"
@@ -415,20 +481,20 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
             </div>
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-black text-slate-400 uppercase mb-2 block">חוג א'</label>
-                  <select value={majorA} onChange={(e) => setMajorA(e.target.value)} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-right font-bold appearance-none">
-                    <option value="">בחירה...</option>
-                    {STUDY_TRACKS.map(t => <option key={t.id} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-black text-slate-400 uppercase mb-2 block">חוג ב'</label>
-                  <select value={majorB} onChange={(e) => setMajorB(e.target.value)} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-right font-bold appearance-none">
-                    <option value="">בחירה...</option>
-                    {STUDY_TRACKS.map(t => <option key={t.id} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
+                <SearchableSelect 
+                  label="חוג א'"
+                  placeholder="בחירה..."
+                  options={STUDY_TRACKS || []}
+                  value={majorA}
+                  onChange={setMajorA}
+                />
+                <SearchableSelect 
+                  label="חוג ב'"
+                  placeholder="בחירה..."
+                  options={STUDY_TRACKS || []}
+                  value={majorB}
+                  onChange={setMajorB}
+                />
               </div>
               <div>
                 <label className="text-xs font-black text-slate-400 uppercase mb-2 block">שאל שאלה</label>

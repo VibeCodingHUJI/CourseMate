@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   Search, GraduationCap, Star, MessageSquare, 
   BookOpen, TrendingUp, Send, FileText, 
@@ -42,7 +42,8 @@ const Dashboard = ({
   showSuggestions, 
   setShowSuggestions, 
   suggestions, 
-  navigate 
+  navigate,
+  studyTracks
 }) => (
   <div className="max-w-7xl mx-auto">
     <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -55,7 +56,7 @@ const Dashboard = ({
                 className="flex items-center gap-4 bg-white border-2 border-slate-200 rounded-[24px] px-8 py-4 hover:border-indigo-500 transition-all shadow-sm group"
               >
                 <span className="font-bold text-slate-700">
-                  {guestSelectedTrack ? STUDY_TRACKS.find(t => t.value === guestSelectedTrack)?.label : 'לחצו לבחירת חוג...'}
+                  {(studyTracks || []).find(t => t.value === guestSelectedTrack)?.label || 'לחצו לבחירת חוג...'}
                 </span>
                 <Filter className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
               </button>
@@ -63,13 +64,13 @@ const Dashboard = ({
           ) : (
             <>
               <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight tracking-tight">שלום {user.name.split(' ')[0]}!</h1>
-              <p className="text-xl text-slate-500 font-medium">הנה הקורסים במסלול {STUDY_TRACKS.find(t => t.value === user.track)?.label || user.track} שלך</p>
+              <p className="text-xl text-slate-500 font-medium">הנה הקורסים במסלול {(studyTracks || []).find(t => t.value === user.track)?.label || user.track} שלך</p>
             </>
           )}
         </div>
 
       <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit self-end">
-        {['All', 'חובה', 'בחירה'].map(f => (
+        {['All', 'חובה', 'בחירה', 'קורסי יסוד', 'חובת בחירה'].map(f => (
           <button
             key={f}
             onClick={() => setCourseFilter(f)}
@@ -157,13 +158,15 @@ const Dashboard = ({
       ) : (
         <>
           {['א', 'ב', 'ג'].map(year => {
-            const yearCourses = filteredCourses.filter(c => c.type === 'חובה' && c.year === year);
+            const yearCourses = filteredCourses.filter(c => c.type !== 'בחירה' && c.year === year);
             if (yearCourses.length === 0) return null;
             return (
               <div key={year} className="space-y-8">
                 <div className="flex items-center gap-4 flex-row-reverse">
                   <div className="h-px flex-1 bg-slate-200"></div>
-                  <h2 className="text-3xl font-black text-slate-800">קורסי חובה - שנה {year}</h2>
+                  <h2 className="text-3xl font-black text-slate-800">
+                    {courseFilter === 'All' ? 'קורסי חובה' : courseFilter} - שנה {year}
+                  </h2>
                   <div className="h-px flex-1 bg-slate-200"></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -259,6 +262,16 @@ const CourseDetail = ({
     return <FileText className="h-6 w-6" />;
   };
 
+  const getTypeBadgeStyles = (type) => {
+    switch (type) {
+      case 'חובה': return 'bg-rose-50 text-rose-600';
+      case 'בחירה': return 'bg-emerald-50 text-emerald-600';
+      case 'קורסי יסוד': return 'bg-blue-50 text-blue-600';
+      case 'חובת בחירה': return 'bg-amber-50 text-amber-600';
+      default: return 'bg-slate-50 text-slate-600';
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <button 
@@ -281,7 +294,7 @@ const CourseDetail = ({
             <div className="flex flex-col items-start gap-2">
               {/* Row 1: [Type] [Credits] [ID|Lang] */}
               <div className="flex items-center gap-2">
-                <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${selectedCourse.type === 'חובה' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${getTypeBadgeStyles(selectedCourse.type)}`}>
                   {selectedCourse.type}
                 </span>
                 <span className="bg-amber-50 text-amber-700 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">
@@ -290,9 +303,14 @@ const CourseDetail = ({
                 <span className="bg-indigo-50 text-indigo-700 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">
                   {selectedCourse.code} | {selectedCourse.language || 'עברית'}
                 </span>
+                {selectedCourse.campus && (
+                  <span className="bg-slate-50 text-slate-400 px-3 py-1 rounded-xl text-[9px] font-bold uppercase tracking-wider border border-slate-100">
+                    {selectedCourse.campus}
+                  </span>
+                )}
               </div>
               
-              {/* Row 2: [Semester] [Assessment] [Attendance] */}
+              {/* Row 2: [Semester] [Assessment] [Attendance] [Lecturer] */}
               <div className="flex items-center gap-2">
                 {selectedCourse.semester && (
                   <span className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">
@@ -307,14 +325,20 @@ const CourseDetail = ({
                   </span>
                 )}
                 <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${selectedCourse.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
-                  {selectedCourse.attendanceMandatory ? 'חובת נוכחות' : 'אין חובת נוכחות'}
+                  נוכחות: {selectedCourse.attendanceValue || (selectedCourse.attendanceMandatory ? 'חובה' : 'אין')}
                 </span>
-                {enforcementRate !== null && (
-                  <span className="bg-indigo-900 text-white px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                    <CheckCircle className="h-3 w-3" />
-                    אכיפה בפועל: {enforcementRate}% ({attendanceReviews.length} הצבעות)
-                  </span>
-                )}
+                <span className="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                  <User className="h-3 w-3" />
+                  {selectedCourse.instructors && selectedCourse.instructors.length > 0 ? (
+                    selectedCourse.instructors.map((inst, idx) => (
+                      <Link key={inst.id} to={`/lecturer/${inst.id}`} className="hover:underline">
+                        {inst.name}{idx < selectedCourse.instructors.length - 1 ? ',' : ''}
+                      </Link>
+                    ))
+                  ) : (
+                    <span>{selectedCourse.instructor || 'לא ידוע'}</span>
+                  )}
+                </span>
               </div>
             </div>
           </div>
@@ -383,8 +407,24 @@ const CourseDetail = ({
                       </div>
                       <div className="text-right">
                         <div className="font-black text-slate-900">{r.author}</div>
-                        <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">מרצה: {selectedCourse.instructor}</div>
-                      </div>
+                        <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex flex-wrap gap-1">
+                          <span>מרצה:</span>
+                          {selectedCourse.instructors && selectedCourse.instructors.length > 0 ? (
+                            selectedCourse.instructors.map((inst, idx) => (
+                              <Link 
+                                key={inst.id} 
+                                to={`/lecturer/${inst.id}`} 
+                                className="hover:underline"
+                              >
+                                {inst.name}{idx < selectedCourse.instructors.length - 1 ? ',' : ''}
+                              </Link>
+                            ))
+                          ) : (
+                            <span>{selectedCourse.instructor || 'לא ידוע'}</span>
+                          )}
+                        </div>
+                        </div>
+
                     </div>
                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
                   </div>
@@ -578,6 +618,7 @@ const App = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   
   // Dynamic Content State
+  const [studyTracks, setStudyTracks] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [allReviews, setAllReviews] = useState([]); // For course card counters
   const [questions, setQuestions] = useState([]);
@@ -591,20 +632,48 @@ const App = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Load study tracks on mount
+  useEffect(() => {
+    fetch('http://localhost:5000/api/combinations')
+      .then(res => res.json())
+      .then(data => setStudyTracks(data.value || data))
+      .catch(err => console.error('Error fetching combinations:', err));
+  }, []);
+
   // Consolidated initial data fetching
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const currentTrack = user?.isGuest ? guestSelectedTrack : user?.track;
+        if (!currentTrack || (user?.isGuest && !guestSelectedTrack)) {
+          setAllCourses([]);
+          return;
+        }
+
+        let coursesUrl = 'http://localhost:3000/courses';
+        
+        // Use real SQL data for any combination selected from the database
+        // Real combinations use roadmap codes (e.g. 521-3010)
+        const isRealCombination = /^\d{3}-\d{4}$/.test(currentTrack);
+        if (isRealCombination) {
+          coursesUrl = `http://localhost:5000/api/combinations/${currentTrack}/courses`;
+        } else if (currentTrack === 'Computer Science') {
+          // Compatibility with legacy mock data
+          coursesUrl = 'http://localhost:5000/api/combinations/521-3010/courses';
+        }
+
         const [coursesRes, reviewsRes] = await Promise.all([
-          fetch('http://localhost:3000/courses'),
+          fetch(coursesUrl),
           fetch('http://localhost:3000/reviews')
         ]);
-        const courses = await coursesRes.json();
+        const coursesData = await coursesRes.json();
+        const courses = Array.isArray(coursesData) ? coursesData : (coursesData.value || []);
+        
         const reviewsData = await reviewsRes.json();
         
         setAllReviews(reviewsData);
         const coursesWithCounts = courses.map(c => {
-          const courseReviews = reviewsData.filter(r => r.courseId === c.id);
+          const courseReviews = reviewsData.filter(r => String(r.courseId) === String(c.id));
           const difficultyReviews = courseReviews.filter(r => r.difficulty !== undefined);
           
           let avgDiff;
@@ -612,11 +681,12 @@ const App = () => {
             avgDiff = (difficultyReviews.reduce((sum, r) => sum + r.difficulty, 0) / difficultyReviews.length);
           } else {
             // Standardize existing 1-5 scale data to 1-10
-            avgDiff = c.difficulty * 2;
+            avgDiff = (c.difficulty || 0) * 2;
           }
           
           return {
             ...c,
+            track: currentTrack, // Ensure it matches the filter
             reviewCount: courseReviews.length,
             difficulty: avgDiff
           };
@@ -627,24 +697,38 @@ const App = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [user?.track, guestSelectedTrack]);
 
   // Sync selectedCourse based on URL path
   useEffect(() => {
-    if (allCourses.length > 0) {
+    const syncCourseFromUrl = async () => {
       const match = location.pathname.match(/\/course\/([^/]+)/);
       if (match) {
         const courseId = match[1];
-        const course = allCourses.find(c => String(c.id) === String(courseId));
+        let course = allCourses.find(c => String(c.id) === String(courseId));
+        
+        if (!course) {
+          try {
+            const res = await fetch(`http://localhost:5000/api/courses/${courseId}`);
+            if (res.ok) {
+              course = await res.json();
+            }
+          } catch (err) {
+            console.error('Error fetching individual course:', err);
+          }
+        }
+        
         if (course) {
           setSelectedCourse(course);
-        } else {
+        } else if (allCourses.length > 0) {
           setSelectedCourse(null);
         }
       } else if (location.pathname === '/') {
         setSelectedCourse(null);
       }
-    }
+    };
+    
+    syncCourseFromUrl();
   }, [location.pathname, allCourses]);
 
   // Load reviews/questions/materials when course is selected
@@ -715,7 +799,7 @@ const App = () => {
     navigate('/'); // ALWAYS navigate to home after track change
   };
 
-  const filteredTracks = STUDY_TRACKS.filter(t => t.label.includes(trackSearch));
+  const filteredTracks = studyTracks.filter(t => t.label.includes(trackSearch));
 
   const suggestions = searchQuery.length > 1 
     ? allCourses.filter(c => 
@@ -1044,7 +1128,7 @@ const App = () => {
                     onClick={() => setIsChangingTrack(!isChangingTrack)}
                     className="text-[10px] text-indigo-600 font-black uppercase mt-1 tracking-tighter hover:underline"
                   >
-                    {STUDY_TRACKS.find(t => t.value === user.track)?.label || user.track}
+                    {(studyTracks || []).find(t => t.value === user.track)?.label || user.track}
                   </button>
                 )}
               </div>
@@ -1093,7 +1177,7 @@ const App = () => {
             <div className="space-y-1 max-h-60 overflow-y-auto">
               {filteredTracks.map(t => (
                 <button
-                  key={t.id}
+                  key={t.value}
                   onClick={() => {
                     // Explicit direct mapping to ensure no jumps
                     const targetTrack = t.value;
@@ -1113,9 +1197,9 @@ const App = () => {
       <main className="flex-grow container mx-auto px-6 py-12">
         <Routes>
           <Route path="/lecturer/:id" element={
-            <LecturerProfile onDepartmentClick={(dept) => {
+            <LecturerProfile user={user} onDepartmentClick={(dept) => {
               // Find the track value that matches the department label
-              const targetTrack = STUDY_TRACKS.find(t => t.label === dept || t.value === dept)?.value || dept;
+              const targetTrack = studyTracks.find(t => t.label === dept || t.value === dept)?.value || dept;
               handleChangeTrack(targetTrack);
               navigate('/');
             }} />
@@ -1165,7 +1249,7 @@ const App = () => {
                   user={user} 
                   onLogout={handleLogout} 
                   onTrackSelect={handleChangeTrack} 
-                  STUDY_TRACKS={STUDY_TRACKS}
+                  STUDY_TRACKS={studyTracks}
                 />
               ) : (
                 <Dashboard 
@@ -1182,6 +1266,7 @@ const App = () => {
                   setShowSuggestions={setShowSuggestions}
                   suggestions={suggestions}
                   navigate={navigate}
+                  studyTracks={studyTracks}
                 />
               )}
             </>
@@ -1437,7 +1522,7 @@ const App = () => {
             <div className="flex-1 overflow-y-auto space-y-2 pr-1">
               {filteredTracks.map(t => (
                 <button
-                  key={t.id}
+                  key={t.value}
                   onClick={() => {
                     handleChangeTrack(t.value);
                     setIsGuestDrawerOpen(false);

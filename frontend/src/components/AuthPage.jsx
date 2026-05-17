@@ -7,22 +7,26 @@ const AuthPage = ({ onLogin }) => {
     name: '',
     email: '',
     password: '',
-    track: '' // Will store the value (e.g., 'Computer Science')
+    track: '' // Will store the value (e.g., '521-3010')
   });
 
+  const [studyTracks, setStudyTracks] = useState([]);
   const [trackSearch, setTrackSearch] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const STUDY_TRACKS = [
-    { id: 'cs', label: 'מדעי המחשב', value: 'Computer Science' },
-    { id: 'ba', label: 'מנהל עסקים', value: 'Business Administration' },
-    { id: 'eco', label: 'כלכלה', value: 'Economics' },
-    { id: 'psy', label: 'פסיכולוגיה', value: 'Psychology' },
-    { id: 'oth', label: 'אחר', value: 'Other' },
-  ];
+  // Fetch real study tracks on mount
+  useEffect(() => {
+    fetch('http://localhost:5000/api/combinations')
+      .then(res => res.json())
+      .then(data => {
+        // SQL backend returns { value: [...] }
+        setStudyTracks(data.value || data);
+      })
+      .catch(err => console.error('Error fetching combinations:', err));
+  }, []);
 
-  const filteredTracks = STUDY_TRACKS.filter(t => 
+  const filteredTracks = studyTracks.filter(t => 
     t.label.toLowerCase().includes(trackSearch.toLowerCase())
   );
 
@@ -80,7 +84,7 @@ const AuthPage = ({ onLogin }) => {
     }
   };
 
-  const selectedTrackLabel = STUDY_TRACKS.find(t => t.value === authForm.track)?.label || '';
+  const selectedTrackLabel = studyTracks.find(t => t.value === authForm.track)?.label || '';
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6" dir="rtl">
@@ -154,15 +158,22 @@ const AuthPage = ({ onLogin }) => {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
                   <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                  <input 
-                    type="text"
-                    placeholder="חפש מסלול..."
-                    value={isDropdownOpen ? trackSearch : (selectedTrackLabel || 'בחר מסלול לימוד')}
-                    readOnly={!isDropdownOpen}
-                    onChange={(e) => setTrackSearch(e.target.value)}
-                    onFocus={() => setIsDropdownOpen(true)}
-                    className="bg-transparent outline-none w-full text-right font-medium cursor-pointer"
-                  />
+                  <div className="flex-1 text-right overflow-hidden">
+                    {isDropdownOpen ? (
+                      <input 
+                        autoFocus
+                        type="text"
+                        placeholder="חפש מסלול..."
+                        value={trackSearch}
+                        onChange={(e) => setTrackSearch(e.target.value)}
+                        className="bg-transparent outline-none w-full text-right font-medium"
+                      />
+                    ) : (
+                      <span className={`font-medium truncate block ${selectedTrackLabel ? 'text-slate-900' : 'text-slate-400'}`}>
+                        {selectedTrackLabel || 'בחר מסלול לימוד'}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {isDropdownOpen && (
@@ -171,7 +182,7 @@ const AuthPage = ({ onLogin }) => {
                       {filteredTracks.length > 0 ? (
                         filteredTracks.map(t => (
                           <div 
-                            key={t.id}
+                            key={t.value}
                             onClick={() => {
                               setAuthForm({...authForm, track: t.value});
                               setTrackSearch('');
@@ -179,8 +190,8 @@ const AuthPage = ({ onLogin }) => {
                             }}
                             className="px-6 py-4 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-colors group"
                           >
-                            {authForm.track === t.value && <Check className="h-4 w-4 text-indigo-600" />}
-                            <span className={`font-bold text-right flex-1 ${authForm.track === t.value ? 'text-indigo-600' : 'text-slate-700 group-hover:text-indigo-600'}`}>
+                            {authForm.track === t.value && <Check className="h-4 w-4 text-indigo-600 shrink-0" />}
+                            <span className={`font-bold text-right flex-1 text-sm ${authForm.track === t.value ? 'text-indigo-600' : 'text-slate-700 group-hover:text-indigo-600'}`}>
                               {t.label}
                             </span>
                           </div>

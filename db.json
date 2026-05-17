@@ -71,6 +71,46 @@
       "track": "Computer Science",
       "isGuest": false,
       "id": 9
+    },
+    {
+      "name": "nthvnthv",
+      "email": "MAYA!@mail.huji.ac.il",
+      "password": "12345678",
+      "track": "Computer Science",
+      "isGuest": false,
+      "id": 10
+    },
+    {
+      "name": "MAYA RASH",
+      "email": "MAYA@mail.huji.ac.il",
+      "password": "12345",
+      "track": "Computer Science",
+      "isGuest": false,
+      "id": 11
+    },
+    {
+      "name": "מאיה ",
+      "email": "SH@mail.huji.ac.il",
+      "password": "123456787654",
+      "track": "Psychology",
+      "isGuest": false,
+      "id": 12
+    },
+    {
+      "name": "מאיה רשתי",
+      "email": "MAYA!!!@mail.huji.ac.il",
+      "password": "1234567543",
+      "track": "525-3035",
+      "isGuest": false,
+      "id": 13
+    },
+    {
+      "name": "מאיה רשתי",
+      "email": "mmmma@mail.huji.ac.il",
+      "password": "123432123432",
+      "track": "321-7411",
+      "isGuest": false,
+      "id": 14
     }
   ],
   "courses": [
@@ -1103,6 +1143,20 @@
       "identityType": "full",
       "likedBy": [],
       "id": "1CuDpgY"
+    },
+    {
+      "courseId": 2961,
+      "difficulty": 7,
+      "comment": "רמת קושי: לא קשה מאוד \n\nהשקעה נדרשת: לא המון \n\nהמבחן היה הוגן: כן\n\nכללי: קורס מעולה! אוהבת ממש",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ד",
+      "attendanceEnforced": true,
+      "date": "12.5.2026",
+      "author": "מ. ר.",
+      "authorId": 14,
+      "identityType": "initials",
+      "likedBy": [],
+      "id": "onf0eFc"
     }
   ],
   "questions": [],
@@ -1123,6 +1177,14 @@
       "date": "1.5.2026",
       "replies": 1,
       "id": 2
+    },
+    {
+      "majorA": "715-1915",
+      "majorB": "715-2615",
+      "title": "אגרואקולוגיה ובריאות הצמח, דו-חוגי, בשילוב כלכלת סביבה וניהול + אגרואקולוגיה ובריאות הצמח, חד-חוגי, עם חטיבת שמירת טבע ומנהל שטחים",
+      "date": "12.5.2026",
+      "replies": 1,
+      "id": 3
     }
   ],
   "combinationQuestions": [
@@ -1159,6 +1221,29 @@
       "date": "1.5.2026",
       "author": "אורח/ת",
       "id": 3
+    },
+    {
+      "combinationId": 3,
+      "question": "מה אומריםםם",
+      "answers": [
+        {
+          "text": "אחלההה",
+          "date": "12.5.2026",
+          "author": "אורח/ת",
+          "authorId": null,
+          "likedBy": []
+        },
+        {
+          "text": "מגניב לאללה",
+          "date": "12.5.2026",
+          "author": "אורח/ת",
+          "authorId": null,
+          "likedBy": []
+        }
+      ],
+      "date": "12.5.2026",
+      "author": "אורח/ת",
+      "id": 4
     }
   ],
   "lecturers": [
