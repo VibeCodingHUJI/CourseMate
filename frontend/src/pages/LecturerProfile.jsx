@@ -19,7 +19,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
   const [selectedReviewCourseId, setSelectedReviewCourseId] = useState('');
   const [identityType, setIdentityType] = useState('anon'); // 'full', 'initials', 'anon'
   const [newSemester, setNewSemester] = useState("סמסטר א'");
-  const [newYear, setNewYear] = useState('תשפ"ד');
+  const [newYear, setNewYear] = useState('תשפ"ו (2025-26)');
 
   // Initialize selectedReviewCourseId when courses are loaded
   useEffect(() => {
@@ -457,10 +457,10 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
                   onChange={(e) => setNewYear(e.target.value)}
                   className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[22px] px-5 py-3 outline-none text-right font-bold text-sm appearance-none cursor-pointer"
                 >
-                  <option value='תשפ"ד'>תשפ"ד</option>
-                  <option value='תשפ"ג'>תשפ"ג</option>
-                  <option value='תשפ"ב'>תשפ"ב</option>
-                  <option value='תשפ"א'>תשפ"א</option>
+                  <option value='תשפ"ו (2025-26)'>תשפ"ו (2025-26)</option>
+                  <option value='תשפ"ה (2024-25)'>תשפ"ה (2024-25)</option>
+                  <option value='תשפ"ד (2023-24)'>תשפ"ד (2023-24)</option>
+                  <option value='תשפ"ג (2022-23)'>תשפ"ג (2022-23)</option>
                 </select>
               </div>
             </div>

@@ -6,6 +6,14 @@ const ReviewForm = ({
   onCommentChange, onSemesterChange, onYearChange, onIdentityChange, onAttendanceChange, onDifficultyChange,
   onSubmit, onClose 
 }) => {
+  const getDifficultyText = (val) => {
+    if (val <= 2) return "קל מאוד";
+    if (val === 3) return "קל";
+    if (val <= 7) return "בינוני";
+    if (val <= 9) return "קשה";
+    return "קשה מאוד";
+  };
+
   // Parsing the existing comment if it was already partially filled
   // but usually this is a fresh state. We'll add local state for the parts.
   const [parts, setParts] = React.useState({
@@ -34,6 +42,7 @@ const ReviewForm = ({
     { id: 'a', label: "סמסטר א'" },
     { id: 'b', label: "סמסטר ב'" },
     { id: 's', label: 'סמסטר קיץ' },
+    { id: 'y', label: 'שנתי' },
   ];
 
   const ACADEMIC_YEARS = [
@@ -136,7 +145,9 @@ const ReviewForm = ({
             </div>
             <div className="flex justify-between mt-2 px-1">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">קל מאוד</span>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">קשה מאוד</span>
+              <span className="text-[10px] font-black text-rose-600 uppercase tracking-tighter">
+                {getDifficultyText(difficulty)}
+              </span>
             </div>
           </div>
 

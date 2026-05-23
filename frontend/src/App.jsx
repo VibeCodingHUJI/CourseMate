@@ -767,7 +767,7 @@ const App = () => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [newReviewComment, setNewReviewComment] = useState('');
   const [newReviewSemester, setNewReviewSemester] = useState("סמסטר א'");
-  const [newReviewYear, setNewReviewYear] = useState('תשפ"ד');
+  const [newReviewYear, setNewReviewYear] = useState('תשפ"ו (2025-26)');
   const [newReviewIdentity, setNewReviewIdentity] = useState('full'); // 'full', 'initials', 'anon'
   const [newReviewAttendance, setNewReviewAttendance] = useState(null); // null means not selected
   const [newReviewDifficulty, setNewReviewDifficulty] = useState(5);
@@ -1301,6 +1301,36 @@ const App = () => {
                   <div className="h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0">
                     {newReviewDifficulty}
                   </div>
+                </div>
+                <div className="flex justify-between mt-2 px-1">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">קל מאוד</span>
+                  <span className="text-[10px] font-black text-rose-600 uppercase tracking-tighter">
+                    {newReviewDifficulty <= 2 ? "קל מאוד" : newReviewDifficulty === 3 ? "קל" : newReviewDifficulty <= 7 ? "בינוני" : newReviewDifficulty <= 9 ? "קשה" : "קשה מאוד"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 mb-8">
+                <label className="text-sm font-black text-slate-700 mb-4 block">סמסטר</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { id: "סמסטר א'", label: "סמסטר א'" },
+                    { id: "סמסטר ב'", label: "סמסטר ב'" },
+                    { id: "סמסטר קיץ", label: "סמסטר קיץ" },
+                    { id: "שנתי", label: "שנתי" }
+                  ].map(option => (
+                    <button
+                      key={option.id}
+                      onClick={() => setNewReviewSemester(option.id)}
+                      className={`py-3 rounded-xl font-black text-sm border-2 transition-all ${
+                        newReviewSemester === option.id 
+                          ? 'bg-indigo-600 text-white border-transparent shadow-md' 
+                          : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200 hover:shadow-sm'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
