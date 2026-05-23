@@ -44,7 +44,11 @@ const Dashboard = ({
   setShowSuggestions, 
   suggestions, 
   navigate,
-  studyTracks
+  studyTracks,
+  filterSemester, setFilterSemester,
+  filterCampus, setFilterCampus,
+  filterLanguage, setFilterLanguage,
+  filterYear, setFilterYear
 }) => (
   <div className="max-w-7xl mx-auto">
     <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -84,7 +88,7 @@ const Dashboard = ({
     </header>
 
     {/* Course Search Bar */}
-    <div className="mb-12 relative max-w-2xl ml-auto group">
+    <div className="mb-8 relative max-w-2xl ml-auto group">
       <input
         key="search-input"
         type="text"
@@ -128,6 +132,50 @@ const Dashboard = ({
           ))}
         </div>
       )}
+    </div>
+
+    {/* Multi-criteria Filters */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12" dir="rtl">
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">סמסטר</label>
+        <select 
+          value={filterSemester} 
+          onChange={(e) => setFilterSemester(e.target.value)}
+          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
+        >
+          {['הכל', "סמסטר א'", "סמסטר ב'", 'שנתי', 'קיץ'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">קמפוס</label>
+        <select 
+          value={filterCampus} 
+          onChange={(e) => setFilterCampus(e.target.value)}
+          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
+        >
+          {['הכל', 'הר הצופים', 'קרית א"י ספרא', 'עין כרם', 'רחובות'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">שפה</label>
+        <select 
+          value={filterLanguage} 
+          onChange={(e) => setFilterLanguage(e.target.value)}
+          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
+        >
+          {['הכל', 'עברית', 'אנגלית'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">שנה בתואר</label>
+        <select 
+          value={filterYear} 
+          onChange={(e) => setFilterYear(e.target.value)}
+          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
+        >
+          {['הכל', "שנה א'", "שנה ב'", "שנה ג'", "שנה ד'"].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      </div>
     </div>
     
     <div className="space-y-16">
@@ -776,6 +824,12 @@ const App = () => {
   const [courseFilter, setCourseFilter] = useState('All'); // 'All', 'חובה', 'בחירה'
   const [showSuggestions, setShowSuggestions] = useState(false);
   
+  // New multi-criteria filters
+  const [filterSemester, setFilterSemester] = useState('הכל');
+  const [filterCampus, setFilterCampus] = useState('הכל');
+  const [filterLanguage, setFilterLanguage] = useState('הכל');
+  const [filterYear, setFilterYear] = useState('הכל');
+  
   // Dynamic Content State
   const [studyTracks, setStudyTracks] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -971,19 +1025,41 @@ const App = () => {
   const filteredCourses = allCourses.filter(c => {
     if (!user) return false;
     
-    // Base filters: search and type (All, חובה, בחירה)
-    const matchesSearch = c.title.includes(searchQuery) || c.code.includes(searchQuery);
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch = !query || 
+      (c.title && c.title.toLowerCase().includes(query)) || 
+      (c.code && c.code.toLowerCase().includes(query));
+      
     const matchesFilter = courseFilter === 'All' || c.type === courseFilter;
     
+    // Multi-criteria filters
+    const semesterQuery = filterSemester.replace(/'/g, '');
+    const matchesSemester = filterSemester === 'הכל' || (c.semester && (
+      (filterSemester === "סמסטר א'" && (c.semester.includes('א') || c.semester.includes('1'))) ||
+      (filterSemester === "סמסטר ב'" && (c.semester.includes('ב') || c.semester.includes('2'))) ||
+      c.semester.includes(semesterQuery)
+    ));
+      
+    const matchesCampus = filterCampus === 'הכל' || 
+      (c.campus && c.campus.includes(filterCampus === 'קרית א"י ספרא' ? 'ספרא' : filterCampus));
+      
+    const matchesLanguage = filterLanguage === 'הכל' || 
+      (c.language && c.language.includes(filterLanguage));
+    
+    const yearMap = { "שנה א'": "א", "שנה ב'": "ב", "שנה ג'": "ג", "שנה ד'": "ד" };
+    const matchesYear = filterYear === 'הכל' || c.year === yearMap[filterYear];
+
+    const passesAllCriteria = matchesSemester && matchesCampus && matchesLanguage && matchesYear;
+
     // Guest Mode logic: Must have a selected track to see any courses
     if (user.isGuest) {
       if (!guestSelectedTrack) return false;
-      return c.track === guestSelectedTrack && matchesSearch && matchesFilter;
+      return c.track === guestSelectedTrack && matchesSearch && matchesFilter && passesAllCriteria;
     }
 
     // Logged-in user logic
     const matchesTrack = user.track === 'General' || !user.track || c.track === user.track;
-    return matchesTrack && matchesSearch && matchesFilter;
+    return matchesTrack && matchesSearch && matchesFilter && passesAllCriteria;
   });
 
   const getAuthorDisplayName = (fullName, type) => {
@@ -1573,6 +1649,14 @@ const App = () => {
                   suggestions={suggestions}
                   navigate={navigate}
                   studyTracks={studyTracks}
+                  filterSemester={filterSemester}
+                  setFilterSemester={setFilterSemester}
+                  filterCampus={filterCampus}
+                  setFilterCampus={setFilterCampus}
+                  filterLanguage={filterLanguage}
+                  setFilterLanguage={setFilterLanguage}
+                  filterYear={filterYear}
+                  setFilterYear={setFilterYear}
                 />
               )}
             </>
