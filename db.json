@@ -1184,6 +1184,24 @@
       "date": "12.5.2026",
       "replies": 1,
       "id": 3
+    },
+    {
+      "majorA": "מנהל עסקים",
+      "majorB": "מדעי המחשב",
+      "academicYear": "תשפ\"ו (2025-26)",
+      "title": "מנהל עסקים + מדעי המחשב",
+      "date": "23.5.2026",
+      "replies": 1,
+      "id": 4
+    },
+    {
+      "majorA": "מדעי החיים",
+      "majorB": "כימיה",
+      "academicYear": "תשפ\"ו (2025-26)",
+      "title": "מדעי החיים + כימיה",
+      "date": "23.5.2026",
+      "replies": 1,
+      "id": 5
     }
   ],
   "combinationQuestions": [
@@ -1243,6 +1261,22 @@
       "date": "12.5.2026",
       "author": "אורח/ת",
       "id": 4
+    },
+    {
+      "combinationId": 4,
+      "question": "איך המעבר בין הקמפוסים?",
+      "answers": [],
+      "date": "23.5.2026",
+      "author": "אורח/ת",
+      "id": 5
+    },
+    {
+      "combinationId": 5,
+      "question": "כמה אנשים לרוב יש בשילוב?",
+      "answers": [],
+      "date": "23.5.2026",
+      "author": "אורח/ת",
+      "id": 6
     }
   ],
   "lecturers": [

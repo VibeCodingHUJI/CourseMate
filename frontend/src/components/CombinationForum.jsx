@@ -3,6 +3,30 @@ import {
   MessageSquare, ChevronLeft, X, Send, User, BookOpen, Search, Heart, Pencil, Check, RotateCcw, ChevronDown
 } from 'lucide-react';
 
+const FIXED_DEPARTMENTS = [
+  "סיעוד", "אגרו-אינפורמטיקה (חטיבת לימודים)", "אגרואקולוגיה ובריאות הצמח", 
+  "אגרואקולוגיה ובריאות הצמח וכלכלת סביבה וניהול", "אגרואקולוגיה, בריאות הצמח וביוטכנולוגיה", 
+  "אדריכלות נוף", "אמירים", "אנגלית", "ארכאולוגיה והמזרח הקרוב הקדום", "ביוכימיה ומדעי המזון", 
+  "ביוכימיה, מדעי המזון וביוטכנולוגיה", "בלשנות", "גאוגרפיה, סביבה וגאואינפורמטיקה", 
+  "היסטוריה", "היסטוריה של עם ישראל ויהדות זמננו", "הלשון העברית", "הנדסת חשמל ומדעי המחשב", 
+  "הנדסת חשמל ופיזיקה יישומית", "התכנית הרב תחומית במדעי הרוח", "התמחויות בביוטכנולוגיה בחקלאות", 
+  "חינוך", "חשבונאות", "יחסים בין-לאומיים", "כימיה", "כלכלה", "כלכלת סביבה וניהול", 
+  "כלכלת סביבה וניהול וביוטכנולוגיה בחקלאות", "לימודי אסיה", "לימודי האסלאם והמזרח התיכון", 
+  "לימודי רווחה חברתית", "לימודים ספרדיים ולטינו-אמריקניים", "לימודים קלאסיים", 
+  "לימודים רומאניים", "לימודים רוסיים וסלאווים", "מדע הדתות", "מדע המדינה", "מדעי בעלי החיים", 
+  "מדעי בעלי החיים וכלכלת סביבה וניהול", "מדעי בעלי חיים וביוטכנולוגיה", "מדעי החיים", 
+  "מדעי היהדות", "מדעי הכימיה והביולוגיה", "מדעי המחשב", "ביולוגיה חישובית", 
+  "מדעי הצמח בחקלאות", "מדעי הצמח בחקלאות וביוטכנולוגיה", "מדעי הצמח בחקלאות וכלכלת סביבה וניהול", 
+  "מדעי הקוגניציה והמוח", "מדעי הקרקע והמים", "מדעי הקרקע והמים וכלכלת סביבה וניהול", 
+  "מדעי התזונה", "מדעי כדור הארץ", "מדעים ביורפואיים", "מוסיקולוגיה", "מחשבת ישראל", 
+  "מט\"ר", "מכפיל במשפטים", "מנהל עסקים", "מקרא", "משפטים", "מתמטיקה", 
+  "סוציולוגיה ואנתרופולוגיה", "סטטיסטיקה ומדע הנתונים", "ספרות כללית והשוואתית", 
+  "ספרות עברית", "עבודה סוציאלית", "פילוסופיה", "פכ\"מ", "פיסיקה", "פיזיקה", "פסיכולוגיה", 
+  "קרימינולוגיה", "רוקחות", "ריפוי בעיסוק", "רפואה", "רפואת שיניים", 
+  "שמירת טבע ומנהל שטחים פתוחים", "שפה וספרות גרמנית", "שפה וספרות ערבית", 
+  "תוכנית רביבים", "תולדות האמנות", "תולדות התאטרון", "תלמוד והלכה", "תקשורת ועיתונאות"
+].sort().map(d => ({ value: d, label: d }));
+
 const SearchableSelect = ({ options, value, onChange, placeholder, label }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -94,6 +118,14 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   // Filters
   const [filterA, setFilterA] = useState('');
   const [filterB, setFilterB] = useState('');
+  const [filterYear, setFilterYear] = useState('תשפ"ו (2025-26)');
+
+  const ACADEMIC_YEARS = [
+    { value: 'תשפ"ד (2023-24)', label: 'תשפ"ד (2023-24)' },
+    { value: 'תשפ"ה (2024-25)', label: 'תשפ"ה (2024-25)' },
+    { value: 'תשפ"ו (2025-26)', label: 'תשפ"ו (2025-26)' },
+    { value: 'תשפ"ז (2026-27)', label: 'תשפ"ז (2026-27)' }
+  ];
 
   // Editing logic
   const [editingQuestionId, setEditingQuestionId] = useState(null);
@@ -145,13 +177,10 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   const handlePostCombination = async () => {
     if (!majorA || !majorB || !initialQuestion) return alert('נא למלא את כל השדות');
     
-    const safeTracks = STUDY_TRACKS || [];
-    const labelA = safeTracks.find(t => t.value === majorA)?.label || majorA;
-    const labelB = safeTracks.find(t => t.value === majorB)?.label || majorB;
-
     const newComb = {
       majorA, majorB,
-      title: `${labelA} + ${labelB}`,
+      academicYear: filterYear,
+      title: `${majorA} + ${majorB}`,
       date: new Date().toLocaleDateString('he-IL'),
       replies: 1
     };
@@ -169,7 +198,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
         question: initialQuestion,
         answers: [],
         date: new Date().toLocaleDateString('he-IL'),
-        author: 'אורח/ת'
+        author: user.isGuest ? 'אורח/ת' : user.name
       };
       
       await fetch('http://localhost:3000/combinationQuestions', {
@@ -194,7 +223,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
       question: newQText,
       answers: [],
       date: new Date().toLocaleDateString('he-IL'),
-      author: 'אורח/ת'
+      author: user.isGuest ? 'אורח/ת' : user.name
     };
 
     try {
@@ -269,8 +298,16 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   };
 
   const filteredCombinations = combinations.filter(c => 
-    (!filterA || c.majorA === filterA || c.majorB === filterA) && 
-    (!filterB || c.majorA === filterB || c.majorB === filterB)
+    (!filterA || c.majorA === filterA || c.majorB === filterA || (c.title && c.title.includes(filterA))) && 
+    (!filterB || c.majorA === filterB || c.majorB === filterB || (c.title && c.title.includes(filterB))) &&
+    (!filterYear || c.academicYear === filterYear)
+  );
+
+  const existingCombination = combinations.find(c => 
+    filterA && filterB && 
+    ((c.majorA === filterA && c.majorB === filterB) || (c.majorA === filterB && c.majorB === filterA) || 
+     (c.title && c.title.includes(filterA) && c.title.includes(filterB))) &&
+    (c.academicYear === filterYear)
   );
 
   return (
@@ -284,10 +321,21 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
 
           {/* Filters Bar */}
           <div className="bg-white p-10 rounded-[40px] shadow-sm border border-slate-100 flex flex-col md:flex-row items-center gap-8">
+            <div className="flex-1 w-full text-right relative">
+              <label className="text-xs font-black text-slate-400 mb-3 block">שנת לימודים</label>
+              <select 
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-6 py-4 outline-none hover:bg-white focus:border-indigo-500 transition-all font-bold text-right appearance-none"
+              >
+                {ACADEMIC_YEARS.map(y => <option key={y.value} value={y.value}>{y.label}</option>)}
+              </select>
+            </div>
+            
             <SearchableSelect 
               label="חוג א'"
               placeholder="הכל..."
-              options={STUDY_TRACKS || []}
+              options={FIXED_DEPARTMENTS}
               value={filterA}
               onChange={setFilterA}
             />
@@ -297,16 +345,40 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
             <SearchableSelect 
               label="חוג ב'"
               placeholder="הכל..."
-              options={STUDY_TRACKS || []}
+              options={FIXED_DEPARTMENTS}
               value={filterB}
               onChange={setFilterB}
             />
-            <button 
-              onClick={() => setIsNewCombModalOpen(true)}
-              className="md:self-end bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black hover:bg-indigo-700 shadow-xl active:scale-95 transition-all"
-            >
-              פתח דיון חדש על שילוב
-            </button>
+
+            <div className="md:self-end flex flex-col gap-2 min-w-[240px]">
+              {existingCombination ? (
+                <button 
+                  onClick={() => setSelectedCombination(existingCombination)}
+                  className="w-full bg-emerald-600 text-white px-10 py-4 rounded-[24px] font-black hover:bg-emerald-700 shadow-xl active:scale-95 transition-all"
+                >
+                  צפה בדיון קיים
+                </button>
+              ) : (
+                <>
+                  {(!filterA || !filterB) ? (
+                    <div className="bg-slate-50 text-slate-400 px-6 py-4 rounded-2xl text-xs font-black text-center border-2 border-dashed border-slate-200">
+                      בחרו שני חוגים לחיפוש/פתיחה
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        setMajorA(filterA);
+                        setMajorB(filterB);
+                        setIsNewCombModalOpen(true);
+                      }}
+                      className="w-full bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black hover:bg-indigo-700 shadow-xl active:scale-95 transition-all"
+                    >
+                      פתח דיון חדש
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
           {/* Grid */}
@@ -325,20 +397,6 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
                   <div className="flex items-center gap-2 text-indigo-600 font-black text-sm">
                     <span>קרא את הדיון המלא</span>
                     <ChevronLeft className="h-4 w-4" />
-                  </div>
-                  <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                    {[
-                      { val: c.majorA, label: STUDY_TRACKS.find(t => t.value === c.majorA)?.label },
-                      { val: c.majorB, label: STUDY_TRACKS.find(t => t.value === c.majorB)?.label }
-                    ].map((m, i) => (
-                      <button
-                        key={i}
-                        onClick={() => onTrackSelect(m.val)}
-                        className="bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-600 px-4 py-2 rounded-xl text-xs font-black transition-all"
-                      >
-                        צפה בקורסי {m.label}
-                      </button>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -484,14 +542,14 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
                 <SearchableSelect 
                   label="חוג א'"
                   placeholder="בחירה..."
-                  options={STUDY_TRACKS || []}
+                  options={FIXED_DEPARTMENTS}
                   value={majorA}
                   onChange={setMajorA}
                 />
                 <SearchableSelect 
                   label="חוג ב'"
                   placeholder="בחירה..."
-                  options={STUDY_TRACKS || []}
+                  options={FIXED_DEPARTMENTS}
                   value={majorB}
                   onChange={setMajorB}
                 />
