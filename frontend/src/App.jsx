@@ -14,6 +14,7 @@ import AuthPage from './components/AuthPage';
 import CourseCard from './components/CourseCard';
 import ReviewForm from './components/ReviewForm';
 import CombinationForum from './components/CombinationForum';
+import ForumsModal from './components/ForumsModal';
 import LecturerProfile from './pages/LecturerProfile';
 
 // Data
@@ -48,16 +49,29 @@ const Dashboard = ({
   filterSemester, setFilterSemester,
   filterCampus, setFilterCampus,
   filterLanguage, setFilterLanguage,
-  filterYear, setFilterYear
-}) => (
+  filterYear, setFilterYear,
+  studentForums,
+  studentForumQuestions,
+  newStudentForumQ,
+  setNewStudentForumQ,
+  onPostStudentForumQ,
+  onPostStudentForumA,
+  expandedStudentQs,
+  onToggleStudentQ,
+  activeStudentForumId,
+  setActiveStudentForumId,
+  isStudentForumModalOpen,
+  setIsStudentForumModalOpen
+}) => {
+  return (
   <div className="max-w-7xl mx-auto">
     <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
         <div className="text-right">
-          {user.isGuest ? (
+          {user?.isGuest ? (
             <div className="space-y-4">
               <label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-2">מסלול לימוד:</label>
               <button 
-                onClick={() => setIsGuestDrawerOpen(true)}
+                onClick={() => setIsGuestDrawerOpen?.(true)}
                 className="flex items-center gap-4 bg-white border-2 border-slate-200 rounded-[24px] px-8 py-4 hover:border-indigo-500 transition-all shadow-sm group"
               >
                 <span className="font-bold text-slate-700">
@@ -68,24 +82,54 @@ const Dashboard = ({
             </div>
           ) : (
             <>
-              <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight tracking-tight">שלום {user.name.split(' ')[0]}!</h1>
-              <p className="text-xl text-slate-500 font-medium">הנה הקורסים במסלול {(studyTracks || []).find(t => t.value === user.track)?.label || user.track} שלך</p>
+              <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight tracking-tight">שלום {(user?.name || '').split(' ')[0]}!</h1>
+              <p className="text-xl text-slate-500 font-medium">הנה הקורסים במסלול {(studyTracks || []).find(t => t.value === user?.track)?.label || user?.track} שלך</p>
             </>
           )}
         </div>
 
-      <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit self-end">
-        {['All', 'חובה', 'בחירה', 'קורסי יסוד', 'חובת בחירה'].map(f => (
-          <button
-            key={f}
-            onClick={() => setCourseFilter(f)}
-            className={`px-6 py-2.5 rounded-xl font-black text-xs transition-all ${courseFilter === f ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+      <div className="flex flex-col items-end gap-6">
+        {user && !user.isGuest && (
+          <button 
+            onClick={() => setIsStudentForumModalOpen?.(true)}
+            className="group flex items-center gap-3 bg-white border-2 border-indigo-100 hover:border-indigo-500 px-6 py-3 rounded-2xl transition-all shadow-sm active:scale-95 cursor-pointer"
           >
-            {f === 'All' ? 'הכל' : f}
+            <div className="bg-indigo-50 p-2 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+              <MessageSquare className="h-4 w-4" />
+            </div>
+            <span className="text-sm font-black text-slate-700 group-hover:text-indigo-600">הפורומים של השילוב שלך</span>
           </button>
-        ))}
+        )}
+
+        <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit">
+          {['All', 'חובה', 'בחירה', 'קורסי יסוד', 'חובת בחירה'].map(f => (
+            <button
+              key={f}
+              onClick={() => setCourseFilter?.(f)}
+              className={`px-6 py-2.5 rounded-xl font-black text-xs transition-all ${courseFilter === f ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+            >
+              {f === 'All' ? 'הכל' : f}
+            </button>
+          ))}
+        </div>
       </div>
     </header>
+
+    <ForumsModal 
+      isOpen={isStudentForumModalOpen}
+      onClose={() => setIsStudentForumModalOpen?.(false)}
+      user={user}
+      forumsList={studentForums || []}
+      activeForumId={activeStudentForumId}
+      onSetActiveForum={setActiveStudentForumId}
+      forumQuestions={studentForumQuestions || []}
+      newQuestion={newStudentForumQ}
+      setNewQuestion={setNewStudentForumQ}
+      onPostQuestion={onPostStudentForumQ}
+      onPostAnswer={onPostStudentForumA}
+      expandedQs={expandedStudentQs || {}}
+      onToggleQ={onToggleStudentQ}
+    />
 
     {/* Course Search Bar */}
     <div className="mb-8 relative max-w-2xl ml-auto group">
@@ -249,7 +293,8 @@ const Dashboard = ({
       )}
     </div>
   </div>
-);
+  );
+};
 
 const MaterialItem = ({ item, user, onUpdate, onDelete, getMaterialIcon }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -830,6 +875,19 @@ const App = () => {
   const [filterLanguage, setFilterLanguage] = useState('הכל');
   const [filterYear, setFilterYear] = useState('הכל');
   
+  // Student Personal Forum State
+  const [studentForums, setStudentForums] = useState([]); // List of relevant forums
+  const [studentForumQuestions, setStudentForumQuestions] = useState([]);
+  const [activeStudentForumId, setActiveStudentForumId] = useState(null);
+  const [isStudentForumExpanded, setIsStudentForumExpanded] = useState(false);
+  const [isStudentForumModalOpen, setIsStudentForumModalOpen] = useState(false);
+  const [newStudentForumQ, setNewStudentForumQ] = useState('');
+  const [expandedStudentQs, setExpandedStudentQs] = useState({});
+
+  const toggleStudentQ = (qId) => {
+    setExpandedStudentQs(prev => ({ ...prev, [qId]: !prev[qId] }));
+  };
+
   // Dynamic Content State
   const [studyTracks, setStudyTracks] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -852,6 +910,138 @@ const App = () => {
       .then(data => setStudyTracks(data.value || data))
       .catch(err => console.error('Error fetching combinations:', err));
   }, []);
+
+  // Fetch Student Personal Forums
+  useEffect(() => {
+    if (!user || user.isGuest || !user.track) {
+      setStudentForums([]);
+      return;
+    }
+
+    const fetchStudentForums = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/combinations');
+        const forums = await res.json();
+        
+        const mA = String(user.track || '').trim();
+        const mB = String(user.majorB || '').trim();
+        const yr = String(user.academicYear || '').trim();
+
+        console.log('DEBUG: Attempting to match forums for:', { mA, mB, yr });
+
+        // Helper for loose matching
+        const isMatch = (field, search) => {
+          if (!field || !search) return false;
+          const f = String(field).toLowerCase().trim();
+          const s = String(search).toLowerCase().trim();
+          return f.includes(s) || s.includes(f);
+        };
+
+        // 1. Primary Forum: Both Major A AND Major B
+        const primary = forums.filter(f => {
+          const matchesMajors = (isMatch(f.title, mA) && isMatch(f.title, mB)) || 
+                               (isMatch(f.majorA, mA) && isMatch(f.majorB, mB)) ||
+                               (isMatch(f.majorA, mB) && isMatch(f.majorB, mA));
+          const matchesYear = !yr || yr === 'הכל' || isMatch(f.academicYear, yr);
+          return matchesMajors && matchesYear;
+        });
+
+        // 2. Secondary Forums (Major A): Major A but NOT Major B
+        const secA = forums.filter(f => {
+          const matchesMajor = isMatch(f.title, mA) || isMatch(f.majorA, mA) || isMatch(f.majorB, mA);
+          const matchesOther = mB && (isMatch(f.title, mB) || isMatch(f.majorA, mB) || isMatch(f.majorB, mB));
+          const matchesYear = !yr || yr === 'הכל' || isMatch(f.academicYear, yr);
+          return matchesMajor && !matchesOther && matchesYear;
+        });
+
+        // 3. Secondary Forums (Major B): Major B but NOT Major A
+        const secB = forums.filter(f => {
+          const matchesMajor = isMatch(f.title, mB) || isMatch(f.majorA, mB) || isMatch(f.majorB, mB);
+          const matchesOther = mA && (isMatch(f.title, mA) || isMatch(f.majorA, mA) || isMatch(f.majorB, mA));
+          const matchesYear = !yr || yr === 'הכל' || isMatch(f.academicYear, yr);
+          return matchesMajor && !matchesOther && matchesYear;
+        });
+
+        const allRelevant = [...primary, ...secA, ...secB];
+        console.log('DEBUG: Lenient search results:', { total: forums.length, matched: allRelevant.length });
+        
+        setStudentForums(allRelevant);
+        
+        if (allRelevant.length > 0 && !activeStudentForumId) {
+          setActiveStudentForumId(primary.length > 0 ? primary[0].id : allRelevant[0].id);
+        }
+      } catch (err) {
+        console.error('Error fetching student forums:', err);
+      }
+    };
+
+    fetchStudentForums();
+  }, [user?.track, user?.majorB, user?.academicYear]);
+
+  // Fetch Questions for active forum
+  useEffect(() => {
+    if (!activeStudentForumId) {
+      setStudentForumQuestions([]);
+      return;
+    }
+
+    fetch(`http://localhost:3000/combinationQuestions?combinationId=${activeStudentForumId}`)
+      .then(res => res.json())
+      .then(qs => setStudentForumQuestions(qs.reverse()))
+      .catch(err => console.error('Error fetching active forum questions:', err));
+  }, [activeStudentForumId]);
+
+  const handlePostStudentForumQ = async () => {
+    if (!newStudentForumQ.trim() || !activeStudentForumId) return;
+
+    const newQ = {
+      combinationId: activeStudentForumId,
+      question: newStudentForumQ,
+      answers: [],
+      date: new Date().toLocaleDateString('he-IL'),
+      author: user.name
+    };
+
+    try {
+      const res = await fetch('http://localhost:3000/combinationQuestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newQ)
+      });
+      const savedQ = await res.json();
+      setStudentForumQuestions([savedQ, ...studentForumQuestions]);
+      setNewStudentForumQ('');
+      alert('השאלה פורסמה בהצלחה!');
+    } catch (err) {
+      alert('שגיאה בפרסום השאלה');
+    }
+  };
+
+  const handlePostStudentForumA = async (qId, text) => {
+    if (!text.trim()) return;
+    const question = studentForumQuestions.find(q => q.id === qId);
+    if (!question) return;
+
+    const updatedAnswers = [...question.answers, { 
+      text, 
+      date: new Date().toLocaleDateString('he-IL'), 
+      author: user.name,
+      authorId: user.id,
+      likedBy: []
+    }];
+
+    try {
+      const res = await fetch(`http://localhost:3000/combinationQuestions/${qId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: updatedAnswers })
+      });
+      const updatedQ = await res.json();
+      setStudentForumQuestions(studentForumQuestions.map(q => q.id === qId ? updatedQ : q));
+    } catch (err) {
+      alert('שגיאה בפרסום התשובה');
+    }
+  };
 
   // Consolidated initial data fetching
   useEffect(() => {
@@ -882,12 +1072,12 @@ const App = () => {
         const coursesData = await coursesRes.json();
         const courses = Array.isArray(coursesData) ? coursesData : (coursesData.value || []);
         
-        const reviewsData = await reviewsRes.json();
-        
+        const reviewsData = (await reviewsRes.json()) || [];
+
         setAllReviews(reviewsData);
         const coursesWithCounts = courses.map(c => {
-          const courseReviews = reviewsData.filter(r => String(r.courseId) === String(c.id));
-          const difficultyReviews = courseReviews.filter(r => r.difficulty !== undefined);
+          const courseReviews = (reviewsData || []).filter(r => String(r?.courseId) === String(c?.id));
+          const difficultyReviews = courseReviews.filter(r => r?.difficulty !== undefined);
           
           let avgDiff;
           if (difficultyReviews.length > 0) {
@@ -970,6 +1160,7 @@ const App = () => {
   const fileInputRef = useRef(null);
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
   const [newLinkType, setNewLinkType] = useState('drive'); // 'drive', 'whatsapp', 'other'
@@ -1306,8 +1497,6 @@ const App = () => {
     // For now, let's keep it separate if necessary
   };
 
-  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
-
   const hasUserRated = reviews.some(r => 
     (r.authorId !== undefined && String(r.authorId) === String(user?.id)) || 
     (r.author === user?.name)
@@ -1391,8 +1580,6 @@ const App = () => {
       alert('שגיאה בהעלאת חומר הלימוד');
     }
   };
-
-  const [editingLinkId, setEditingLinkId] = useState(null);
 
   const handleEditLink = (link) => {
     setEditingLinkId(link.id);
@@ -1657,6 +1844,18 @@ const App = () => {
                   setFilterLanguage={setFilterLanguage}
                   filterYear={filterYear}
                   setFilterYear={setFilterYear}
+                  studentForums={studentForums}
+                  studentForumQuestions={studentForumQuestions}
+                  newStudentForumQ={newStudentForumQ}
+                  setNewStudentForumQ={setNewStudentForumQ}
+                  onPostStudentForumQ={handlePostStudentForumQ}
+                  onPostStudentForumA={handlePostStudentForumA}
+                  expandedStudentQs={expandedStudentQs}
+                  onToggleStudentQ={toggleStudentQ}
+                  activeStudentForumId={activeStudentForumId}
+                  setActiveStudentForumId={setActiveStudentForumId}
+                  isStudentForumModalOpen={isStudentForumModalOpen}
+                  setIsStudentForumModalOpen={setIsStudentForumModalOpen}
                 />
               )}
             </>

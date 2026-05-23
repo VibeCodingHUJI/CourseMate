@@ -44,7 +44,9 @@
       "name": "שירה ",
       "email": "shira.mutzafi@mail.huji.ac.il",
       "password": "12345",
-      "track": "Business Administration",
+      "track": "מנהל עסקים",
+      "majorB": "כלכלה",
+      "academicYear": "תשפ\"ו (2025-26)",
       "isGuest": false,
       "id": 6
     },
@@ -1202,6 +1204,33 @@
       "date": "23.5.2026",
       "replies": 1,
       "id": 5
+    },
+    {
+      "majorA": "מנהל עסקים",
+      "majorB": "כלכלה",
+      "academicYear": "תשפ\"ו (2025-26)",
+      "title": "מנהל עסקים + כלכלה",
+      "date": "23.5.2026",
+      "replies": 1,
+      "id": 6
+    },
+    {
+      "majorA": "כלכלה",
+      "majorB": "סטטיסטיקה ומדע הנתונים",
+      "academicYear": "תשפ\"ו (2025-26)",
+      "title": "כלכלה + סטטיסטיקה ומדע הנתונים",
+      "date": "23.5.2026",
+      "replies": 1,
+      "id": 7
+    },
+    {
+      "majorA": "כלכלה",
+      "majorB": "אמירים",
+      "academicYear": "תשפ\"ו (2025-26)",
+      "title": "כלכלה + אמירים",
+      "date": "23.5.2026",
+      "replies": 1,
+      "id": 8
     }
   ],
   "combinationQuestions": [
@@ -1277,6 +1306,30 @@
       "date": "23.5.2026",
       "author": "אורח/ת",
       "id": 6
+    },
+    {
+      "combinationId": 6,
+      "question": "מה אופציות התעסוקה בחוץ לשילוב הזה? האם הוא מומלץ?",
+      "answers": [],
+      "date": "23.5.2026",
+      "author": "אורח/ת",
+      "id": 7
+    },
+    {
+      "combinationId": 7,
+      "question": "האם זה נחשב שילוב עמוס וקשה? כמה ימים בשבוע בממוצע נמצאים באוניברסיטה?",
+      "answers": [],
+      "date": "23.5.2026",
+      "author": "אורח/ת",
+      "id": 8
+    },
+    {
+      "combinationId": 8,
+      "question": "האם מומלץ לשלב כלכלה עם אמירים?",
+      "answers": [],
+      "date": "23.5.2026",
+      "author": "אורח/ת",
+      "id": 9
     }
   ],
   "lecturers": [
