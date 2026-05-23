@@ -88,11 +88,11 @@ const Dashboard = ({
           )}
         </div>
 
-      <div className="flex flex-col items-end gap-6">
+      <div className="flex flex-col items-end gap-6 flex-shrink-0">
         {user && !user.isGuest && (
           <button 
             onClick={() => setIsStudentForumModalOpen?.(true)}
-            className="group flex items-center gap-3 bg-white border-2 border-indigo-100 hover:border-indigo-500 px-6 py-3 rounded-2xl transition-all shadow-sm active:scale-95 cursor-pointer"
+            className="group flex items-center gap-3 bg-white border-2 border-indigo-100 hover:border-indigo-500 px-6 py-3 rounded-2xl transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap flex-shrink-0"
           >
             <div className="bg-indigo-50 p-2 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
               <MessageSquare className="h-4 w-4" />
@@ -101,12 +101,12 @@ const Dashboard = ({
           </button>
         )}
 
-        <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit">
+        <div className="flex flex-row flex-nowrap gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit min-w-max">
           {['All', 'חובה', 'בחירה', 'קורסי יסוד', 'חובת בחירה'].map(f => (
             <button
               key={f}
               onClick={() => setCourseFilter?.(f)}
-              className={`px-6 py-2.5 rounded-xl font-black text-xs transition-all ${courseFilter === f ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+              className={`px-6 py-2.5 rounded-xl font-black text-xs transition-all whitespace-nowrap flex-shrink-0 ${courseFilter === f ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
             >
               {f === 'All' ? 'הכל' : f}
             </button>
@@ -516,50 +516,54 @@ const CourseDetail = ({
             
             <div className="flex flex-col items-start gap-2">
               {/* Row 1: [Type] [Credits] [ID|Lang] */}
-              <div className="flex items-center gap-2">
-                <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${getTypeBadgeStyles(selectedCourse.type)}`}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${getTypeBadgeStyles(selectedCourse.type)}`}>
                   {selectedCourse.type}
                 </span>
-                <span className="bg-amber-50 text-amber-700 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">
+                <span className="bg-amber-50 text-amber-700 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
                   {selectedCourse.credits} נ"ז
                 </span>
-                <span className="bg-indigo-50 text-indigo-700 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">
+                <span className="bg-indigo-50 text-indigo-700 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
                   {selectedCourse.code} | {selectedCourse.language || 'עברית'}
                 </span>
                 {selectedCourse.campus && (
-                  <span className="bg-slate-50 text-slate-400 px-3 py-1 rounded-xl text-[9px] font-bold uppercase tracking-wider border border-slate-100">
+                  <span className="bg-slate-50 text-slate-400 px-3 py-1 rounded-xl text-[9px] font-bold uppercase tracking-wider border border-slate-100 whitespace-nowrap">
                     {selectedCourse.campus}
                   </span>
                 )}
               </div>
               
               {/* Row 2: [Semester] [Assessment] [Attendance] [Lecturer] */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {selectedCourse.semester && (
-                  <span className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest">
-                    {selectedCourse.semester === 'א' ? 'סמסטר א׳' : 
+                  <span className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+                    {selectedCourse.semester === 'שנתי' ? 'שנתי' :
+                     selectedCourse.semester === 'א' ? 'סמסטר א׳' : 
                      selectedCourse.semester === 'ב' ? 'סמסטר ב׳' : 
                      selectedCourse.semester === 'א וב' ? 'סמסטר א׳ וב׳' : `סמסטר ${selectedCourse.semester}`}
                   </span>
                 )}
                 {selectedCourse.assessmentType && (
-                  <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${selectedCourse.assessmentType === 'בחינה' ? 'bg-violet-50 text-violet-600' : 'bg-teal-50 text-teal-600'}`}>
+                  <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${selectedCourse.assessmentType === 'בחינה' ? 'bg-violet-50 text-violet-600' : 'bg-teal-50 text-teal-600'}`}>
                     {selectedCourse.assessmentType}
                   </span>
                 )}
-                <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ${selectedCourse.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
+                <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${selectedCourse.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
                   נוכחות: {selectedCourse.attendanceValue || (selectedCourse.attendanceMandatory ? 'חובה' : 'אין')}
                 </span>
-                <span className="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                <span className="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center flex-wrap gap-x-1.5 gap-y-1">
                   <User className="h-3 w-3" />
                   {selectedCourse.instructors && selectedCourse.instructors.length > 0 ? (
                     selectedCourse.instructors.map((inst, idx) => (
-                      <Link key={inst.id} to={`/lecturer/${inst.id}`} className="hover:underline">
-                        {inst.name}{idx < selectedCourse.instructors.length - 1 ? ',' : ''}
-                      </Link>
+                      <span key={inst.id} className="whitespace-nowrap">
+                        <Link to={`/lecturer/${inst.id}`} className="hover:underline">
+                          {inst.name}
+                        </Link>
+                        {idx < selectedCourse.instructors.length - 1 ? ',' : ''}
+                      </span>
                     ))
                   ) : (
-                    <span>{selectedCourse.instructor || 'לא ידוע'}</span>
+                    <span className="whitespace-nowrap">{selectedCourse.instructor || 'לא ידוע'}</span>
                   )}
                 </span>
               </div>
@@ -630,20 +634,22 @@ const CourseDetail = ({
                       </div>
                       <div className="text-right">
                         <div className="font-black text-slate-900">{r.author}</div>
-                        <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex flex-wrap gap-1">
-                          <span>מרצה:</span>
+                        <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex flex-wrap gap-x-1.5 gap-y-1">
+                          <span className="whitespace-nowrap">מרצה:</span>
                           {selectedCourse.instructors && selectedCourse.instructors.length > 0 ? (
                             selectedCourse.instructors.map((inst, idx) => (
-                              <Link 
-                                key={inst.id} 
-                                to={`/lecturer/${inst.id}`} 
-                                className="hover:underline"
-                              >
-                                {inst.name}{idx < selectedCourse.instructors.length - 1 ? ',' : ''}
-                              </Link>
+                              <span key={inst.id} className="whitespace-nowrap">
+                                <Link 
+                                  to={`/lecturer/${inst.id}`} 
+                                  className="hover:underline"
+                                >
+                                  {inst.name}
+                                </Link>
+                                {idx < selectedCourse.instructors.length - 1 ? ',' : ''}
+                              </span>
                             ))
                           ) : (
-                            <span>{selectedCourse.instructor || 'לא ידוע'}</span>
+                            <span className="whitespace-nowrap">{selectedCourse.instructor || 'לא ידוע'}</span>
                           )}
                         </div>
                         </div>
@@ -1769,7 +1775,7 @@ const App = () => {
           <Route path="/lecturer/:id" element={
             <LecturerProfile user={user} onDepartmentClick={(dept) => {
               // Find the track value that matches the department label
-              const targetTrack = studyTracks.find(t => t.label === dept || t.value === dept)?.value || dept;
+              const targetTrack = (studyTracks || []).find(t => t?.label === dept || t?.value === dept)?.value || dept;
               handleChangeTrack(targetTrack);
               navigate('/');
             }} />

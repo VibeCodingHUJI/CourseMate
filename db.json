@@ -1145,6 +1145,21 @@
       "identityType": "full",
       "likedBy": [],
       "id": "1CuDpgY"
+    },
+    {
+      "courseId": 1036,
+      "rating": 5,
+      "difficulty": 10,
+      "attendanceEnforced": false,
+      "comment": "",
+      "semester": "סמסטר א'",
+      "year": "תשפ\"ו (2025-26)",
+      "date": "23.5.2026",
+      "author": "שירה ",
+      "authorId": 6,
+      "identityType": "full",
+      "likedBy": [],
+      "id": "hkFGYDF"
     }
   ],
   "questions": [],
@@ -1249,15 +1264,6 @@
       "date": "23.5.2026",
       "replies": 1,
       "id": 10
-    },
-    {
-      "majorA": "מדעי המדינה",
-      "majorB": "חוג נוסף",
-      "academicYear": "תשפ\"ו (2025-26)",
-      "title": "מדעי המדינה + חוג נוסף",
-      "date": "23.5.2026",
-      "replies": 1,
-      "id": 11
     }
   ],
   "combinationQuestions": [
@@ -1381,14 +1387,6 @@
       "date": "23.5.2026",
       "author": "אורח/ת",
       "id": 11
-    },
-    {
-      "combinationId": 11,
-      "question": "מה כדאי לקחת כחוג נוסף למדעי המדינה?",
-      "answers": [],
-      "date": "23.5.2026",
-      "author": "אורח/ת",
-      "id": 12
     }
   ],
   "lecturers": [

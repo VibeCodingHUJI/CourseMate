@@ -23,45 +23,39 @@ const CourseCard = ({ course, onClick }) => {
     >
       <div className="flex justify-start items-start mb-6">
         {/* Badge Container */}
-        <div className="flex flex-col items-start gap-2">
-          {/* Row 1: [Type] [Credits] [ID|Lang] */}
-          <div className="flex items-center gap-2">
-            <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${styles.badge}`}>
-              {course.type}
-            </div>
-          <div className="bg-amber-50 text-amber-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${styles.badge}`}>
+            {course.type}
+          </div>
+          <div className="bg-amber-50 text-amber-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
             {course.credits} נ"ז
           </div>
-          <div className="bg-indigo-50 text-indigo-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+          <div className="bg-indigo-50 text-indigo-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
             {course.code} | {course.language || 'עברית'}
           </div>
           {course.campus && (
-            <div className="bg-slate-50 text-slate-400 px-3 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border border-slate-100">
+            <div className="bg-slate-50 text-slate-400 px-3 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border border-slate-100 whitespace-nowrap">
               {course.campus}
             </div>
           )}
-        </div>
-        
-        {/* Row 2: [Semester] [Assessment] [Attendance] */}
-        <div className="flex items-center gap-2">
           {course.semester && (
-            <div className="bg-orange-50 text-orange-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-              {course.semester === 'א' ? 'סמסטר א׳' : 
+            <div className="bg-orange-50 text-orange-600 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
+              {course.semester === 'שנתי' ? 'שנתי' :
+               course.semester === 'א' ? 'סמסטר א׳' : 
                course.semester === 'ב' ? 'סמסטר ב׳' : 
                course.semester === 'א וב' ? 'סמסטר א׳ וב׳' : `סמסטר ${course.semester}`}
             </div>
           )}
           {course.assessmentType && (
-            <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.assessmentType === 'בחינה' ? 'bg-violet-50 text-violet-600' : 'bg-teal-50 text-teal-600'}`}>
+            <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${course.assessmentType === 'בחינה' ? 'bg-violet-50 text-violet-600' : 'bg-teal-50 text-teal-600'}`}>
               {course.assessmentType}
             </div>
           )}
-          <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${course.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
+          <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${course.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
             נוכחות: {course.attendanceValue || (course.attendanceMandatory ? 'חובה' : 'אין')}
           </div>
         </div>
       </div>
-    </div>
     
     <h3 className="text-2xl font-extrabold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">
       {course.title}
@@ -89,21 +83,23 @@ const CourseCard = ({ course, onClick }) => {
           <User className="h-5 w-5" />
         </div>
         <div className="flex flex-col">
-          <div className="text-xs text-slate-700 font-black flex flex-wrap gap-1">
-            <span>מרצה:</span>
+          <div className="text-xs text-slate-700 font-black flex flex-wrap gap-x-1.5 gap-y-1">
+            <span className="whitespace-nowrap">מרצה:</span>
             {course.instructors && course.instructors.length > 0 ? (
               course.instructors.map((inst, idx) => (
-                <Link 
-                  key={inst.id} 
-                  to={`/lecturer/${inst.id}`} 
-                  onClick={(e) => e.stopPropagation()} 
-                  className="hover:text-indigo-600 hover:underline transition-all"
-                >
-                  {inst.name}{idx < course.instructors.length - 1 ? ',' : ''}
-                </Link>
+                <span key={inst.id} className="whitespace-nowrap">
+                  <Link 
+                    to={`/lecturer/${inst.id}`} 
+                    onClick={(e) => e.stopPropagation()} 
+                    className="hover:text-indigo-600 hover:underline transition-all"
+                  >
+                    {inst.name}
+                  </Link>
+                  {idx < course.instructors.length - 1 ? ',' : ''}
+                </span>
               ))
             ) : (
-              <span>{course.instructor || 'לא ידוע'}</span>
+              <span className="whitespace-nowrap">{course.instructor || 'לא ידוע'}</span>
             )}
           </div>
           {course.ta && (
