@@ -129,6 +129,7 @@ const Dashboard = ({
       onPostAnswer={onPostStudentForumA}
       expandedQs={expandedStudentQs || {}}
       onToggleQ={onToggleStudentQ}
+      studyTracks={studyTracks || []}
     />
 
     {/* Course Search Bar */}
@@ -923,11 +924,18 @@ const App = () => {
         const res = await fetch('http://localhost:3000/combinations');
         const forums = await res.json();
         
-        const mA = String(user.track || '').trim();
-        const mB = String(user.majorB || '').trim();
-        const yr = String(user.academicYear || '').trim();
+        // Helper to resolve clean labels from IDs or English values
+        const getLabel = (val) => {
+          const raw = String(val || "").trim();
+          const match = (studyTracks || []).find(t => t.value === raw || t.label === raw);
+          return match ? match.label : raw;
+        };
 
-        console.log('DEBUG: Attempting to match forums for:', { mA, mB, yr });
+        const mA = getLabel(user?.track);
+        const mB = getLabel(user?.majorB);
+        const yr = String(user?.academicYear || "").trim();
+
+        console.log('DEBUG: Attempting to match forums for resolved labels:', { mA, mB, yr });
 
         // Helper for loose matching
         const isMatch = (field, search) => {
@@ -963,12 +971,14 @@ const App = () => {
         });
 
         const allRelevant = [...primary, ...secA, ...secB];
-        console.log('DEBUG: Lenient search results:', { total: forums.length, matched: allRelevant.length });
+        console.log('DEBUG: Forums data sync - Total available:', forums.length, 'Relevant to student:', allRelevant.length);
         
-        setStudentForums(allRelevant);
+        // Use full forums list for the modal, but still auto-select the best match
+        setStudentForums(forums);
         
-        if (allRelevant.length > 0 && !activeStudentForumId) {
-          setActiveStudentForumId(primary.length > 0 ? primary[0].id : allRelevant[0].id);
+        if (allRelevant.length > 0) {
+          const exactMatch = primary[0];
+          setActiveStudentForumId(exactMatch ? exactMatch.id : allRelevant[0].id);
         }
       } catch (err) {
         console.error('Error fetching student forums:', err);
