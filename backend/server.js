@@ -117,7 +117,7 @@ app.get('/api/combinations/:code/courses', (req, res) => {
         c.semester,
         c.language,
         c.campus,
-        (SELECT '[' || GROUP_CONCAT('{"id":' || l.id || ',"name":"' || REPLACE(l.name, '"', '\"') || '"}') || ']'
+        (SELECT '[' || GROUP_CONCAT('{"id":' || l.id || ',"name":"' || REPLACE(l.name, '"', '\\\"') || '"}') || ']'
          FROM lecturers l 
          JOIN course_lecturers cl ON l.id = cl.lecturer_id 
          WHERE cl.course_id = c.id) as instructors,
@@ -141,7 +141,7 @@ app.get('/api/combinations/:code/courses', (req, res) => {
 app.get('/api/courses/:id', (req, res) => {
   const query = `
     SELECT c.*, 
-    (SELECT '[' || GROUP_CONCAT('{"id":' || l.id || ',"name":"' || REPLACE(l.name, '"', '\"') || '"}') || ']'
+    (SELECT '[' || GROUP_CONCAT('{"id":' || l.id || ',"name":"' || REPLACE(l.name, '"', '\\\"') || '"}') || ']'
      FROM lecturers l 
      JOIN course_lecturers cl ON l.id = cl.lecturer_id 
      WHERE cl.course_id = c.id) as instructors
@@ -246,6 +246,39 @@ app.patch('/api/lecturer_reviews/:id/like', (req, res) => {
       }
       res.json(row);
     });
+  });
+});
+
+app.patch('/api/lecturers/:lecturerId/reviews/:id', (req, res) => {
+  const { id } = req.params;
+  const { rating, comment, semester, year, course_id } = req.body;
+  
+  const query = 'UPDATE lecturer_reviews SET rating = ?, comment = ?, semester = ?, year = ?, course_id = ? WHERE id = ?';
+  db.run(query, [rating, comment, semester, year, course_id, id], function(err) {
+    if (err) {
+      res.status(500).json({ message: err.message });
+      return;
+    }
+    db.get('SELECT * FROM lecturer_reviews WHERE id = ?', [id], (err, row) => {
+      if (err) {
+        res.status(500).json({ message: err.message });
+        return;
+      }
+      res.json(row);
+    });
+  });
+});
+
+app.delete('/api/lecturers/:lecturerId/reviews/:id', (req, res) => {
+  const { id } = req.params;
+  
+  const query = 'DELETE FROM lecturer_reviews WHERE id = ?';
+  db.run(query, [id], function(err) {
+    if (err) {
+      res.status(500).json({ message: err.message });
+      return;
+    }
+    res.json({ message: 'Review deleted successfully' });
   });
 });
 

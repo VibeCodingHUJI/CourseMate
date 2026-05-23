@@ -4,7 +4,7 @@ import { Send, X, User, UserCircle, Ghost } from 'lucide-react';
 const ReviewForm = ({ 
   comment, semester, year, identityType, attendanceEnforced, difficulty,
   onCommentChange, onSemesterChange, onYearChange, onIdentityChange, onAttendanceChange, onDifficultyChange,
-  onSubmit, onClose 
+  onSubmit, onClose, hasRated
 }) => {
   const getDifficultyText = (val) => {
     if (val <= 2) return "קל מאוד";
@@ -16,28 +16,6 @@ const ReviewForm = ({
 
   // Parsing the existing comment if it was already partially filled
   // but usually this is a fresh state. We'll add local state for the parts.
-  const [parts, setParts] = React.useState({
-    difficulty: '',
-    investment: '',
-    exam: '',
-    general: ''
-  });
-
-  const updatePart = (key, value) => {
-    const newParts = { ...parts, [key]: value };
-    setParts(newParts);
-    
-    // Combine all non-empty parts into a single string
-    const combined = [
-      newParts.difficulty && `רמת קושי: ${newParts.difficulty}`,
-      newParts.investment && `השקעה נדרשת: ${newParts.investment}`,
-      newParts.exam && `המבחן היה הוגן: ${newParts.exam}`,
-      newParts.general && `כללי: ${newParts.general}`
-    ].filter(Boolean).join('\n\n');
-    
-    onCommentChange(combined);
-  };
-
   const SEMESTERS = [
     { id: 'a', label: "סמסטר א'" },
     { id: 'b', label: "סמסטר ב'" },
@@ -58,16 +36,14 @@ const ReviewForm = ({
     { id: 'anon', label: 'אנונימי/ת', icon: Ghost },
   ];
 
-  const QUESTIONS = [
-    { id: 'difficulty', label: 'מה רמת הקושי של הקורס?', placeholder: 'האם החומר מורכב להבנה?' },
-    { id: 'investment', label: 'כמה השקעה הקורס דורש?', placeholder: 'יש הרבה עבודות/תרגילים?' },
-    { id: 'exam', label: 'האם המבחן/העבודה היה הוגן?', placeholder: 'האם המבחן/העבודה היה הוגן?' },
-    { id: 'general', label: 'משהו נוסף שתרצו להוסיף?', placeholder: 'טיפים לסטודנטים אחרים...' },
-  ];
+  const placeholderText = "ספרו בקצרה על החוויה שלכם מהקורס.";
+
+  const wordCount = comment.trim() ? comment.trim().split(/\s+/).length : 0;
+  const isOverLimit = wordCount > 200;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative" style={{ direction: 'rtl' }}>
-      {/* Right Column: Static Info */}
+      {/* Right Column: Info & Settings */}
       <div className="flex flex-col text-right">
         <div className="flex items-center gap-4 mb-2">
           <button 
@@ -83,7 +59,7 @@ const ReviewForm = ({
         </div>
         <p className="text-slate-500 font-bold mb-8 text-lg mr-12">ספרו על הקורס מהחוויה שלכם בצורה בונה ומלמדת</p>
 
-        <div className="space-y-8 pr-1">
+        <div className="space-y-6 pr-1">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-black uppercase tracking-widest text-slate-400 mb-2 block">סמסטר</label>
@@ -127,8 +103,11 @@ const ReviewForm = ({
             </div>
           </div>
 
-          <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 mb-4">
-            <label className="text-sm font-black text-slate-700 mb-4 block">רמת קושי הקורס (1-10)</label>
+          <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative">
+            <div className="flex justify-between items-center mb-4">
+              <label className="text-sm font-black text-slate-700 block">רמת קושי הקורס (1-10)</label>
+              {hasRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}
+            </div>
             <div className="flex items-center gap-6">
               <input 
                 type="range" 
@@ -137,22 +116,26 @@ const ReviewForm = ({
                 step="1"
                 value={difficulty}
                 onChange={(e) => onDifficultyChange(parseInt(e.target.value))}
-                className="flex-1 h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                disabled={hasRated}
+                className={`flex-1 h-3 bg-slate-200 rounded-lg appearance-none accent-rose-500 ${hasRated ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
               />
-              <div className="h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0">
+              <div className={`h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0 ${hasRated ? 'opacity-50' : ''}`}>
                 {difficulty}
               </div>
             </div>
             <div className="flex justify-between mt-2 px-1">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">קל מאוד</span>
-              <span className="text-[10px] font-black text-rose-600 uppercase tracking-tighter">
+              <span className={`text-[10px] font-black uppercase tracking-tighter ${hasRated ? 'text-slate-300' : 'text-slate-400'}`}>קל מאוד</span>
+              <span className={`text-[10px] font-black uppercase tracking-tighter ${hasRated ? 'text-rose-300' : 'text-rose-600'}`}>
                 {getDifficultyText(difficulty)}
               </span>
             </div>
           </div>
 
-          <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
-            <label className="text-sm font-black text-slate-700 mb-4 block">האם נבדקה נוכחות?</label>
+          <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative">
+            <div className="flex justify-between items-center mb-4">
+              <label className="text-sm font-black text-slate-700 block">האם נבדקה נוכחות?</label>
+              {hasRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}
+            </div>
             <div className="grid grid-cols-3 gap-3">
               {[
                 { id: true, label: 'כן', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
@@ -162,49 +145,49 @@ const ReviewForm = ({
                 <button
                   key={String(option.id)}
                   onClick={() => onAttendanceChange(option.id)}
+                  disabled={hasRated}
                   className={`py-3 rounded-xl font-black text-[10px] border-2 transition-all ${
                     attendanceEnforced === option.id 
                       ? `${option.id === true ? 'bg-emerald-600' : option.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md` 
                       : `${option.color} hover:shadow-sm`
-                  }`}
+                  } ${hasRated ? 'cursor-not-allowed opacity-50' : ''}`}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
-            <p className="text-[10px] text-slate-400 font-bold mt-4 text-center">האם המרצה אכף נוכחות בקורס?</p>
           </div>
-        </div>
-
-        <div className="pt-6 mt-6 border-t border-slate-50 hidden lg:block">
-          <button 
-            onClick={onSubmit}
-            className="w-full bg-indigo-600 text-white py-6 rounded-[32px] font-black text-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-4"
-          >
-            <Send className="h-6 w-6" />
-            פרסום ביקורת
-          </button>
         </div>
       </div>
 
-      {/* Left Column: Questions */}
-      <div className="space-y-8 py-2">
-        {QUESTIONS.map(q => (
-          <div key={q.id}>
-            <label className="text-sm font-black text-slate-700 mb-3 block">{q.label}</label>
-            <textarea 
-              value={parts[q.id]}
-              onChange={(e) => updatePart(q.id, e.target.value)}
-              className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl p-6 h-32 outline-none focus:border-indigo-500 focus:bg-white transition-all resize-none text-right font-medium text-slate-600" 
-              placeholder={q.placeholder}
-            ></textarea>
+      {/* Left Column: Unified Comment Area */}
+      <div className="flex flex-col">
+        <div className="flex flex-col">
+          <div className="flex justify-between items-center mb-1">
+            <label className="text-sm font-black text-slate-700">תוכן הביקורת</label>
+            <span className={`text-[10px] font-black uppercase tracking-widest ${isOverLimit ? 'text-rose-500' : 'text-slate-400'}`}>
+              {wordCount} / 200 מילים
+            </span>
           </div>
-        ))}
+          <p className="text-[10px] font-bold text-slate-400 mb-3 text-right">
+            האם החומר מורכב להבנה? כמה השקעה הקורס דורש? האם המבחן/העבודה היה הוגן? טיפים לסטודנטים אחרים...
+          </p>
+          <textarea 
+            value={comment}
+            onChange={(e) => onCommentChange(e.target.value)}
+            className={`w-full bg-slate-50 border-2 rounded-3xl p-6 outline-none focus:bg-white transition-all resize-none text-right font-medium text-slate-600 h-48 overflow-y-auto ${isOverLimit ? 'border-rose-200 focus:border-rose-500' : 'border-slate-100 focus:border-indigo-500'}`}
+            placeholder={placeholderText}
+          ></textarea>
+          {isOverLimit && (
+            <p className="text-[10px] text-rose-500 font-bold mt-2 text-right italic">שימו לב: חרגתם ממכסת המילים (מקסימום 200)</p>
+          )}
+        </div>
         
-        <div className="lg:hidden pb-6">
+        <div className="mt-4">
           <button 
             onClick={onSubmit}
-            className="w-full bg-indigo-600 text-white py-6 rounded-[32px] font-black text-xl hover:bg-indigo-700 active:scale-95 transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-4"
+            disabled={isOverLimit || !comment.trim()}
+            className={`w-full py-6 rounded-[32px] font-black text-xl transition-all shadow-xl flex items-center justify-center gap-4 ${isOverLimit || !comment.trim() ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 shadow-indigo-600/20'}`}
           >
             <Send className="h-6 w-6" />
             פרסום ביקורת

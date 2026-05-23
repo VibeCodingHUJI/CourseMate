@@ -1143,109 +1143,17 @@
       "identityType": "full",
       "likedBy": [],
       "id": "1CuDpgY"
-    },
-    {
-      "courseId": 2961,
-      "difficulty": 7,
-      "comment": "רמת קושי: לא קשה מאוד \n\nהשקעה נדרשת: לא המון \n\nהמבחן היה הוגן: כן\n\nכללי: קורס מעולה! אוהבת ממש",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ד",
-      "attendanceEnforced": true,
-      "date": "12.5.2026",
-      "author": "מ. ר.",
-      "authorId": 14,
-      "identityType": "initials",
-      "likedBy": [],
-      "id": "onf0eFc"
-    },
-    {
-      "courseId": 1299,
-      "difficulty": 7,
-      "comment": "רמת קושי: קורס סבבה\n\nהשקעה נדרשת: יש תרגיל שבועי לא ארוך\n\nהמבחן היה הוגן: מבחן הוגן",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ד",
-      "attendanceEnforced": false,
-      "date": "17.5.2026",
-      "author": "אנונימי/ת",
-      "authorId": 6,
-      "identityType": "anon",
-      "likedBy": [],
-      "id": "KBi_k1c"
-    },
-    {
-      "courseId": 1299,
-      "difficulty": 5,
-      "comment": "רמת קושי: החומר סבבה\n\nהשקעה נדרשת: תרגיל שבועי יחסית קל\n\nהמבחן היה הוגן: מבחן אמריקאי והגון",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ד",
-      "attendanceEnforced": false,
-      "date": "17.5.2026",
-      "author": "ש.",
-      "authorId": 6,
-      "identityType": "initials",
-      "likedBy": [],
-      "id": "ZsQvsa5"
-    },
-    {
-      "courseId": 1611,
-      "rating": 5,
-      "difficulty": 8,
-      "attendanceEnforced": false,
-      "comment": "",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ד",
-      "date": "23.5.2026",
-      "author": "שירה ",
-      "authorId": 6,
-      "identityType": "full",
-      "likedBy": [],
-      "id": "FtUuY3d"
-    },
-    {
-      "courseId": 1611,
-      "rating": 5,
-      "difficulty": 7,
-      "attendanceEnforced": false,
-      "comment": "",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ד",
-      "date": "23.5.2026",
-      "author": "שירה ",
-      "authorId": 6,
-      "identityType": "full",
-      "likedBy": [],
-      "id": "GLxJnYR"
-    },
-    {
-      "courseId": 2977,
-      "difficulty": 6,
-      "comment": "רמת קושי: חומר קל יחסית\n\nהשקעה נדרשת: יש תרגילי כיתה ובוחן אמצע\n\nהמבחן היה הוגן: השאלות האמריקאיות מבלבלות\n\nכללי: מומלץ לקחת את הקורס בעברית",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ו (2025-26)",
-      "attendanceEnforced": false,
-      "date": "23.5.2026",
-      "author": "אנונימי/ת",
-      "authorId": 6,
-      "identityType": "anon",
-      "likedBy": [],
-      "id": "vx61Aso"
-    },
-    {
-      "courseId": 1296,
-      "difficulty": 3,
-      "comment": "השקעה נדרשת: לא הרבה השקעה אבל צריך להיות על זה כשמתפרסמים ניסויים\n\nהמבחן היה הוגן: לא היה מבחן או עבודה",
-      "semester": "סמסטר א'",
-      "year": "תשפ\"ה (2024-25)",
-      "attendanceEnforced": true,
-      "date": "23.5.2026",
-      "author": "אנונימי/ת",
-      "authorId": 6,
-      "identityType": "anon",
-      "likedBy": [],
-      "id": "24h3tSA"
     }
   ],
-  "questions": [],
+  "questions": [
+    {
+      "courseId": 1035,
+      "question": "כמה זמן יש לבצע את הקורס הזה?",
+      "answers": [],
+      "date": "23.5.2026",
+      "id": 1
+    }
+  ],
   "materials": [],
   "combinations": [
     {

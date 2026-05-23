@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ChevronRight, Star, BookOpen, GraduationCap, AlertCircle, MessageSquare, Plus, X, Heart, Ghost, UserCircle, User } from 'lucide-react';
+import { ChevronRight, Star, BookOpen, GraduationCap, AlertCircle, MessageSquare, Plus, X, Heart, Ghost, UserCircle, User, Edit2, Trash2 } from 'lucide-react';
 
 const LecturerProfile = ({ user, onDepartmentClick }) => {
   const navigate = useNavigate();
@@ -14,6 +14,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState(null);
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
   const [selectedReviewCourseId, setSelectedReviewCourseId] = useState('');
@@ -28,7 +29,12 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
     }
   }, [courses]);
 
-  const handleAddReview = async () => {
+  const hasUserRated = reviews.some(r => 
+    (r.authorId !== undefined && String(r.authorId) === String(user?.id)) || 
+    (r.author === user?.name)
+  );
+
+  const handlePostReview = async () => {
     if (user?.isGuest) return alert('אורחים אינם יכולים להוסיף ביקורות');
     if (!newComment.trim()) return alert('נא להוסיף תוכן לביקורת');
     if (!selectedReviewCourseId) return alert('נא לבחור קורס רלוונטי');
@@ -45,36 +51,81 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
       }
     }
 
-    const newReview = {
+    const reviewData = {
       course_id: selectedReviewCourseId,
       author: displayName,
       author_id: user.id,
       rating: newRating,
       comment: newComment,
-      date: new Date().toLocaleDateString('he-IL'),
+      date: editingReviewId ? reviews.find(r => r.id === editingReviewId)?.date : new Date().toLocaleDateString('he-IL'),
       semester: newSemester,
       year: newYear
     };
 
     try {
-      const res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newReview)
-      });
+      let res;
+      if (editingReviewId) {
+        res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews/${editingReviewId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reviewData)
+        });
+      } else {
+        res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reviewData)
+        });
+      }
 
       if (!res.ok) throw new Error('Failed to save review');
 
       const savedReview = await res.json();
-      setReviews([savedReview, ...reviews]);
+      if (editingReviewId) {
+        setReviews(reviews.map(r => r.id === editingReviewId ? savedReview : r));
+      } else {
+        setReviews([savedReview, ...reviews]);
+      }
+      
       setIsModalOpen(false);
       setNewComment('');
       setNewRating(5);
       setIdentityType('anon');
+      setEditingReviewId(null);
+      alert(editingReviewId ? 'הביקורת עודכנה בהצלחה!' : 'הביקורת פורסמה בהצלחה!');
     } catch (err) {
       console.error('Error saving review:', err);
       alert('שגיאה בשמירת הביקורת. אנא נסו שוב.');
     }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('האם אתם בטוחים שברצונכם למחוק את הביקורת?')) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews/${reviewId}`, {
+        method: 'DELETE'
+      });
+
+      if (!res.ok) throw new Error('Failed to delete review');
+
+      setReviews(reviews.filter(r => r.id !== reviewId));
+      alert('הביקורת נמחקה בהצלחה');
+    } catch (err) {
+      console.error('Error deleting review:', err);
+      alert('שגיאה במחיקת הביקורת');
+    }
+  };
+
+  const handleEditReview = (review) => {
+    setEditingReviewId(review.id);
+    setNewRating(review.rating);
+    setNewComment(review.comment);
+    setSelectedReviewCourseId(review.course_id);
+    setNewSemester(review.semester);
+    setNewYear(review.year);
+    // Note: identityType is harder to recover perfectly from author string, defaulting to anon or current name
+    setIsModalOpen(true);
   };
 
   const handleLikeReview = (reviewId) => {
@@ -320,12 +371,58 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
                         </div>
                       </div>
                     </div>
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{review.date}</div>
+                    <div className="flex items-center gap-4">
+                      {((review.author_id !== undefined && String(review.author_id) === String(user?.id)) || (review.authorId !== undefined && String(review.authorId) === String(user?.id)) || (review.author === user?.name)) && (
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleEditReview(review)}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                            title="עריכה"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteReview(review.id)}
+                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                            title="מחיקה"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{review.date}</div>
+                    </div>
                   </div>
                   
-                  <p className="text-slate-600 text-lg font-medium leading-relaxed mb-6">
-                    {review.comment}
-                  </p>
+                  <div className="mb-8 pr-4 border-r-2 border-indigo-50 mt-4">
+                    {editingReviewId === review.id ? (
+                      <div className="space-y-4">
+                        <textarea 
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          className="w-full bg-slate-50 border-2 border-indigo-100 focus:border-indigo-500 rounded-[24px] p-6 h-32 outline-none text-right font-medium text-slate-700 resize-none transition-all"
+                        />
+                        <div className="flex items-center gap-3 justify-end">
+                          <button 
+                            onClick={() => { setEditingReviewId(null); setNewComment(''); }}
+                            className="px-6 py-2 rounded-xl text-slate-500 font-bold hover:bg-slate-100 transition-all text-sm"
+                          >
+                            ביטול
+                          </button>
+                          <button 
+                            onClick={handlePostReview}
+                            className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all text-sm shadow-md"
+                          >
+                            שמירה
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-slate-600 text-lg font-medium leading-relaxed mb-6">
+                        {review.comment}
+                      </p>
+                    )}
+                  </div>
                   
                   <div className="flex items-center justify-between border-t border-slate-50 pt-6">
                     <div className="flex items-center gap-2">
@@ -342,14 +439,14 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
                     <button 
                       onClick={() => handleLikeReview(review.id)}
                       className={`flex items-center gap-2 transition-all active:scale-110 ${
-                        review.isUserReview 
+                        (String(review.author_id) === String(user?.id) || String(review.authorId) === String(user?.id))
                           ? 'text-slate-300 cursor-not-allowed opacity-50' 
                           : likedReviews.includes(review.id)
                             ? 'text-rose-500'
                             : 'text-slate-400 hover:text-rose-500'
                       }`}
-                      title={review.isUserReview ? 'לא ניתן לעשות לייק לביקורת שלך' : ''}
-                      disabled={review.isUserReview}
+                      title={(String(review.author_id) === String(user?.id) || String(review.authorId) === String(user?.id)) ? 'לא ניתן לעשות לייק לביקורת שלך' : ''}
+                      disabled={(String(review.author_id) === String(user?.id) || String(review.authorId) === String(user?.id))}
                     >
                       <span className="text-xs font-black">{review.likes || 0}</span>
                       <Heart 
@@ -379,6 +476,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
             setIsModalOpen(false);
             setNewComment('');
             setNewRating(5);
+            setEditingReviewId(null);
           }}
         >
           <div 
@@ -389,10 +487,10 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
             <button 
               onClick={(e) => {
                 e.preventDefault();
-                console.log('X Button Clicked');
                 setIsModalOpen(false);
                 setNewComment('');
                 setNewRating(5);
+                setEditingReviewId(null);
               }}
               className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-full cursor-pointer z-[110]"
               type="button"
@@ -400,20 +498,25 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
               <X className="h-6 w-6" />
             </button>
 
-            <h3 className="text-2xl font-black text-slate-900 mb-6 mr-10 text-right">הוספת ביקורת על המרצה</h3>
+            <h3 className="text-2xl font-black text-slate-900 mb-6 mr-10 text-right">
+              {editingReviewId ? 'עריכת ביקורת' : 'הוספת ביקורת על המרצה'}
+            </h3>
             
-            <div className="mb-6">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">דירוג המרצה</label>
-              <div className="flex items-center gap-1.5 flex-row-reverse justify-end">
+            <div className="mb-6 relative">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">דירוג המרצה</label>
+                {hasUserRated && !editingReviewId && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת מרצה זה בעבר.</span>}
+              </div>
+              <div className={`flex items-center gap-1.5 flex-row-reverse justify-end ${(hasUserRated && !editingReviewId) ? 'opacity-50' : ''}`}>
                 {[5, 4, 3, 2, 1].map((num) => (
                   <button
                     key={num}
                     type="button"
+                    disabled={hasUserRated && !editingReviewId}
                     onClick={() => {
-                      console.log(`Rating Selected: ${num}`);
                       setNewRating(num);
                     }}
-                    className="transition-transform active:scale-110 cursor-pointer"
+                    className={`transition-transform ${(hasUserRated && !editingReviewId) ? 'cursor-not-allowed' : 'active:scale-110 cursor-pointer'}`}
                   >
                     <Star 
                       className={`h-7 w-7 ${num <= newRating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} 
@@ -475,7 +578,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
               ></textarea>
             </div>
 
-            {/* Redesigned Identity Selector */}
+            {/* Identity Selector */}
             <div className="mb-8">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block text-right">איך להציג את שמך?</label>
               <div className="grid grid-cols-3 gap-3">
@@ -486,6 +589,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
                 ].map((opt) => (
                   <button
                     key={opt.id}
+                    type="button"
                     onClick={() => setIdentityType(opt.id)}
                     className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${
                       identityType === opt.id 
@@ -504,12 +608,11 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                console.log('Submit Review Button Clicked');
-                handleAddReview();
+                handlePostReview();
               }}
               className="w-full bg-indigo-600 text-white py-4 rounded-[22px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98] cursor-pointer text-sm"
             >
-              שלח ביקורת
+              {editingReviewId ? 'עדכן ביקורת' : 'שלח ביקורת'}
             </button>
           </div>
         </div>

@@ -5,7 +5,8 @@ import {
   BookOpen, TrendingUp, Send, FileText, 
   Download, Upload, User, ChevronLeft,
   Filter, Award, Clock, X, CheckCircle, Lock,
-  Camera, Heart, ChevronDown, Link as LinkIcon, ExternalLink, Share2, HardDrive
+  Camera, Heart, ChevronDown, Link as LinkIcon, ExternalLink, Share2, HardDrive,
+  Edit2, Trash2
 } from 'lucide-react';
 
 // Components
@@ -213,6 +214,13 @@ const CourseDetail = ({
   setIsRatingModalOpen,
   handleLogout, 
   handleLikeReview, 
+  handleDeleteReview,
+  handleEditReview,
+  editingReviewId,
+  inlineEditComment,
+  setInlineEditComment,
+  handleSaveInlineEdit,
+  handleCancelInlineEdit,
   questions, 
   setIsQuestionModalOpen, 
   handlePostAnswer, 
@@ -235,7 +243,10 @@ const CourseDetail = ({
 
   const textReviews = reviews.filter(r => r.comment && r.comment.trim() !== '');
 
-  const hasUserRated = reviews.some(r => r.authorId === user.id);
+  const hasUserRated = reviews.some(r => 
+    (r.authorId !== undefined && String(r.authorId) === String(user?.id)) || 
+    (r.author === user?.name)
+  );
 
   const handleOpenRatingModal = () => {
     if (hasUserRated) {
@@ -246,11 +257,7 @@ const CourseDetail = ({
   };
 
   const handleOpenReviewModal = () => {
-    if (hasUserRated) {
-      alert('כבר דירגת את הקורס הזה, תודה על העזרה!');
-    } else {
-      setIsReviewModalOpen(true);
-    }
+    setIsReviewModalOpen(true);
   };
 
   const getMaterialIcon = (m) => {
@@ -426,15 +433,57 @@ const CourseDetail = ({
                         </div>
 
                     </div>
-                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
+                    <div className="flex items-center gap-4">
+                      {((r.authorId !== undefined && String(r.authorId) === String(user?.id)) || (r.author === user?.name)) && (
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleEditReview(r)}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                            title="עריכה"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteReview(r.id)}
+                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                            title="מחיקה"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
+                    </div>
                   </div>
                   
-                  <div className="space-y-4 mb-8 pr-4 border-r-2 border-indigo-50">
-                    {r.comment.split('\n\n').map((line, idx) => (
-                      <div key={idx} className="text-slate-600 text-lg font-medium leading-relaxed italic whitespace-pre-wrap">
-                        {line.startsWith('המבחן:') ? line.replace('המבחן:', 'המבחן היה הוגן:') : line}
+                  <div className="mb-8 pr-4 border-r-2 border-indigo-50">
+                    {editingReviewId === r.id ? (
+                      <div className="space-y-4">
+                        <textarea 
+                          value={inlineEditComment}
+                          onChange={(e) => setInlineEditComment(e.target.value)}
+                          className="w-full bg-slate-50 border-2 border-indigo-100 focus:border-indigo-500 rounded-[24px] p-6 h-32 outline-none text-right font-medium text-slate-700 resize-none transition-all"
+                        />
+                        <div className="flex items-center gap-3 justify-end">
+                          <button 
+                            onClick={handleCancelInlineEdit}
+                            className="px-6 py-2 rounded-xl text-slate-500 font-bold hover:bg-slate-100 transition-all text-sm"
+                          >
+                            ביטול
+                          </button>
+                          <button 
+                            onClick={() => handleSaveInlineEdit(r.id)}
+                            className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all text-sm shadow-md"
+                          >
+                            שמירה
+                          </button>
+                        </div>
                       </div>
-                    ))}
+                    ) : (
+                      <p className="text-slate-600 text-lg font-medium leading-relaxed italic whitespace-pre-wrap">
+                        {r.comment}
+                      </p>
+                    )}
                   </div>
                   
                   <div className="flex items-center justify-between border-t border-slate-100 pt-6">
@@ -765,6 +814,7 @@ const App = () => {
   const [newMaterialFile, setNewMaterialFile] = useState(null);
 
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState(null);
   const [newReviewComment, setNewReviewComment] = useState('');
   const [newReviewSemester, setNewReviewSemester] = useState("סמסטר א'");
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ו (2025-26)');
@@ -839,44 +889,118 @@ const App = () => {
     if (user?.isGuest) return;
     if (!newReviewComment) return alert('נא למלא את תוכן הביקורת');
     
-    const newReview = {
+    const reviewData = {
       courseId: selectedCourse.id,
       difficulty: newReviewDifficulty,
       comment: newReviewComment,
       semester: newReviewSemester,
       year: newReviewYear,
       attendanceEnforced: newReviewAttendance,
-      date: new Date().toLocaleDateString('he-IL'),
+      date: editingReviewId ? reviews.find(r => r.id === editingReviewId)?.date : new Date().toLocaleDateString('he-IL'),
       author: getAuthorDisplayName(user.name, newReviewIdentity),
       authorId: user.id,
       identityType: newReviewIdentity,
-      likedBy: []
+      likedBy: editingReviewId ? (reviews.find(r => r.id === editingReviewId)?.likedBy || []) : []
     };
     
     try {
-      const res = await fetch('http://localhost:3000/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newReview)
-      });
+      let res;
+      if (editingReviewId) {
+        res = await fetch(`http://localhost:3000/reviews/${editingReviewId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reviewData)
+        });
+      } else {
+        res = await fetch('http://localhost:3000/reviews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reviewData)
+        });
+      }
+
+      if (!res.ok) throw new Error('Failed to save review');
       const savedReview = await res.json();
-      setReviews([savedReview, ...reviews]);
-      setAllReviews([savedReview, ...allReviews]);
       
-      // Update allCourses count
-      setAllCourses(allCourses.map(c => 
-        c.id === selectedCourse.id 
-          ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } 
-          : c
-      ));
+      if (editingReviewId) {
+        setReviews(reviews.map(r => r.id === editingReviewId ? savedReview : r));
+        setAllReviews(allReviews.map(r => r.id === editingReviewId ? savedReview : r));
+      } else {
+        setReviews([savedReview, ...reviews]);
+        setAllReviews([savedReview, ...allReviews]);
+        setAllCourses(allCourses.map(c => 
+          c.id === selectedCourse.id 
+            ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } 
+            : c
+        ));
+      }
 
       setNewReviewComment('');
-      setNewReviewAttendance(false);
+      setNewReviewAttendance(null);
       setNewReviewDifficulty(5);
+      setEditingReviewId(null);
       setIsReviewModalOpen(false);
-      alert('הביקורת פורסמה בהצלחה!');
+      alert(editingReviewId ? 'הביקורת עודכנה בהצלחה!' : 'הביקורת פורסמה בהצלחה!');
     } catch (err) {
-      alert('שגיאה בפרסום הביקורת');
+      alert('שגיאה בשמירת הביקורת');
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('האם אתם בטוחים שברצונכם למחוק את הביקורת?')) return;
+
+    try {
+      const res = await fetch(`http://localhost:3000/reviews/${reviewId}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete review');
+
+      setReviews(reviews.filter(r => r.id !== reviewId));
+      setAllReviews(allReviews.filter(r => r.id !== reviewId));
+      setAllCourses(allCourses.map(c => 
+        c.id === selectedCourse?.id 
+          ? { ...c, reviewCount: Math.max(0, (c.reviewCount || 0) - 1) } 
+          : c
+      ));
+      alert('הביקורת נמחקה בהצלחה');
+    } catch (err) {
+      alert('שגיאה במחיקת הביקורת');
+    }
+  };
+
+  const [inlineEditComment, setInlineEditComment] = useState('');
+
+  const handleEditReview = (review) => {
+    setEditingReviewId(review.id);
+    setInlineEditComment(review.comment);
+  };
+
+  const handleCancelInlineEdit = () => {
+    setEditingReviewId(null);
+    setInlineEditComment('');
+  };
+
+  const handleSaveInlineEdit = async (reviewId) => {
+    if (!inlineEditComment.trim()) return alert('נא למלא את תוכן הביקורת');
+
+    try {
+      const res = await fetch(`http://localhost:3000/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment: inlineEditComment })
+      });
+
+      if (!res.ok) throw new Error('Failed to update review');
+      const updatedReview = await res.json();
+      
+      setReviews(reviews.map(r => r.id === reviewId ? updatedReview : r));
+      setAllReviews(allReviews.map(r => r.id === reviewId ? updatedReview : r));
+      
+      setEditingReviewId(null);
+      setInlineEditComment('');
+      alert('הביקורת עודכנה בהצלחה!');
+    } catch (err) {
+      alert('שגיאה בעדכון הביקורת');
     }
   };
 
@@ -997,6 +1121,11 @@ const App = () => {
   };
 
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+
+  const hasUserRated = reviews.some(r => 
+    (r.authorId !== undefined && String(r.authorId) === String(user?.id)) || 
+    (r.author === user?.name)
+  );
 
   const handlePostRating = async () => {
     if (user?.isGuest || !selectedCourse) return;
@@ -1216,6 +1345,13 @@ const App = () => {
               setIsRatingModalOpen={setIsRatingModalOpen}
               handleLogout={handleLogout}
               handleLikeReview={handleLikeReview}
+              handleDeleteReview={handleDeleteReview}
+              handleEditReview={handleEditReview}
+              editingReviewId={editingReviewId}
+              inlineEditComment={inlineEditComment}
+              setInlineEditComment={setInlineEditComment}
+              handleSaveInlineEdit={handleSaveInlineEdit}
+              handleCancelInlineEdit={handleCancelInlineEdit}
               questions={questions}
               setIsQuestionModalOpen={setIsQuestionModalOpen}
               handlePostAnswer={handlePostAnswer}
@@ -1286,8 +1422,11 @@ const App = () => {
             </div>
 
             <div className="space-y-8">
-              <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
-                <label className="text-sm font-black text-slate-700 mb-4 block">רמת קושי הקורס (1-10)</label>
+              <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative">
+                <div className="flex justify-between items-center mb-4">
+                  <label className="text-sm font-black text-slate-700 block">רמת קושי הקורס (1-10)</label>
+                  {hasUserRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}
+                </div>
                 <div className="flex items-center gap-6">
                   <input 
                     type="range" 
@@ -1296,15 +1435,16 @@ const App = () => {
                     step="1"
                     value={newReviewDifficulty}
                     onChange={(e) => setNewReviewDifficulty(parseInt(e.target.value))}
-                    className="flex-1 h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                    disabled={hasUserRated}
+                    className={`flex-1 h-3 bg-slate-200 rounded-lg appearance-none accent-rose-500 ${hasUserRated ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                   />
-                  <div className="h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0">
+                  <div className={`h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0 ${hasUserRated ? 'opacity-50' : ''}`}>
                     {newReviewDifficulty}
                   </div>
                 </div>
                 <div className="flex justify-between mt-2 px-1">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">קל מאוד</span>
-                  <span className="text-[10px] font-black text-rose-600 uppercase tracking-tighter">
+                  <span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-slate-300' : 'text-slate-400'}`}>קל מאוד</span>
+                  <span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-rose-300' : 'text-rose-600'}`}>
                     {newReviewDifficulty <= 2 ? "קל מאוד" : newReviewDifficulty === 3 ? "קל" : newReviewDifficulty <= 7 ? "בינוני" : newReviewDifficulty <= 9 ? "קשה" : "קשה מאוד"}
                   </span>
                 </div>
@@ -1334,8 +1474,11 @@ const App = () => {
                 </div>
               </div>
 
-              <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
-                <label className="text-sm font-black text-slate-700 mb-4 block">האם נבדקה נוכחות?</label>
+              <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative">
+                <div className="flex justify-between items-center mb-4">
+                  <label className="text-sm font-black text-slate-700 block">האם נבדקה נוכחות?</label>
+                  {hasUserRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}
+                </div>
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { id: true, label: 'כן', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
@@ -1345,11 +1488,12 @@ const App = () => {
                     <button
                       key={String(option.id)}
                       onClick={() => setNewReviewAttendance(option.id)}
+                      disabled={hasUserRated}
                       className={`py-3 rounded-xl font-black text-sm border-2 transition-all ${
                         newReviewAttendance === option.id 
                           ? `${option.id === true ? 'bg-emerald-600' : option.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md` 
                           : `${option.color} hover:shadow-sm`
-                      }`}
+                      } ${hasUserRated ? 'cursor-not-allowed opacity-50' : ''}`}
                     >
                       {option.label}
                     </button>
@@ -1387,6 +1531,7 @@ const App = () => {
               onDifficultyChange={setNewReviewDifficulty}
               onSubmit={handlePostReview}
               onClose={() => setIsReviewModalOpen(false)}
+              hasRated={hasUserRated}
             />
           </div>
         </div>
