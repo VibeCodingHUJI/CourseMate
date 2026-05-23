@@ -309,6 +309,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
               courses.map(course => (
                 <Link 
                   to={`/course/${course.id}`}
+                  state={{ from: 'lecturer', lecturerId: id, lecturerName: lecturer.name }}
                   key={course.id}
                   className="bg-white p-6 rounded-[24px] border border-slate-200 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md transition-all group flex items-center justify-start gap-6"
                 >

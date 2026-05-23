@@ -203,6 +203,113 @@ const Dashboard = ({
   </div>
 );
 
+const MaterialItem = ({ item, user, onUpdate, onDelete, getMaterialIcon }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(item.title);
+  const [editUrl, setEditUrl] = useState(item.url || '');
+
+  const handleSave = async () => {
+    if (!editTitle || (item.isLink && !editUrl)) return alert('נא למלא את כל הפרטים');
+    await onUpdate(item.id, { title: editTitle, url: editUrl });
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditTitle(item.title);
+    setEditUrl(item.url || '');
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="flex flex-col gap-4 p-6 bg-slate-50 rounded-[32px] border-2 border-indigo-100 animate-in fade-in duration-200 text-right">
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1 mr-2">כותרת</label>
+            <input 
+              type="text" 
+              value={editTitle} 
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:border-indigo-500 transition-all font-bold text-right"
+            />
+          </div>
+          {item.isLink && (
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1 mr-2">כתובת (URL)</label>
+              <input 
+                type="text" 
+                value={editUrl} 
+                onChange={(e) => setEditUrl(e.target.value)}
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 outline-none focus:border-indigo-500 transition-all font-medium text-right"
+                dir="ltr"
+              />
+            </div>
+          )}
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          <button 
+            onClick={() => onDelete(item.id)}
+            className="flex items-center gap-2 text-rose-500 hover:text-rose-600 font-black text-xs transition-all px-4 py-2 hover:bg-rose-50 rounded-xl"
+          >
+            <Trash2 className="h-4 w-4" />
+            <span>מחיקת פריט</span>
+          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleCancel}
+              className="px-4 py-2 rounded-xl text-slate-500 font-bold hover:bg-slate-200 transition-all text-xs"
+            >
+              ביטול
+            </button>
+            <button 
+              onClick={handleSave}
+              className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all text-xs shadow-md"
+            >
+              שמירה
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between p-6 bg-white rounded-[32px] border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all group">
+      <div className="flex items-center gap-6">
+        <div className="h-14 w-14 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+          {getMaterialIcon(item)}
+        </div>
+        <div className="text-right">
+          <h4 className="font-black text-slate-900 text-lg">{item.title}</h4>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            {item.isLink ? `${item.type} • ${item.date}` : `${item.type} • ${item.author} • ${item.date}`}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        {!user.isGuest && (
+          <button 
+            onClick={() => setIsEditing(true)}
+            className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+            title="עריכה"
+          >
+            <Edit2 className="h-5 w-5" />
+          </button>
+        )}
+        {item.isLink ? (
+          <a href={item.url} target="_blank" rel="noopener noreferrer" className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all">
+            <ExternalLink className="h-5 w-5" />
+          </a>
+        ) : (
+          <button className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all">
+            <Download className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const CourseDetail = ({ 
   selectedCourse, 
   navigate, 
@@ -227,10 +334,25 @@ const CourseDetail = ({
   handleLikeAnswer, 
   setIsMaterialModalOpen,
   setIsLinkModalOpen,
-  materials 
+  materials,
+  onUpdateMaterial,
+  onDeleteMaterial
 }) => {
+  const location = useLocation();
   if (!selectedCourse) return <div className="text-center py-20 animate-pulse text-2xl font-black text-slate-400">טוען נתונים...</div>;
   
+  const fromLecturer = location.state?.from === 'lecturer';
+  const lecturerName = location.state?.lecturerName;
+
+  const handleBack = () => {
+    // If we have history, go back. Otherwise go to home.
+    if (window.history.length > 1 && location.key !== 'default') {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
   const attendanceReviews = reviews.filter(r => r.attendanceEnforced !== undefined && r.attendanceEnforced !== null);
   const enforcementRate = attendanceReviews.length > 0
     ? Math.round((attendanceReviews.filter(r => r.attendanceEnforced === true).length / attendanceReviews.length) * 100)
@@ -282,13 +404,13 @@ const CourseDetail = ({
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <button 
-        onClick={() => navigate('/')}
+        onClick={handleBack}
         className="group mb-8 flex items-center gap-3 text-slate-500 font-black hover:text-indigo-600 transition-all"
       >
         <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200 group-hover:border-indigo-100">
           <ChevronLeft className="h-4 w-4 rotate-180" />
         </div>
-        <span>חזרה לכל הקורסים</span>
+        <span>{fromLecturer ? `חזרה למרצה: ${lecturerName || ''}` : 'חזרה לכל הקורסים'}</span>
       </button>
 
       <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 p-10 mb-8 relative overflow-hidden text-right">
@@ -611,26 +733,14 @@ const CourseDetail = ({
                         <div className="grid grid-cols-1 gap-4">
                           {categoryMaterials.length > 0 ? (
                             categoryMaterials.map(m => (
-                              <div key={m.id} className="flex items-center justify-between p-6 bg-white rounded-[32px] border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all group">
-                                <div className="flex items-center gap-6">
-                                  <div className="h-14 w-14 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                                    {getMaterialIcon(m)}
-                                  </div>
-                                  <div className="text-right">
-                                    <h4 className="font-black text-slate-900 text-lg">{m.title}</h4>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{m.type} • {m.author} • {m.date}</span>
-                                  </div>
-                                </div>
-                                {m.isLink ? (
-                                  <a href={m.url} target="_blank" rel="noopener noreferrer" className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all">
-                                    <ExternalLink className="h-5 w-5" />
-                                  </a>
-                                ) : (
-                                  <button className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all">
-                                    <Download className="h-5 w-5" />
-                                  </button>
-                                )}
-                              </div>
+                              <MaterialItem 
+                                key={m.id}
+                                item={m}
+                                user={user}
+                                onUpdate={onUpdateMaterial}
+                                onDelete={onDeleteMaterial}
+                                getMaterialIcon={getMaterialIcon}
+                              />
                             ))
                           ) : (
                             <div className="py-8 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 text-slate-400 font-bold">
@@ -1206,36 +1316,94 @@ const App = () => {
     }
   };
 
+  const [editingLinkId, setEditingLinkId] = useState(null);
+
+  const handleEditLink = (link) => {
+    setEditingLinkId(link.id);
+    setNewLinkTitle(link.title);
+    setNewLinkUrl(link.url);
+    setNewLinkType(link.type.toLowerCase());
+    setIsLinkModalOpen(true);
+  };
+
   const handlePostLink = async () => {
     if (user?.isGuest || !selectedCourse) return;
     if (!newLinkTitle || !newLinkUrl) return alert('נא למלא את כל הפרטים');
 
-    const newLink = {
+    const linkData = {
       courseId: selectedCourse.id,
       title: newLinkTitle,
       url: newLinkUrl,
       category: 'links',
       type: newLinkType.toUpperCase(),
       author: user.name,
-      date: new Date().toLocaleDateString('he-IL'),
+      date: editingLinkId ? materials.find(m => m.id === editingLinkId)?.date : new Date().toLocaleDateString('he-IL'),
       isLink: true,
-      likedBy: []
+      likedBy: editingLinkId ? (materials.find(m => m.id === editingLinkId)?.likedBy || []) : []
     };
 
     try {
-      const res = await fetch('http://localhost:3000/materials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newLink)
-      });
+      let res;
+      if (editingLinkId) {
+        res = await fetch(`http://localhost:3000/materials/${editingLinkId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(linkData)
+        });
+      } else {
+        res = await fetch('http://localhost:3000/materials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(linkData)
+        });
+      }
+
+      if (!res.ok) throw new Error('Failed to save link');
       const savedL = await res.json();
-      setMaterials([savedL, ...materials]);
+      
+      if (editingLinkId) {
+        setMaterials(materials.map(m => m.id === editingLinkId ? savedL : m));
+      } else {
+        setMaterials([savedL, ...materials]);
+      }
+
       setNewLinkTitle('');
       setNewLinkUrl('');
+      setEditingLinkId(null);
       setIsLinkModalOpen(false);
-      alert('הקישור נוסף בהצלחה!');
+      alert(editingLinkId ? 'הקישור עודכן בהצלחה!' : 'הקישור נוסף בהצלחה!');
     } catch (err) {
-      alert('שגיאה בהוספת הקישור');
+      alert('שגיאה בשמירת הקישור');
+    }
+  };
+
+  const handleDeleteMaterial = async (materialId) => {
+    if (!window.confirm('האם למחוק את הפריט?')) return;
+    try {
+      const res = await fetch(`http://localhost:3000/materials/${materialId}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete material');
+      setMaterials(materials.filter(m => m.id !== materialId));
+      alert('הפריט נמחק בהצלחה');
+    } catch (err) {
+      alert('שגיאה במחיקת הפריט');
+    }
+  };
+
+  const handleUpdateMaterial = async (id, data) => {
+    try {
+      const res = await fetch(`http://localhost:3000/materials/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error('Failed to update material');
+      const updated = await res.json();
+      setMaterials(materials.map(m => m.id === id ? updated : m));
+      alert('העדכון נשמר בהצלחה');
+    } catch (err) {
+      alert('שגיאה בשמירת העדכון');
     }
   };
 
@@ -1359,6 +1527,8 @@ const App = () => {
               setIsMaterialModalOpen={setIsMaterialModalOpen}
               setIsLinkModalOpen={setIsLinkModalOpen}
               materials={materials}
+              onUpdateMaterial={handleUpdateMaterial}
+              onDeleteMaterial={handleDeleteMaterial}
             />
           } />
           <Route path="/" element={
@@ -1624,20 +1794,32 @@ const App = () => {
 
       {/* Link Modal */}
       {isLinkModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsLinkModalOpen(false)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => { setIsLinkModalOpen(false); setEditingLinkId(null); }}>
           <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-4 mb-8">
-              <button onClick={() => setIsLinkModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button>
-              <h3 className="text-3xl font-black text-slate-900">הוספת קישור</h3>
+              <button onClick={() => { setIsLinkModalOpen(false); setEditingLinkId(null); }} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button>
+              <h3 className="text-3xl font-black text-slate-900">{editingLinkId ? 'עריכת קישור' : 'הוספת קישור'}</h3>
             </div>
             <div className="space-y-6">
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת הקישור</label>
-                <input type="text" value={newLinkTitle} onChange={(e) => setNewLinkTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: קבוצת וואטסאפ של הקורס" />
+                <input 
+                  type="text" 
+                  value={newLinkTitle} 
+                  onChange={(e) => setNewLinkTitle(e.target.value)} 
+                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" 
+                  placeholder="למשל: קבוצת וואטסאפ של הקורס" 
+                />
               </div>
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כתובת הקישור (URL)</label>
-                <input type="text" value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="https://..." />
+                <input 
+                  type="text" 
+                  value={newLinkUrl} 
+                  onChange={(e) => setNewLinkUrl(e.target.value)} 
+                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" 
+                  placeholder="https://..." 
+                />
               </div>
               <div>
                 <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג הקישור</label>
@@ -1658,7 +1840,9 @@ const App = () => {
                   ))}
                 </div>
               </div>
-              <button onClick={handlePostLink} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">הוסף קישור</button>
+              <button onClick={handlePostLink} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">
+                {editingLinkId ? 'עדכן קישור' : 'הוסף קישור'}
+              </button>
             </div>
           </div>
         </div>

@@ -1145,16 +1145,21 @@
       "id": "1CuDpgY"
     }
   ],
-  "questions": [
+  "questions": [],
+  "materials": [
     {
-      "courseId": 1035,
-      "question": "כמה זמן יש לבצע את הקורס הזה?",
-      "answers": [],
+      "courseId": 1291,
+      "title": "דרייב מיקרו כלכלה",
+      "url": "https://drive.google.com/drive/folders/1G9yYQuiFDq2qBPmPcBteciuwzmLK8ucN?usp=sharing",
+      "category": "links",
+      "type": "DRIVE",
+      "author": "שירה ",
       "date": "23.5.2026",
+      "isLink": true,
+      "likedBy": [],
       "id": 1
     }
   ],
-  "materials": [],
   "combinations": [
     {
       "majorA": "Computer Science",
