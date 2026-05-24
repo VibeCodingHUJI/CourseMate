@@ -121,6 +121,14 @@
       "track": "525-3035",
       "isGuest": false,
       "id": 15
+    },
+    {
+      "name": "מאיה",
+      "email": "mm@mail.huji.ac.il",
+      "password": "12",
+      "track": "124-1329",
+      "isGuest": false,
+      "id": 16
     }
   ],
   "courses": [

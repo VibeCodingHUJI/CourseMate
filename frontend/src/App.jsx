@@ -967,7 +967,7 @@ const App = () => {
         let url = 'http://localhost:3000/courses';
         if (/^\d{3}-\d{4}$/.test(currentTrack)) url = `http://localhost:5000/api/combinations/${currentTrack}/courses`;
         else if (currentTrack === 'Computer Science') url = 'http://localhost:5000/api/combinations/521-3010/courses';
-        const [cRes, rRes] = await Promise.all([fetch(url), fetch('http://localhost:3000/reviews')]);
+        const [cRes, rRes] = await Promise.all([fetch(url), fetch('http://localhost:5000/api/reviews')]);
         const cData = await cRes.json();
         const rData = (await rRes.json()) || [];
         setAllReviews(rData);
@@ -998,9 +998,9 @@ const App = () => {
 
   useEffect(() => {
     if (selectedCourse) {
-      fetch(`http://localhost:3000/reviews?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setReviews(d));
-      fetch(`http://localhost:3000/questions?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setQuestions(d));
-      fetch(`http://localhost:3000/materials?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setMaterials(d));
+      fetch(`http://localhost:5000/api/reviews?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setReviews(d));
+      fetch(`http://localhost:5000/api/questions?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setQuestions(d));
+      fetch(`http://localhost:5000/api/materials?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setMaterials(d));
     }
   }, [selectedCourse]);
 
@@ -1058,7 +1058,7 @@ const App = () => {
     if (user?.isGuest || !newReviewComment) return;
     const data = { courseId: selectedCourse.id, difficulty: newReviewDifficulty, comment: newReviewComment, semester: newReviewSemester, year: newReviewYear, attendanceEnforced: newReviewAttendance, date: editingReviewId ? reviews.find(r => r.id === editingReviewId)?.date : new Date().toLocaleDateString('he-IL'), author: getAuthorDisplayName(user.name, newReviewIdentity), authorId: user.id, identityType: newReviewIdentity, likedBy: editingReviewId ? (reviews.find(r => r.id === editingReviewId)?.likedBy || []) : [] };
     try {
-      const res = editingReviewId ? await fetch(`http://localhost:3000/reviews/${editingReviewId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }) : await fetch('http://localhost:3000/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const res = editingReviewId ? await fetch(`http://localhost:5000/api/reviews/${editingReviewId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }) : await fetch('http://localhost:5000/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const saved = await res.json();
       if (editingReviewId) { setReviews(reviews.map(r => r.id === editingReviewId ? saved : r)); setAllReviews(allReviews.map(r => r.id === editingReviewId ? saved : r)); }
       else { setReviews([saved, ...reviews]); setAllReviews([saved, ...allReviews]); setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c)); }
@@ -1069,7 +1069,7 @@ const App = () => {
   const handleDeleteReview = async (id) => {
     if (!window.confirm('האם למחוק?')) return;
     try {
-      await fetch(`http://localhost:3000/reviews/${id}`, { method: 'DELETE' });
+      await fetch(`http://localhost:5000/api/reviews/${id}`, { method: 'DELETE' });
       setReviews(reviews.filter(r => r.id !== id));
       setAllReviews(allReviews.filter(r => r.id !== id));
       setAllCourses(allCourses.map(c => c.id === selectedCourse?.id ? { ...c, reviewCount: Math.max(0, (c.reviewCount || 0) - 1) } : c));
@@ -1082,7 +1082,7 @@ const App = () => {
   const handleCancelInlineEdit = () => { setEditingReviewId(null); setInlineEditComment(''); };
   const handleSaveInlineEdit = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: inlineEditComment }) });
+      const res = await fetch(`http://localhost:5000/api/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: inlineEditComment }) });
       const saved = await res.json();
       setReviews(reviews.map(r => r.id === id ? saved : r));
       setAllReviews(allReviews.map(r => r.id === id ? saved : r));
@@ -1092,13 +1092,13 @@ const App = () => {
 
   const handlePostQuestion = async () => {
     const data = { courseId: selectedCourse.id, question: newQuestionText, answers: [], date: new Date().toLocaleDateString('he-IL') };
-    try { const res = await fetch('http://localhost:3000/questions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setQuestions([saved, ...questions]); setNewQuestionText(''); setIsQuestionModalOpen(false); } catch (err) { alert('שגיאה'); }
+    try { const res = await fetch('http://localhost:5000/api/questions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setQuestions([saved, ...questions]); setNewQuestionText(''); setIsQuestionModalOpen(false); } catch (err) { alert('שגיאה'); }
   };
 
   const handlePostAnswer = async (id, text) => {
     const q = questions.find(q => q.id === id);
     const updated = [...q.answers, { text, date: new Date().toLocaleDateString('he-IL'), authorId: user.id, likedBy: [] }];
-    try { const res = await fetch(`http://localhost:3000/questions/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updated }) }); const saved = await res.json(); setQuestions(questions.map(q => q.id === id ? saved : q)); } catch (err) { alert('שגיאה'); }
+    try { const res = await fetch(`http://localhost:5000/api/questions/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updated }) }); const saved = await res.json(); setQuestions(questions.map(q => q.id === id ? saved : q)); } catch (err) { alert('שגיאה'); }
   };
 
   const handleLikeReview = async (id) => {
@@ -1106,7 +1106,7 @@ const App = () => {
     if (!r || !user?.id || r.authorId === user.id) return;
     const likedBy = r.likedBy || [];
     if (likedBy.includes(user.id)) return;
-    try { const res = await fetch(`http://localhost:3000/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ likedBy: [...likedBy, user.id] }) }); const saved = await res.json(); setReviews(reviews.map(r => r.id === id ? saved : r)); } catch (err) { }
+    try { const res = await fetch(`http://localhost:5000/api/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ likedBy: [...likedBy, user.id] }) }); const saved = await res.json(); setReviews(reviews.map(r => r.id === id ? saved : r)); } catch (err) { }
   };
 
   const handleLikeAnswer = async (qId, i) => {
@@ -1114,26 +1114,26 @@ const App = () => {
     const a = q.answers[i];
     if (a.authorId === user.id) return;
     const updated = q.answers.map((ans, idx) => i === idx ? { ...ans, likedBy: [...(ans.likedBy || []), user.id] } : ans);
-    try { const res = await fetch(`http://localhost:3000/questions/${qId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updated }) }); const saved = await res.json(); setQuestions(questions.map(q => q.id === qId ? updated : q)); } catch (err) { }
+    try { const res = await fetch(`http://localhost:5000/api/questions/${qId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updated }) }); const saved = await res.json(); setQuestions(questions.map(q => q.id === qId ? updated : q)); } catch (err) { }
   };
 
   const handlePostRating = async () => {
     const data = { courseId: selectedCourse.id, rating: 5, difficulty: newReviewDifficulty, attendanceEnforced: newReviewAttendance, comment: "", semester: newReviewSemester, year: newReviewYear, date: new Date().toLocaleDateString('he-IL'), author: getAuthorDisplayName(user.name, newReviewIdentity), authorId: user.id, identityType: newReviewIdentity, likedBy: [] };
-    try { const res = await fetch('http://localhost:3000/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setReviews([saved, ...reviews]); setAllReviews([saved, ...allReviews]); setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c)); setIsRatingModalOpen(false); alert('תודה על הדירוג!'); } catch (err) { alert('שגיאה'); }
+    try { const res = await fetch('http://localhost:5000/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setReviews([saved, ...reviews]); setAllReviews([saved, ...allReviews]); setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c)); setIsRatingModalOpen(false); alert('תודה על הדירוג!'); } catch (err) { alert('שגיאה'); }
   };
 
   const handlePostMaterial = async () => {
     const data = { courseId: selectedCourse.id, title: newMaterialTitle, category: newMaterialCategory, type: newMaterialFile.name.split('.').pop().toUpperCase(), author: user.name, date: new Date().toLocaleDateString('he-IL'), likedBy: [] };
-    try { const res = await fetch('http://localhost:3000/materials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewMaterialTitle(''); setNewMaterialFile(null); setIsMaterialModalOpen(false); alert('הועלה בהצלחה'); } catch (err) { alert('שגיאה'); }
+    try { const res = await fetch('http://localhost:5000/api/materials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewMaterialTitle(''); setNewMaterialFile(null); setIsMaterialModalOpen(false); alert('הועלה בהצלחה'); } catch (err) { alert('שגיאה'); }
   };
 
   const handlePostLink = async () => {
     const data = { courseId: selectedCourse.id, title: newLinkTitle, url: newLinkUrl, category: 'links', type: newLinkType.toUpperCase(), author: user.name, date: new Date().toLocaleDateString('he-IL'), isLink: true, likedBy: [] };
-    try { const res = await fetch('http://localhost:3000/materials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewLinkTitle(''); setNewLinkUrl(''); setIsLinkModalOpen(false); alert('נוסף בהצלחה'); } catch (err) { alert('שגיאה'); }
+    try { const res = await fetch('http://localhost:5000/api/materials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewLinkTitle(''); setNewLinkUrl(''); setIsLinkModalOpen(false); alert('נוסף בהצלחה'); } catch (err) { alert('שגיאה'); }
   };
 
-  const handleDeleteMaterial = async (id) => { if (window.confirm('למחוק?')) try { await fetch(`http://localhost:3000/materials/${id}`, { method: 'DELETE' }); setMaterials(materials.filter(m => m.id !== id)); alert('נמחק'); } catch (err) { alert('שגיאה'); } };
-  const handleUpdateMaterial = async (id, data) => { try { const res = await fetch(`http://localhost:3000/materials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials(materials.map(m => m.id === id ? saved : m)); alert('נשמר'); } catch (err) { alert('שגיאה'); } };
+  const handleDeleteMaterial = async (id) => { if (window.confirm('למחוק?')) try { await fetch(`http://localhost:5000/api/materials/${id}`, { method: 'DELETE' }); setMaterials(materials.filter(m => m.id !== id)); alert('נמחק'); } catch (err) { alert('שגיאה'); } };
+  const handleUpdateMaterial = async (id, data) => { try { const res = await fetch(`http://localhost:5000/api/materials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials(materials.map(m => m.id === id ? saved : m)); alert('נשמר'); } catch (err) { alert('שגיאה'); } };
 
   const handleToggleFollow = (id, title, status) => {
     if (status) {
@@ -1147,6 +1147,11 @@ const App = () => {
       setNotifications(notifications.filter(n => n.courseId !== id));
     }
   };
+
+  const hasUserRated = reviews.some(r =>
+    (r.authorId !== undefined && String(r.authorId) === String(user?.id)) ||
+    (r.author === user?.name)
+  );
 
   if (!user) return <AuthPage onLogin={handleLogin} />;
 

@@ -1,6 +1,6 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const express = require('express');
-const { Pool } = require('pg');
+const { Pool, Client } = require('pg');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -161,6 +161,241 @@ app.get('/api/courses/:id', async (req, res) => {
     res.json(mapCourse(result.rows[0]));
   } catch (err) {
     console.error(`Error fetching course ${req.params.id}:`, err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Reviews Routes ---
+
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const { courseId } = req.query;
+    let query = 'SELECT * FROM course_reviews';
+    let params = [];
+    if (courseId) {
+      query += ' WHERE course_id = $1';
+      params.push(courseId);
+    }
+    query += ' ORDER BY id DESC';
+    const result = await pool.query(query, params);
+    res.json(result.rows.map(r => ({
+      ...r,
+      courseId: r.course_id,
+      authorId: r.author_id,
+      identityType: r.identity_type,
+      attendanceEnforced: r.attendance_enforced,
+      likedBy: r.liked_by || []
+    })));
+  } catch (err) {
+    console.error('Error fetching reviews:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/reviews', async (req, res) => {
+  try {
+    const { courseId, rating, difficulty, comment, date, author, authorId, semester, year, attendanceEnforced, identityType } = req.body;
+    const query = `
+      INSERT INTO course_reviews (course_id, rating, difficulty, comment, date, author, author_id, semester, year, attendance_enforced, identity_type)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING *
+    `;
+    const params = [courseId, rating, difficulty, comment, date, author, authorId, semester, year, attendanceEnforced, identityType];
+    const result = await pool.query(query, params);
+    const saved = result.rows[0];
+    res.status(201).json({
+      ...saved,
+      courseId: saved.course_id,
+      authorId: saved.author_id,
+      identityType: saved.identity_type,
+      attendanceEnforced: saved.attendance_enforced,
+      likedBy: saved.liked_by || []
+    });
+  } catch (err) {
+    console.error('Error creating review:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch('/api/reviews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comment, difficulty, rating, likedBy } = req.body;
+    
+    let updates = [];
+    let params = [];
+    let index = 1;
+
+    if (comment !== undefined) { updates.push(`comment = $${index++}`); params.push(comment); }
+    if (difficulty !== undefined) { updates.push(`difficulty = $${index++}`); params.push(difficulty); }
+    if (rating !== undefined) { updates.push(`rating = $${index++}`); params.push(rating); }
+    if (likedBy !== undefined) { updates.push(`liked_by = $${index++}`); params.push(likedBy); }
+
+    if (updates.length === 0) return res.status(400).json({ message: 'No updates provided' });
+
+    params.push(id);
+    const query = `UPDATE course_reviews SET ${updates.join(', ')} WHERE id = $${index} RETURNING *`;
+    const result = await pool.query(query, params);
+    
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Review not found' });
+    
+    const saved = result.rows[0];
+    res.json({
+      ...saved,
+      courseId: saved.course_id,
+      authorId: saved.author_id,
+      identityType: saved.identity_type,
+      attendanceEnforced: saved.attendance_enforced,
+      likedBy: saved.liked_by || []
+    });
+  } catch (err) {
+    console.error('Error updating review:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/reviews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM course_reviews WHERE id = $1', [id]);
+    if (result.rowCount === 0) return res.status(404).json({ message: 'Review not found' });
+    res.json({ message: 'Review deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting review:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Questions Routes ---
+
+app.get('/api/questions', async (req, res) => {
+  try {
+    const { courseId } = req.query;
+    let query = 'SELECT * FROM course_questions';
+    let params = [];
+    if (courseId) {
+      query += ' WHERE course_id = $1';
+      params.push(courseId);
+    }
+    query += ' ORDER BY id DESC';
+    const result = await pool.query(query, params);
+    res.json(result.rows.map(q => ({
+      ...q,
+      courseId: q.course_id
+    })));
+  } catch (err) {
+    console.error('Error fetching questions:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/questions', async (req, res) => {
+  try {
+    const { courseId, question, answers, date } = req.body;
+    const query = `
+      INSERT INTO course_questions (course_id, question, answers, date)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `;
+    const result = await pool.query(query, [courseId, question, JSON.stringify(answers || []), date]);
+    const saved = result.rows[0];
+    res.status(201).json({ ...saved, courseId: saved.course_id });
+  } catch (err) {
+    console.error('Error creating question:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch('/api/questions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { answers } = req.body;
+    const result = await pool.query(
+      'UPDATE course_questions SET answers = $1 WHERE id = $2 RETURNING *',
+      [JSON.stringify(answers), id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Question not found' });
+    const saved = result.rows[0];
+    res.json({ ...saved, courseId: saved.course_id });
+  } catch (err) {
+    console.error('Error updating question:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Materials Routes ---
+
+app.get('/api/materials', async (req, res) => {
+  try {
+    const { courseId } = req.query;
+    let query = 'SELECT * FROM course_materials';
+    let params = [];
+    if (courseId) {
+      query += ' WHERE course_id = $1';
+      params.push(courseId);
+    }
+    const result = await pool.query(query, params);
+    res.json(result.rows.map(m => ({
+      ...m,
+      courseId: m.course_id,
+      isLink: m.is_link,
+      likedBy: m.liked_by || []
+    })));
+  } catch (err) {
+    console.error('Error fetching materials:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/materials', async (req, res) => {
+  try {
+    const { courseId, title, category, type, author, date, url, isLink } = req.body;
+    const query = `
+      INSERT INTO course_materials (course_id, title, category, type, author, date, url, is_link)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `;
+    const result = await pool.query(query, [courseId, title, category, type, author, date, url, isLink || false]);
+    const saved = result.rows[0];
+    res.status(201).json({ ...saved, courseId: saved.course_id, isLink: saved.is_link, likedBy: saved.liked_by || [] });
+  } catch (err) {
+    console.error('Error creating material:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch('/api/materials/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, url, likedBy } = req.body;
+    let updates = [];
+    let params = [];
+    let index = 1;
+    if (title !== undefined) { updates.push(`title = $${index++}`); params.push(title); }
+    if (url !== undefined) { updates.push(`url = $${index++}`); params.push(url); }
+    if (likedBy !== undefined) { updates.push(`liked_by = $${index++}`); params.push(likedBy); }
+    
+    if (updates.length === 0) return res.status(400).json({ message: 'No updates provided' });
+    params.push(id);
+    const query = `UPDATE course_materials SET ${updates.join(', ')} WHERE id = $${index} RETURNING *`;
+    const result = await pool.query(query, params);
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Material not found' });
+    const saved = result.rows[0];
+    res.json({ ...saved, courseId: saved.course_id, isLink: saved.is_link, likedBy: saved.liked_by || [] });
+  } catch (err) {
+    console.error('Error updating material:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/materials/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM course_materials WHERE id = $1', [id]);
+    if (result.rowCount === 0) return res.status(404).json({ message: 'Material not found' });
+    res.json({ message: 'Material deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting material:', err);
     res.status(500).json({ message: err.message });
   }
 });
