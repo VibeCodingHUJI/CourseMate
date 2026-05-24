@@ -1,18 +1,21 @@
-import sqlite3
+import psycopg2
+import os
 import re
+from dotenv import load_dotenv
+
+# Load DATABASE_URL from .env
+load_dotenv(dotenv_path='backend/.env')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 def analyze_combinations():
-    conn = sqlite3.connect('backend/huji_data.db')
+    if not DATABASE_URL:
+        print("Error: DATABASE_URL not found in .env")
+        return
+
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute("SELECT id, name FROM combinations")
     rows = cursor.fetchall()
-    
-    pairs = []
-    # Simple logic: split by 'בשילוב' or 'ו' in specific contexts
-    # Or just look for common elements.
-    
-    # Let's try to find potential duplicates by looking for combinations that contain the same two major names.
-    # We'll normalize the names by removing common suffixes/prefixes.
     
     def normalize(name):
         # Remove common Hebrew prefixes/suffixes for matching

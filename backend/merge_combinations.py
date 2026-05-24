@@ -1,8 +1,18 @@
-import sqlite3
+import psycopg2
+import os
 import re
+from dotenv import load_dotenv
+
+# Load DATABASE_URL from .env
+load_dotenv(dotenv_path='backend/.env')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 def merge_combinations():
-    conn = sqlite3.connect('backend/huji_data.db')
+    if not DATABASE_URL:
+        print("Error: DATABASE_URL not found in .env")
+        return
+
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute("SELECT id, name FROM combinations")
     rows = cursor.fetchall()
@@ -37,24 +47,23 @@ def merge_combinations():
                 print(f"  <- Moving courses from [{other_id}] {other_name}")
                 
                 # Move courses from the other combination to the primary
-                # We use INSERT OR IGNORE to avoid duplicate entries for the same course in the same combination
+                # Postgres equivalent of INSERT OR IGNORE is ON CONFLICT DO NOTHING
                 cursor.execute("""
-                    INSERT OR IGNORE INTO combination_courses (combination_id, course_id, category_type, year)
-                    SELECT ?, course_id, category_type, year 
+                    INSERT INTO combination_courses (combination_id, course_id, category_type, year)
+                    SELECT %s, course_id, category_type, year 
                     FROM combination_courses 
-                    WHERE combination_id = ?
+                    WHERE combination_id = %s
+                    ON CONFLICT DO NOTHING
                 """, (primary_id, other_id))
                 
                 # Delete the redundant combination_courses entries
-                cursor.execute("DELETE FROM combination_courses WHERE combination_id = ?", (other_id,))
+                cursor.execute("DELETE FROM combination_courses WHERE combination_id = %s", (other_id,))
                 
                 # Delete the redundant combination entry
-                cursor.execute("DELETE FROM combinations WHERE id = ?", (other_id,))
+                cursor.execute("DELETE FROM combinations WHERE id = %s", (other_id,))
                 
                 merged_count += 1
             
-            # Optional: Rename the primary combination to reflect both majors clearly if needed
-            # But usually the existing names are fine.
             print("-" * 10)
 
     conn.commit()

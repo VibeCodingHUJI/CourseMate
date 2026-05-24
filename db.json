@@ -113,6 +113,14 @@
       "track": "321-7411",
       "isGuest": false,
       "id": 14
+    },
+    {
+      "name": "מאיה",
+      "email": "mmm@mail.huji.ac.il",
+      "password": "q3w4",
+      "track": "525-3035",
+      "isGuest": false,
+      "id": 15
     }
   ],
   "courses": [
@@ -1426,7 +1434,22 @@
     {
       "combinationId": 10,
       "question": "האם יש חפיפה בין קורסים בכלכלה ומדעי המדינה?",
-      "answers": [],
+      "answers": [
+        {
+          "text": "כן ",
+          "date": "24.5.2026",
+          "author": "אורח/ת",
+          "authorId": null,
+          "likedBy": []
+        },
+        {
+          "text": "כןןן",
+          "date": "24.5.2026",
+          "author": "אורח/ת",
+          "authorId": null,
+          "likedBy": []
+        }
+      ],
       "date": "23.5.2026",
       "author": "אורח/ת",
       "id": 11

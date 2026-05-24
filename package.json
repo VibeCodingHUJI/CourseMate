@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "server": "json-server --watch db.json --port 3000",
-    "backend": "node backend/server.js",
+    "backend": "cd backend && node server.js",
     "client": "npm run dev --prefix frontend",
     "dev": "concurrently \"npm run server\" \"npm run client\" \"npm run backend\""
   },
