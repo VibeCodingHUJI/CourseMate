@@ -1315,6 +1315,15 @@
       "date": "23.5.2026",
       "replies": 1,
       "id": 10
+    },
+    {
+      "majorA": "מט\"ר",
+      "majorB": "פסיכולוגיה",
+      "academicYear": "תשפ\"ו (2025-26)",
+      "title": "מט\"ר + פסיכולוגיה",
+      "date": "24.5.2026",
+      "replies": 1,
+      "id": 11
     }
   ],
   "combinationQuestions": [
@@ -1378,7 +1387,15 @@
     {
       "combinationId": 4,
       "question": "איך המעבר בין הקמפוסים?",
-      "answers": [],
+      "answers": [
+        {
+          "text": "מבעס",
+          "date": "24.5.2026",
+          "author": "מאיה",
+          "authorId": 15,
+          "likedBy": []
+        }
+      ],
       "date": "23.5.2026",
       "author": "אורח/ת",
       "id": 5
@@ -1453,6 +1470,30 @@
       "date": "23.5.2026",
       "author": "אורח/ת",
       "id": 11
+    },
+    {
+      "combinationId": 4,
+      "question": "מי לומד את השילוב הזה \n",
+      "answers": [
+        {
+          "text": "אני",
+          "date": "24.5.2026",
+          "author": "מאיה",
+          "authorId": 15,
+          "likedBy": []
+        }
+      ],
+      "date": "24.5.2026",
+      "author": "מאיה",
+      "id": 12
+    },
+    {
+      "combinationId": 11,
+      "question": "שילוב טוב?",
+      "answers": [],
+      "date": "24.5.2026",
+      "author": "אורח/ת",
+      "id": 13
     }
   ],
   "lecturers": [
