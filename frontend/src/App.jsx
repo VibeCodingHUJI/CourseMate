@@ -6,7 +6,7 @@ import {
   Download, Upload, User, ChevronLeft,
   Filter, Award, Clock, X, CheckCircle, Lock,
   Camera, Heart, ChevronDown, Link as LinkIcon, ExternalLink, Share2, HardDrive,
-  Edit2, Trash2
+  Edit2, Trash2, Bell, BellDot
 } from 'lucide-react';
 
 // Components
@@ -430,21 +430,37 @@ const CourseDetail = ({
   setIsLinkModalOpen,
   materials,
   onUpdateMaterial,
-  onDeleteMaterial
+  onDeleteMaterial,
+  isFollowing,
+  onToggleFollow
 }) => {
   const location = useLocation();
+  const [isUnfollowModalOpen, setIsUnfollowModalOpen] = useState(false);
+
   if (!selectedCourse) return <div className="text-center py-20 animate-pulse text-2xl font-black text-slate-400">טוען נתונים...</div>;
   
   const fromLecturer = location.state?.from === 'lecturer';
   const lecturerName = location.state?.lecturerName;
 
   const handleBack = () => {
-    // If we have history, go back. Otherwise go to home.
     if (window.history.length > 1 && location.key !== 'default') {
       navigate(-1);
     } else {
       navigate('/');
     }
+  };
+
+  const handleFollowToggle = () => {
+    if (isFollowing) {
+      setIsUnfollowModalOpen(true);
+    } else {
+      onToggleFollow(selectedCourse.id, selectedCourse.title, true);
+    }
+  };
+
+  const confirmUnfollow = () => {
+    onToggleFollow(selectedCourse.id, selectedCourse.title, false);
+    setIsUnfollowModalOpen(false);
   };
 
   const attendanceReviews = reviews.filter(r => r.attendanceEnforced !== undefined && r.attendanceEnforced !== null);
@@ -463,18 +479,6 @@ const CourseDetail = ({
     (r.authorId !== undefined && String(r.authorId) === String(user?.id)) || 
     (r.author === user?.name)
   );
-
-  const handleOpenRatingModal = () => {
-    if (hasUserRated) {
-      alert('כבר דירגת את הקורס הזה, תודה על העזרה!');
-    } else {
-      setIsRatingModalOpen(true);
-    }
-  };
-
-  const handleOpenReviewModal = () => {
-    setIsReviewModalOpen(true);
-  };
 
   const getMaterialIcon = (m) => {
     if (m.isLink) {
@@ -496,7 +500,33 @@ const CourseDetail = ({
   };
 
   return (
-    <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+      {/* Unfollow Confirmation Modal */}
+      {isUnfollowModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsUnfollowModalOpen(false)}>
+          <div className="bg-white w-full max-w-sm rounded-[40px] p-10 text-center shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="bg-rose-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-rose-500">
+              <CheckCircle className="h-10 w-10" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 mb-4 leading-tight">האם ברצונך לבטל את המעקב אחרי קורס זה?</h3>
+            <div className="flex flex-col gap-3 mt-8">
+              <button 
+                onClick={confirmUnfollow}
+                className="w-full bg-rose-500 text-white py-4 rounded-[24px] font-black hover:bg-rose-600 transition-all shadow-lg shadow-rose-200 active:scale-95"
+              >
+                כן, בטל מעקב
+              </button>
+              <button 
+                onClick={() => setIsUnfollowModalOpen(false)}
+                className="w-full bg-slate-100 text-slate-500 py-4 rounded-[24px] font-black hover:bg-slate-200 transition-all active:scale-95"
+              >
+                ביטול
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <button 
         onClick={handleBack}
         className="group mb-8 flex items-center gap-3 text-slate-500 font-black hover:text-indigo-600 transition-all"
@@ -510,12 +540,27 @@ const CourseDetail = ({
       <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 p-10 mb-8 relative overflow-hidden text-right">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start gap-8">
-          <div className="flex-1 flex flex-col items-start text-right">
-            <h1 className="text-5xl font-black text-slate-900 mb-6 tracking-tight w-full">{selectedCourse.title}</h1>
+          <div className="flex-1 flex flex-col items-start text-right w-full">
+            <div className="flex items-center gap-3 mb-6">
+               <h1 className="text-5xl font-black text-slate-900 tracking-tight">{selectedCourse.title}</h1>
+               {!user.isGuest && (
+                 <div className="flex items-center gap-3 group cursor-pointer" onClick={handleFollowToggle}>
+                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${isFollowing ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-slate-200 hover:border-indigo-300'}`}>
+                      {isFollowing ? (
+                        <CheckCircle className="h-5 w-5 text-white" />
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-slate-100 group-hover:bg-indigo-100"></div>
+                      )}
+                    </div>
+                    <span className={`text-xs font-black transition-colors ${isFollowing ? 'text-emerald-600' : 'text-slate-400 group-hover:text-indigo-500'}`}>
+                      {isFollowing ? 'עוקב' : 'מעקב אחרי הקורס'}
+                    </span>
+                 </div>
+               )}
+            </div>
             <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-2xl mb-8 w-full">{selectedCourse.description}</p>
             
             <div className="flex flex-col items-start gap-2">
-              {/* Row 1: [Type] [Credits] [ID|Lang] */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${getTypeBadgeStyles(selectedCourse.type)}`}>
                   {selectedCourse.type}
@@ -533,7 +578,6 @@ const CourseDetail = ({
                 )}
               </div>
               
-              {/* Row 2: [Semester] [Assessment] [Attendance] [Lecturer] */}
               <div className="flex items-center gap-2 flex-wrap">
                 {selectedCourse.semester && (
                   <span className="bg-orange-50 text-orange-600 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
@@ -569,6 +613,7 @@ const CourseDetail = ({
               </div>
             </div>
           </div>
+
           <div className="bg-slate-50 p-6 rounded-[32px] flex md:flex-col items-center gap-4 min-w-[180px]">
             <div className="text-center">
               <div className="text-4xl font-black text-rose-500 mb-1">{avgDifficulty}</div>
@@ -587,8 +632,8 @@ const CourseDetail = ({
         </div>
       </header>
 
-      <div className="mb-10" style={{ display: 'flex', justifyContent: 'flex-start' }}>
-        <div className="p-1.5 bg-slate-100 rounded-[28px] w-fit flex gap-2" style={{ direction: 'rtl' }}>
+      <div className="mb-10 flex justify-start">
+        <div className="p-1.5 bg-slate-100 rounded-[28px] w-fit flex gap-2" dir="rtl">
           {[
             { id: 'reviews', label: 'ביקורות', icon: Star },
             { id: 'qna', label: 'שאלות ותשובות', icon: MessageSquare },
@@ -609,253 +654,186 @@ const CourseDetail = ({
       </div>
 
       <div className="space-y-6">
-        <div className="space-y-6">
-          {activeTab === 'reviews' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-black text-slate-900 text-right">ביקורות ({textReviews.length})</h2>
-                {!user.isGuest && (
-                  <button 
-                    onClick={() => setIsReviewModalOpen(true)}
-                    className="bg-indigo-600 text-white px-6 py-2 rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center gap-2"
-                  >
-                    <Send className="h-4 w-4" />
-                    הוספת ביקורת
-                  </button>
-                )}
-              </div>
-
-              {textReviews.map(r => (
-                <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right relative overflow-hidden">
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black shrink-0">
-                        {r.author[0]}
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-slate-900">{r.author}</div>
-                        <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex flex-wrap gap-x-1.5 gap-y-1">
-                          <span className="whitespace-nowrap">מרצה:</span>
-                          {selectedCourse.instructors && selectedCourse.instructors.length > 0 ? (
-                            selectedCourse.instructors.map((inst, idx) => (
-                              <span key={inst.id} className="whitespace-nowrap">
-                                <Link 
-                                  to={`/lecturer/${inst.id}`} 
-                                  className="hover:underline"
-                                >
-                                  {inst.name}
-                                </Link>
-                                {idx < selectedCourse.instructors.length - 1 ? ',' : ''}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="whitespace-nowrap">{selectedCourse.instructor || 'לא ידוע'}</span>
-                          )}
-                        </div>
-                        </div>
-
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {((r.authorId !== undefined && String(r.authorId) === String(user?.id)) || (r.author === user?.name)) && (
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => handleEditReview(r)}
-                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                            title="עריכה"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteReview(r.id)}
-                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                            title="מחיקה"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )}
-                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-8 pr-4 border-r-2 border-indigo-50">
-                    {editingReviewId === r.id ? (
-                      <div className="space-y-4">
-                        <textarea 
-                          value={inlineEditComment}
-                          onChange={(e) => setInlineEditComment(e.target.value)}
-                          className="w-full bg-slate-50 border-2 border-indigo-100 focus:border-indigo-500 rounded-[24px] p-6 h-32 outline-none text-right font-medium text-slate-700 resize-none transition-all"
-                        />
-                        <div className="flex items-center gap-3 justify-end">
-                          <button 
-                            onClick={handleCancelInlineEdit}
-                            className="px-6 py-2 rounded-xl text-slate-500 font-bold hover:bg-slate-100 transition-all text-sm"
-                          >
-                            ביטול
-                          </button>
-                          <button 
-                            onClick={() => handleSaveInlineEdit(r.id)}
-                            className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all text-sm shadow-md"
-                          >
-                            שמירה
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-slate-600 text-lg font-medium leading-relaxed italic whitespace-pre-wrap">
-                        {r.comment}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-6">
-                    <div className="flex items-center gap-4">
-                      <div className="text-xs font-black text-slate-400 bg-slate-50 px-4 py-1.5 rounded-xl uppercase tracking-widest">
-                        {r.semester}, {r.year}
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => handleLikeReview(r.id)}
-                      className="flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors group/like"
-                    >
-                      <span className="text-xs font-black">{(r.likedBy?.length || 0)}</span>
-                      <Heart className={`h-5 w-5 ${(r.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : 'group-hover/like:fill-rose-500'}`} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'qna' && (
-            <div className="space-y-6 text-right">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-black text-slate-900">שאלות מהקהילה</h2>
-                <button onClick={() => setIsQuestionModalOpen(true)} className="bg-white border-2 border-slate-200 px-6 py-2 rounded-2xl font-black text-sm hover:border-indigo-500 transition-all">שאל שאלה</button>
-              </div>
-              {questions.map(q => (
-                <div key={q.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden text-right">
-                  <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <MessageSquare className="h-6 w-6 text-indigo-400" />
-                      <div className="text-xl font-bold text-right">{q.question}</div>
-                    </div>
-                    <div className="text-xs font-medium text-white/50 whitespace-nowrap">
-                      פורסם ב-{q.date}
-                    </div>
-                  </div>
-                  <div className="p-8 space-y-6">
-                    {q.answers.map((a, i) => (
-                      <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6 group/ans">
-                        <div className="h-10 w-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0"><User className="h-5 w-5" /></div>
-                        <div className="flex-1 flex justify-between items-start">
-                          <p className="text-slate-700 font-medium">{a.text}</p>
-                          <button 
-                            onClick={() => handleLikeAnswer(q.id, i)}
-                            className="flex items-center gap-1.5 text-slate-300 hover:text-rose-500 transition-colors"
-                          >
-                            <span className="text-[10px] font-black">{a.likedBy?.length || 0}</span>
-                            <Heart className={`h-4 w-4 ${(a.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    {!user.isGuest && (
-                      <div className="pt-4 mr-16 flex gap-3">
-                        <input 
-                          type="text" 
-                          placeholder="תשובה..."
-                          onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
-                          className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'materials' && (
-            <div className="space-y-10 text-right">
-              <div className="flex justify-between items-start mb-6">
-                <div className="text-right">
-                  <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
-                </div>
-                {!user.isGuest && (
-                  <button 
-                    onClick={() => setIsMaterialModalOpen(true)}
-                    className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-2"
-                  >
-                    <Upload className="h-4 w-4" />
-                    העלאת חומר לימוד
-                  </button>
-                )}
-              </div>
-
-              {user.isGuest ? (
-                <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-200 p-12 text-center">
-                  <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-400">
-                    <Lock className="h-10 w-10" />
-                  </div>
-                  <h3 className="text-2xl font-black text-slate-900 mb-2">חומרי הלימוד זמינים לסטודנטים רשומים בלבד</h3>
-                  <p className="text-slate-500 mb-8 font-medium">הירשמו עכשיו כדי לקבל גישה לסיכומים, מבחנים ודפי נוסחאות!</p>
-                  <button 
-                    onClick={handleLogout}
-                    className="bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all"
-                  >
-                    הירשמו עכשיו
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-12">
-                  {MATERIAL_CATEGORIES.map(category => {
-                    const categoryMaterials = materials.filter(m => m.category === category.id);
-                    return (
-                      <div key={category.id} className="space-y-4">
-                        <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
-                          <div className="flex items-center gap-3">
-                            <category.icon className="h-6 w-6 text-indigo-600" />
-                            <h3 className="text-xl font-black text-slate-800">{category.label}</h3>
-                            <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black">{categoryMaterials.length}</span>
-                          </div>
-                          {category.id === 'links' && !user.isGuest && (
-                            <button 
-                              onClick={() => setIsLinkModalOpen(true)}
-                              className="text-indigo-600 hover:text-indigo-700 font-black text-xs flex items-center gap-1.5 transition-all px-3 py-1.5 bg-indigo-50 rounded-xl"
-                            >
-                              <LinkIcon className="h-3 w-3" />
-                              הוספת קישור
-                            </button>
-                          )}
-                        </div>
-                        
-                        <div className="grid grid-cols-1 gap-4">
-                          {categoryMaterials.length > 0 ? (
-                            categoryMaterials.map(m => (
-                              <MaterialItem 
-                                key={m.id}
-                                item={m}
-                                user={user}
-                                onUpdate={onUpdateMaterial}
-                                onDelete={onDeleteMaterial}
-                                getMaterialIcon={getMaterialIcon}
-                              />
-                            ))
-                          ) : (
-                            <div className="py-8 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 text-slate-400 font-bold">
-                              אין חומרים בקטגוריה זו עדיין
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+        {activeTab === 'reviews' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-black text-slate-900 text-right">ביקורות ({textReviews.length})</h2>
+              {!user.isGuest && (
+                <button 
+                  onClick={() => setIsReviewModalOpen(true)}
+                  className="bg-indigo-600 text-white px-6 py-2 rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-md active:scale-95 flex items-center gap-2"
+                >
+                  <Send className="h-4 w-4" />
+                  הוספת ביקורת
+                </button>
               )}
             </div>
-          )}
-        </div>
+
+            {textReviews.map(r => (
+              <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right relative overflow-hidden">
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black shrink-0">
+                      {r.author[0]}
+                    </div>
+                    <div className="text-right">
+                      <div className="font-black text-slate-900">{r.author}</div>
+                      <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex flex-wrap gap-x-1.5 gap-y-1">
+                        <span className="whitespace-nowrap">מרצה:</span>
+                        {selectedCourse.instructors && selectedCourse.instructors.length > 0 ? (
+                          selectedCourse.instructors.map((inst, idx) => (
+                            <span key={inst.id} className="whitespace-nowrap">
+                              <Link to={`/lecturer/${inst.id}`} className="hover:underline">{inst.name}</Link>
+                              {idx < selectedCourse.instructors.length - 1 ? ',' : ''}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="whitespace-nowrap">{selectedCourse.instructor || 'לא ידוע'}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    {((r.authorId !== undefined && String(r.authorId) === String(user?.id)) || (r.author === user?.name)) && (
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleEditReview(r)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="עריכה">
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => handleDeleteReview(r.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="מחיקה">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{r.date}</div>
+                  </div>
+                </div>
+                
+                <div className="mb-8 pr-4 border-r-2 border-indigo-50">
+                  {editingReviewId === r.id ? (
+                    <div className="space-y-4">
+                      <textarea 
+                        value={inlineEditComment}
+                        onChange={(e) => setInlineEditComment(e.target.value)}
+                        className="w-full bg-slate-50 border-2 border-indigo-100 focus:border-indigo-500 rounded-[24px] p-6 h-32 outline-none text-right font-medium text-slate-700 resize-none transition-all"
+                      />
+                      <div className="flex items-center gap-3 justify-end">
+                        <button onClick={handleCancelInlineEdit} className="px-6 py-2 rounded-xl text-slate-500 font-bold hover:bg-slate-100 transition-all text-sm">ביטול</button>
+                        <button onClick={() => handleSaveInlineEdit(r.id)} className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all text-sm shadow-md">שמירה</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-slate-600 text-lg font-medium leading-relaxed italic whitespace-pre-wrap">{r.comment}</p>
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between border-t border-slate-100 pt-6">
+                  <div className="text-xs font-black text-slate-400 bg-slate-50 px-4 py-1.5 rounded-xl uppercase tracking-widest">{r.semester}, {r.year}</div>
+                  <button onClick={() => handleLikeReview(r.id)} className="flex items-center gap-2 text-slate-400 hover:text-rose-500 transition-colors group/like">
+                    <span className="text-xs font-black">{(r.likedBy?.length || 0)}</span>
+                    <Heart className={`h-5 w-5 ${(r.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : 'group-hover/like:fill-rose-500'}`} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'qna' && (
+          <div className="space-y-6 text-right">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-black text-slate-900">שאלות מהקהילה</h2>
+              <button onClick={() => setIsQuestionModalOpen(true)} className="bg-white border-2 border-slate-200 px-6 py-2 rounded-2xl font-black text-sm hover:border-indigo-500 transition-all">שאל שאלה</button>
+            </div>
+            {questions.map(q => (
+              <div key={q.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden text-right">
+                <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <MessageSquare className="h-6 w-6 text-indigo-400" />
+                    <div className="text-xl font-bold text-right">{q.question}</div>
+                  </div>
+                  <div className="text-xs font-medium text-white/50 whitespace-nowrap">פורסם ב-{q.date}</div>
+                </div>
+                <div className="p-8 space-y-6">
+                  {q.answers.map((a, i) => (
+                    <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6 group/ans">
+                      <div className="h-10 w-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0"><User className="h-5 w-5" /></div>
+                      <div className="flex-1 flex justify-between items-start">
+                        <p className="text-slate-700 font-medium">{a.text}</p>
+                        <button onClick={() => handleLikeAnswer(q.id, i)} className="flex items-center gap-1.5 text-slate-300 hover:text-rose-500 transition-colors">
+                          <span className="text-[10px] font-black">{a.likedBy?.length || 0}</span>
+                          <Heart className={`h-4 w-4 ${(a.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {!user.isGuest && (
+                    <div className="pt-4 mr-16 flex gap-3">
+                      <input 
+                        type="text" 
+                        placeholder="תשובה..."
+                        onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
+                        className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'materials' && (
+          <div className="space-y-10 text-right">
+            <div className="flex justify-between items-start mb-6">
+              <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
+              {!user.isGuest && (
+                <button onClick={() => setIsMaterialModalOpen(true)} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  העלאת חומר לימוד
+                </button>
+              )}
+            </div>
+
+            {user.isGuest ? (
+              <div className="bg-white rounded-[40px] border-2 border-dashed border-slate-200 p-12 text-center">
+                <div className="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-400"><Lock className="h-10 w-10" /></div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">חומרי הלימוד זמינים לסטודנטים רשומים בלבד</h3>
+                <p className="text-slate-500 mb-8 font-medium">הירשמו עכשיו כדי לקבל גישה לסיכומים, מבחנים ודפי נוסחאות!</p>
+                <button onClick={handleLogout} className="bg-indigo-600 text-white px-10 py-4 rounded-[24px] font-black hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all">הירשמו עכשיו</button>
+              </div>
+            ) : (
+              <div className="space-y-12">
+                {MATERIAL_CATEGORIES.map(category => {
+                  const categoryMaterials = materials.filter(m => m.category === category.id);
+                  return (
+                    <div key={category.id} className="space-y-4">
+                      <div className="flex items-center justify-between border-b-2 border-slate-100 pb-3">
+                        <div className="flex items-center gap-3">
+                          <category.icon className="h-6 w-6 text-indigo-600" />
+                          <h3 className="text-xl font-black text-slate-800">{category.label}</h3>
+                          <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black">{categoryMaterials.length}</span>
+                        </div>
+                        {category.id === 'links' && !user.isGuest && (
+                          <button onClick={() => setIsLinkModalOpen(true)} className="text-indigo-600 hover:text-indigo-700 font-black text-xs flex items-center gap-1.5 transition-all px-3 py-1.5 bg-indigo-50 rounded-xl">
+                            <LinkIcon className="h-3 w-3" />
+                            הוספת קישור
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 gap-4">
+                        {categoryMaterials.length > 0 ? categoryMaterials.map(m => (
+                          <MaterialItem key={m.id} item={m} user={user} onUpdate={onUpdateMaterial} onDelete={onDeleteMaterial} getMaterialIcon={getMaterialIcon} />
+                        )) : (
+                          <div className="py-8 text-center bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 text-slate-400 font-bold">אין חומרים בקטגוריה זו עדיין</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -867,50 +845,56 @@ const App = () => {
     return saved ? JSON.parse(saved) : null;
   });
   
-  // Dashboard State
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [activeTab, setActiveTab] = useState('reviews');
   const [searchQuery, setSearchQuery] = useState('');
   const [isChangingTrack, setIsChangingTrack] = useState(false);
   const [trackSearch, setTrackSearch] = useState('');
-  const [courseFilter, setCourseFilter] = useState('All'); // 'All', 'חובה', 'בחירה'
+  const [courseFilter, setCourseFilter] = useState('All');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  
-  // New multi-criteria filters
   const [filterSemester, setFilterSemester] = useState('הכל');
   const [filterCampus, setFilterCampus] = useState('הכל');
   const [filterLanguage, setFilterLanguage] = useState('הכל');
   const [filterYear, setFilterYear] = useState('הכל');
   
-  // Student Personal Forum State
-  const [studentForums, setStudentForums] = useState([]); // List of relevant forums
+  const [studentForums, setStudentForums] = useState([]);
   const [studentForumQuestions, setStudentForumQuestions] = useState([]);
   const [activeStudentForumId, setActiveStudentForumId] = useState(null);
-  const [isStudentForumExpanded, setIsStudentForumExpanded] = useState(false);
   const [isStudentForumModalOpen, setIsStudentForumModalOpen] = useState(false);
   const [newStudentForumQ, setNewStudentForumQ] = useState('');
   const [expandedStudentQs, setExpandedStudentQs] = useState({});
 
-  const toggleStudentQ = (qId) => {
-    setExpandedStudentQs(prev => ({ ...prev, [qId]: !prev[qId] }));
-  };
+  const toggleStudentQ = (qId) => setExpandedStudentQs(prev => ({ ...prev, [qId]: !prev[qId] }));
 
-  // Dynamic Content State
   const [studyTracks, setStudyTracks] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [allReviews, setAllReviews] = useState([]); // For course card counters
+  const [allReviews, setAllReviews] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
-  const [guestTab, setGuestTab] = useState('forum'); // 'forum', 'courses'
+  const [guestTab, setGuestTab] = useState('forum');
   const [guestSelectedTrack, setGuestSelectedTrack] = useState('');
   const [isGuestDrawerOpen, setIsGuestDrawerOpen] = useState(false);
 
-  // Sync selectedCourse with URL
+  // Lifted Follow State
+  const [followedCourseIds, setFollowedCourseIds] = useState([]);
+
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: "מאיה ענתה על השאלה שלך בקורס 'יסודות השיווק'", read: false, date: "לפני 5 דק׳" },
+    { id: 2, text: "שאלה חדשה עלתה בפורום מנהל עסקים + כלכלה", read: false, date: "לפני שעה" }
+  ]);
+  const [isNotifyOpen, setIsNotifyOpen] = useState(false);
+  const notifyRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => { if (notifyRef.current && !notifyRef.current.contains(e.target)) setIsNotifyOpen(false); };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Load study tracks on mount
   useEffect(() => {
     fetch('http://localhost:5000/api/combinations')
       .then(res => res.json())
@@ -918,771 +902,249 @@ const App = () => {
       .catch(err => console.error('Error fetching combinations:', err));
   }, []);
 
-  // Fetch Student Personal Forums
   useEffect(() => {
-    if (!user || user.isGuest || !user.track) {
-      setStudentForums([]);
-      return;
-    }
-
+    if (!user || user.isGuest || !user.track) { setStudentForums([]); return; }
     const fetchStudentForums = async () => {
       try {
         const res = await fetch('http://localhost:3000/combinations');
         const forums = await res.json();
-        
-        // Helper to resolve clean labels from IDs or English values
         const getLabel = (val) => {
           const raw = String(val || "").trim();
           const match = (studyTracks || []).find(t => t.value === raw || t.label === raw);
           return match ? match.label : raw;
         };
-
         const mA = getLabel(user?.track);
         const mB = getLabel(user?.majorB);
         const yr = String(user?.academicYear || "").trim();
-
-        console.log('DEBUG: Attempting to match forums for resolved labels:', { mA, mB, yr });
-
-        // Helper for loose matching
-        const isMatch = (field, search) => {
-          if (!field || !search) return false;
-          const f = String(field).toLowerCase().trim();
-          const s = String(search).toLowerCase().trim();
-          return f.includes(s) || s.includes(f);
-        };
-
-        // 1. Primary Forum: Both Major A AND Major B
-        const primary = forums.filter(f => {
-          const matchesMajors = (isMatch(f.title, mA) && isMatch(f.title, mB)) || 
-                               (isMatch(f.majorA, mA) && isMatch(f.majorB, mB)) ||
-                               (isMatch(f.majorA, mB) && isMatch(f.majorB, mA));
-          const matchesYear = !yr || yr === 'הכל' || isMatch(f.academicYear, yr);
-          return matchesMajors && matchesYear;
-        });
-
-        // 2. Secondary Forums (Major A): Major A but NOT Major B
-        const secA = forums.filter(f => {
-          const matchesMajor = isMatch(f.title, mA) || isMatch(f.majorA, mA) || isMatch(f.majorB, mA);
-          const matchesOther = mB && (isMatch(f.title, mB) || isMatch(f.majorA, mB) || isMatch(f.majorB, mB));
-          const matchesYear = !yr || yr === 'הכל' || isMatch(f.academicYear, yr);
-          return matchesMajor && !matchesOther && matchesYear;
-        });
-
-        // 3. Secondary Forums (Major B): Major B but NOT Major A
-        const secB = forums.filter(f => {
-          const matchesMajor = isMatch(f.title, mB) || isMatch(f.majorA, mB) || isMatch(f.majorB, mB);
-          const matchesOther = mA && (isMatch(f.title, mA) || isMatch(f.majorA, mA) || isMatch(f.majorB, mA));
-          const matchesYear = !yr || yr === 'הכל' || isMatch(f.academicYear, yr);
-          return matchesMajor && !matchesOther && matchesYear;
-        });
-
-        const allRelevant = [...primary, ...secA, ...secB];
-        console.log('DEBUG: Forums data sync - Total available:', forums.length, 'Relevant to student:', allRelevant.length);
-        
-        // Use full forums list for the modal, but still auto-select the best match
+        const isMatch = (f, s) => { if (!f || !s) return false; return String(f).toLowerCase().includes(String(s).toLowerCase()) || String(s).toLowerCase().includes(String(f).toLowerCase()); };
+        const primary = forums.filter(f => ((isMatch(f.title, mA) && isMatch(f.title, mB)) || (isMatch(f.majorA, mA) && isMatch(f.majorB, mB)) || (isMatch(f.majorA, mB) && isMatch(f.majorB, mA))) && (!yr || yr === 'הכל' || isMatch(f.academicYear, yr)));
+        const secA = forums.filter(f => (isMatch(f.title, mA) || isMatch(f.majorA, mA) || isMatch(f.majorB, mA)) && !(mB && (isMatch(f.title, mB) || isMatch(f.majorA, mB) || isMatch(f.majorB, mB))) && (!yr || yr === 'הכל' || isMatch(f.academicYear, yr)));
+        const secB = forums.filter(f => (isMatch(f.title, mB) || isMatch(f.majorA, mB) || isMatch(f.majorB, mB)) && !(mA && (isMatch(f.title, mA) || isMatch(f.majorA, mA) || isMatch(f.majorB, mA))) && (!yr || yr === 'הכל' || isMatch(f.academicYear, yr)));
         setStudentForums(forums);
-        
-        if (allRelevant.length > 0) {
-          const exactMatch = primary[0];
-          setActiveStudentForumId(exactMatch ? exactMatch.id : allRelevant[0].id);
-        }
-      } catch (err) {
-        console.error('Error fetching student forums:', err);
-      }
+        if ([...primary, ...secA, ...secB].length > 0) setActiveStudentForumId(primary[0] ? primary[0].id : [...primary, ...secA, ...secB][0].id);
+      } catch (err) { console.error('Error fetching student forums:', err); }
     };
-
     fetchStudentForums();
-  }, [user?.track, user?.majorB, user?.academicYear]);
+  }, [user?.track, user?.majorB, user?.academicYear, studyTracks]);
 
-  // Fetch Questions for active forum
   useEffect(() => {
-    if (!activeStudentForumId) {
-      setStudentForumQuestions([]);
-      return;
-    }
-
+    if (!activeStudentForumId) { setStudentForumQuestions([]); return; }
     fetch(`http://localhost:3000/combinationQuestions?combinationId=${activeStudentForumId}`)
       .then(res => res.json())
       .then(qs => setStudentForumQuestions(qs.reverse()))
-      .catch(err => console.error('Error fetching active forum questions:', err));
+      .catch(err => console.error('Error fetching questions:', err));
   }, [activeStudentForumId]);
 
   const handlePostStudentForumQ = async () => {
     if (!newStudentForumQ.trim() || !activeStudentForumId) return;
-
-    const newQ = {
-      combinationId: activeStudentForumId,
-      question: newStudentForumQ,
-      answers: [],
-      date: new Date().toLocaleDateString('he-IL'),
-      author: user.name
-    };
-
+    const newQ = { combinationId: activeStudentForumId, question: newStudentForumQ, answers: [], date: new Date().toLocaleDateString('he-IL'), author: user.name };
     try {
-      const res = await fetch('http://localhost:3000/combinationQuestions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newQ)
-      });
+      const res = await fetch('http://localhost:3000/combinationQuestions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newQ) });
       const savedQ = await res.json();
       setStudentForumQuestions([savedQ, ...studentForumQuestions]);
       setNewStudentForumQ('');
       alert('השאלה פורסמה בהצלחה!');
-    } catch (err) {
-      alert('שגיאה בפרסום השאלה');
-    }
+    } catch (err) { alert('שגיאה בפרסום השאלה'); }
   };
 
   const handlePostStudentForumA = async (qId, text) => {
     if (!text.trim()) return;
-    const question = studentForumQuestions.find(q => q.id === qId);
-    if (!question) return;
-
-    const updatedAnswers = [...question.answers, { 
-      text, 
-      date: new Date().toLocaleDateString('he-IL'), 
-      author: user.name,
-      authorId: user.id,
-      likedBy: []
-    }];
-
+    const q = studentForumQuestions.find(q => q.id === qId);
+    if (!q) return;
+    const updatedAnswers = [...q.answers, { text, date: new Date().toLocaleDateString('he-IL'), author: user.name, authorId: user.id, likedBy: [] }];
     try {
-      const res = await fetch(`http://localhost:3000/combinationQuestions/${qId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: updatedAnswers })
-      });
+      const res = await fetch(`http://localhost:3000/combinationQuestions/${qId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updatedAnswers }) });
       const updatedQ = await res.json();
       setStudentForumQuestions(studentForumQuestions.map(q => q.id === qId ? updatedQ : q));
-    } catch (err) {
-      alert('שגיאה בפרסום התשובה');
-    }
+    } catch (err) { alert('שגיאה בפרסום התשובה'); }
   };
 
-  // Consolidated initial data fetching
   useEffect(() => {
     const fetchData = async () => {
       try {
         const currentTrack = user?.isGuest ? guestSelectedTrack : user?.track;
-        if (!currentTrack || (user?.isGuest && !guestSelectedTrack)) {
-          setAllCourses([]);
-          return;
-        }
-
-        let coursesUrl = 'http://localhost:3000/courses';
-        
-        // Use real SQL data for any combination selected from the database
-        // Real combinations use roadmap codes (e.g. 521-3010)
-        const isRealCombination = /^\d{3}-\d{4}$/.test(currentTrack);
-        if (isRealCombination) {
-          coursesUrl = `http://localhost:5000/api/combinations/${currentTrack}/courses`;
-        } else if (currentTrack === 'Computer Science') {
-          // Compatibility with legacy mock data
-          coursesUrl = 'http://localhost:5000/api/combinations/521-3010/courses';
-        }
-
-        const [coursesRes, reviewsRes] = await Promise.all([
-          fetch(coursesUrl),
-          fetch('http://localhost:3000/reviews')
-        ]);
-        const coursesData = await coursesRes.json();
-        const courses = Array.isArray(coursesData) ? coursesData : (coursesData.value || []);
-        
-        const reviewsData = (await reviewsRes.json()) || [];
-
-        setAllReviews(reviewsData);
-        const coursesWithCounts = courses.map(c => {
-          const courseReviews = (reviewsData || []).filter(r => String(r?.courseId) === String(c?.id));
-          const difficultyReviews = courseReviews.filter(r => r?.difficulty !== undefined);
-          
-          let avgDiff;
-          if (difficultyReviews.length > 0) {
-            avgDiff = (difficultyReviews.reduce((sum, r) => sum + r.difficulty, 0) / difficultyReviews.length);
-          } else {
-            // Standardize existing 1-5 scale data to 1-10
-            avgDiff = (c.difficulty || 0) * 2;
-          }
-          
-          return {
-            ...c,
-            track: currentTrack, // Ensure it matches the filter
-            reviewCount: courseReviews.length,
-            difficulty: avgDiff
-          };
-        });
-        setAllCourses(coursesWithCounts);
-      } catch (err) {
-        console.error('Error fetching initial data:', err);
-      }
+        if (!currentTrack || (user?.isGuest && !guestSelectedTrack)) { setAllCourses([]); return; }
+        let url = 'http://localhost:3000/courses';
+        if (/^\d{3}-\d{4}$/.test(currentTrack)) url = `http://localhost:5000/api/combinations/${currentTrack}/courses`;
+        else if (currentTrack === 'Computer Science') url = 'http://localhost:5000/api/combinations/521-3010/courses';
+        const [cRes, rRes] = await Promise.all([fetch(url), fetch('http://localhost:3000/reviews')]);
+        const cData = await cRes.json();
+        const rData = (await rRes.json()) || [];
+        setAllReviews(rData);
+        setAllCourses((Array.isArray(cData) ? cData : (cData.value || [])).map(c => {
+          const cR = rData.filter(r => String(r?.courseId) === String(c?.id));
+          const dR = cR.filter(r => r?.difficulty !== undefined);
+          return { ...c, track: currentTrack, reviewCount: cR.length, difficulty: dR.length > 0 ? (dR.reduce((s, r) => s + r.difficulty, 0) / dR.length) : (c.difficulty || 0) * 2 };
+        }));
+      } catch (err) { console.error('Error fetching data:', err); }
     };
     fetchData();
   }, [user?.track, guestSelectedTrack]);
 
-  // Sync selectedCourse based on URL path
   useEffect(() => {
-    const syncCourseFromUrl = async () => {
-      const match = location.pathname.match(/\/course\/([^/]+)/);
-      if (match) {
-        const courseId = match[1];
-        let course = allCourses.find(c => String(c.id) === String(courseId));
-        
-        if (!course) {
-          try {
-            const res = await fetch(`http://localhost:5000/api/courses/${courseId}`);
-            if (res.ok) {
-              course = await res.json();
-            }
-          } catch (err) {
-            console.error('Error fetching individual course:', err);
-          }
+    const sync = async () => {
+      const m = location.pathname.match(/\/course\/([^/]+)/);
+      if (m) {
+        const id = m[1];
+        let c = allCourses.find(c => String(c.id) === String(id));
+        if (!c) {
+          try { const res = await fetch(`http://localhost:5000/api/courses/${id}`); if (res.ok) c = await res.json(); } catch (err) { console.error('Error:', err); }
         }
-        
-        if (course) {
-          setSelectedCourse(course);
-        } else if (allCourses.length > 0) {
-          setSelectedCourse(null);
-        }
-      } else if (location.pathname === '/') {
-        setSelectedCourse(null);
-      }
+        if (c) setSelectedCourse(c); else if (allCourses.length > 0) setSelectedCourse(null);
+      } else if (location.pathname === '/') setSelectedCourse(null);
     };
-    
-    syncCourseFromUrl();
+    sync();
   }, [location.pathname, allCourses]);
 
-  // Load reviews/questions/materials when course is selected
   useEffect(() => {
     if (selectedCourse) {
-      // Fetch reviews for specific course
-      fetch(`http://localhost:3000/reviews?courseId=${selectedCourse.id}`)
-        .then(res => res.json())
-        .then(data => setReviews(data));
-      
-      // Fetch questions
-      fetch(`http://localhost:3000/questions?courseId=${selectedCourse.id}`)
-        .then(res => res.json())
-        .then(data => setQuestions(data));
-
-      // Fetch materials
-      fetch(`http://localhost:3000/materials?courseId=${selectedCourse.id}`)
-        .then(res => res.json())
-        .then(data => setMaterials(data));
+      fetch(`http://localhost:3000/reviews?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setReviews(d));
+      fetch(`http://localhost:3000/questions?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setQuestions(d));
+      fetch(`http://localhost:3000/materials?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setMaterials(d));
     }
   }, [selectedCourse]);
 
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
-
   const fileInputRef = useRef(null);
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
-  const [newLinkType, setNewLinkType] = useState('drive'); // 'drive', 'whatsapp', 'other'
+  const [newLinkType, setNewLinkType] = useState('drive');
   const [newMaterialTitle, setNewMaterialTitle] = useState('');
   const [newMaterialCategory, setNewMaterialCategory] = useState('summaries');
   const [newMaterialFile, setNewMaterialFile] = useState(null);
-
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [newReviewComment, setNewReviewComment] = useState('');
   const [newReviewSemester, setNewReviewSemester] = useState("סמסטר א'");
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ו (2025-26)');
-  const [newReviewIdentity, setNewReviewIdentity] = useState('full'); // 'full', 'initials', 'anon'
-  const [newReviewAttendance, setNewReviewAttendance] = useState(null); // null means not selected
+  const [newReviewIdentity, setNewReviewIdentity] = useState('full');
+  const [newReviewAttendance, setNewReviewAttendance] = useState(null);
   const [newReviewDifficulty, setNewReviewDifficulty] = useState(5);
 
-  const handleLogin = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    setSelectedCourse(null);
-    navigate('/');
-  };
-
-  const handleChangeTrack = (newTrack) => {
-    if (user.isGuest) {
-      setGuestSelectedTrack(newTrack);
-      setGuestTab('courses'); // Switch to courses view for guests
-    } else {
-      const updatedUser = { ...user, track: newTrack };
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
-    setIsChangingTrack(false);
-    setTrackSearch('');
-    setSelectedCourse(null);
-    navigate('/'); // ALWAYS navigate to home after track change
+  const handleLogin = (u) => { setUser(u); localStorage.setItem('user', JSON.stringify(u)); };
+  const handleLogout = () => { setUser(null); localStorage.removeItem('user'); setSelectedCourse(null); navigate('/'); };
+  const handleChangeTrack = (t) => {
+    if (user.isGuest) { setGuestSelectedTrack(t); setGuestTab('courses'); }
+    else { const u = { ...user, track: t }; setUser(u); localStorage.setItem('user', JSON.stringify(u)); }
+    setIsChangingTrack(false); setTrackSearch(''); setSelectedCourse(null); navigate('/');
   };
 
   const filteredTracks = studyTracks.filter(t => t.label.includes(trackSearch));
-
-  const suggestions = searchQuery.length > 1 
-    ? allCourses.filter(c => 
-        c.title.includes(searchQuery) || 
-        c.code.includes(searchQuery)
-      ).slice(0, 5)
-    : [];
+  const suggestions = searchQuery.length > 1 ? allCourses.filter(c => c.title.includes(searchQuery) || c.code.includes(searchQuery)).slice(0, 5) : [];
 
   const filteredCourses = allCourses.filter(c => {
     if (!user) return false;
-    
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch = !query || 
-      (c.title && c.title.toLowerCase().includes(query)) || 
-      (c.code && c.code.toLowerCase().includes(query));
-      
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch = !q || (c.title && c.title.toLowerCase().includes(q)) || (c.code && c.code.toLowerCase().includes(q));
     const matchesFilter = courseFilter === 'All' || c.type === courseFilter;
-    
-    // Multi-criteria filters
-    const semesterQuery = filterSemester.replace(/'/g, '');
-    const matchesSemester = filterSemester === 'הכל' || (c.semester && (
-      (filterSemester === "סמסטר א'" && (c.semester.includes('א') || c.semester.includes('1'))) ||
-      (filterSemester === "סמסטר ב'" && (c.semester.includes('ב') || c.semester.includes('2'))) ||
-      c.semester.includes(semesterQuery)
-    ));
-      
-    const matchesCampus = filterCampus === 'הכל' || 
-      (c.campus && c.campus.includes(filterCampus === 'קרית א"י ספרא' ? 'ספרא' : filterCampus));
-      
-    const matchesLanguage = filterLanguage === 'הכל' || 
-      (c.language && c.language.includes(filterLanguage));
-    
-    const yearMap = { "שנה א'": "א", "שנה ב'": "ב", "שנה ג'": "ג", "שנה ד'": "ד" };
-    const matchesYear = filterYear === 'הכל' || c.year === yearMap[filterYear];
-
-    const passesAllCriteria = matchesSemester && matchesCampus && matchesLanguage && matchesYear;
-
-    // Guest Mode logic: Must have a selected track to see any courses
-    if (user.isGuest) {
-      if (!guestSelectedTrack) return false;
-      return c.track === guestSelectedTrack && matchesSearch && matchesFilter && passesAllCriteria;
-    }
-
-    // Logged-in user logic
-    const matchesTrack = user.track === 'General' || !user.track || c.track === user.track;
-    return matchesTrack && matchesSearch && matchesFilter && passesAllCriteria;
+    const sQ = filterSemester.replace(/'/g, '');
+    const matchesSemester = filterSemester === 'הכל' || (c.semester && ((filterSemester === "סמסטר א'" && (c.semester.includes('א') || c.semester.includes('1'))) || (filterSemester === "סמסטר ב'" && (c.semester.includes('ב') || c.semester.includes('2'))) || c.semester.includes(sQ)));
+    const matchesCampus = filterCampus === 'הכל' || (c.campus && c.campus.includes(filterCampus === 'קרית א"י ספרא' ? 'ספרא' : filterCampus));
+    const matchesLanguage = filterLanguage === 'הכל' || (c.language && c.language.includes(filterLanguage));
+    const map = { "שנה א'": "א", "שנה ב'": "ב", "שנה ג'": "ג", "שנה ד'": "ד" };
+    const matchesYear = filterYear === 'הכל' || c.year === map[filterYear];
+    const passes = matchesSemester && matchesCampus && matchesLanguage && matchesYear;
+    if (user.isGuest) return guestSelectedTrack && c.track === guestSelectedTrack && matchesSearch && matchesFilter && passes;
+    return (user.track === 'General' || !user.track || c.track === user.track) && matchesSearch && matchesFilter && passes;
   });
 
-  const getAuthorDisplayName = (fullName, type) => {
-    if (!fullName) return 'אורח/ת';
-    if (type === 'anon') return 'אנונימי/ת';
-    if (type === 'initials') {
-      return fullName.trim().split(/\s+/).map(n => n[0] + '.').join(' ');
-    }
-    return fullName;
-  };
+  const getAuthorDisplayName = (n, t) => { if (!n) return 'אורח/ת'; if (t === 'anon') return 'אנונימי/ת'; if (t === 'initials') return n.trim().split(/\s+/).map(x => x[0] + '.').join(' '); return n; };
 
   const handlePostReview = async () => {
-    if (user?.isGuest) return;
-    if (!newReviewComment) return alert('נא למלא את תוכן הביקורת');
-    
-    const reviewData = {
-      courseId: selectedCourse.id,
-      difficulty: newReviewDifficulty,
-      comment: newReviewComment,
-      semester: newReviewSemester,
-      year: newReviewYear,
-      attendanceEnforced: newReviewAttendance,
-      date: editingReviewId ? reviews.find(r => r.id === editingReviewId)?.date : new Date().toLocaleDateString('he-IL'),
-      author: getAuthorDisplayName(user.name, newReviewIdentity),
-      authorId: user.id,
-      identityType: newReviewIdentity,
-      likedBy: editingReviewId ? (reviews.find(r => r.id === editingReviewId)?.likedBy || []) : []
-    };
-    
+    if (user?.isGuest || !newReviewComment) return;
+    const data = { courseId: selectedCourse.id, difficulty: newReviewDifficulty, comment: newReviewComment, semester: newReviewSemester, year: newReviewYear, attendanceEnforced: newReviewAttendance, date: editingReviewId ? reviews.find(r => r.id === editingReviewId)?.date : new Date().toLocaleDateString('he-IL'), author: getAuthorDisplayName(user.name, newReviewIdentity), authorId: user.id, identityType: newReviewIdentity, likedBy: editingReviewId ? (reviews.find(r => r.id === editingReviewId)?.likedBy || []) : [] };
     try {
-      let res;
-      if (editingReviewId) {
-        res = await fetch(`http://localhost:3000/reviews/${editingReviewId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reviewData)
-        });
-      } else {
-        res = await fetch('http://localhost:3000/reviews', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reviewData)
-        });
-      }
-
-      if (!res.ok) throw new Error('Failed to save review');
-      const savedReview = await res.json();
-      
-      if (editingReviewId) {
-        setReviews(reviews.map(r => r.id === editingReviewId ? savedReview : r));
-        setAllReviews(allReviews.map(r => r.id === editingReviewId ? savedReview : r));
-      } else {
-        setReviews([savedReview, ...reviews]);
-        setAllReviews([savedReview, ...allReviews]);
-        setAllCourses(allCourses.map(c => 
-          c.id === selectedCourse.id 
-            ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } 
-            : c
-        ));
-      }
-
-      setNewReviewComment('');
-      setNewReviewAttendance(null);
-      setNewReviewDifficulty(5);
-      setEditingReviewId(null);
-      setIsReviewModalOpen(false);
-      alert(editingReviewId ? 'הביקורת עודכנה בהצלחה!' : 'הביקורת פורסמה בהצלחה!');
-    } catch (err) {
-      alert('שגיאה בשמירת הביקורת');
-    }
+      const res = editingReviewId ? await fetch(`http://localhost:3000/reviews/${editingReviewId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }) : await fetch('http://localhost:3000/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const saved = await res.json();
+      if (editingReviewId) { setReviews(reviews.map(r => r.id === editingReviewId ? saved : r)); setAllReviews(allReviews.map(r => r.id === editingReviewId ? saved : r)); }
+      else { setReviews([saved, ...reviews]); setAllReviews([saved, ...allReviews]); setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c)); }
+      setNewReviewComment(''); setEditingReviewId(null); setIsReviewModalOpen(false); alert('הביקורת נשמרה בהצלחה!');
+    } catch (err) { alert('שגיאה בשמירת הביקורת'); }
   };
 
-  const handleDeleteReview = async (reviewId) => {
-    if (!window.confirm('האם אתם בטוחים שברצונכם למחוק את הביקורת?')) return;
-
+  const handleDeleteReview = async (id) => {
+    if (!window.confirm('האם למחוק?')) return;
     try {
-      const res = await fetch(`http://localhost:3000/reviews/${reviewId}`, {
-        method: 'DELETE'
-      });
-      if (!res.ok) throw new Error('Failed to delete review');
-
-      setReviews(reviews.filter(r => r.id !== reviewId));
-      setAllReviews(allReviews.filter(r => r.id !== reviewId));
-      setAllCourses(allCourses.map(c => 
-        c.id === selectedCourse?.id 
-          ? { ...c, reviewCount: Math.max(0, (c.reviewCount || 0) - 1) } 
-          : c
-      ));
-      alert('הביקורת נמחקה בהצלחה');
-    } catch (err) {
-      alert('שגיאה במחיקת הביקורת');
-    }
+      await fetch(`http://localhost:3000/reviews/${id}`, { method: 'DELETE' });
+      setReviews(reviews.filter(r => r.id !== id));
+      setAllReviews(allReviews.filter(r => r.id !== id));
+      setAllCourses(allCourses.map(c => c.id === selectedCourse?.id ? { ...c, reviewCount: Math.max(0, (c.reviewCount || 0) - 1) } : c));
+      alert('נמחק בהצלחה');
+    } catch (err) { alert('שגיאה'); }
   };
 
   const [inlineEditComment, setInlineEditComment] = useState('');
-
-  const handleEditReview = (review) => {
-    setEditingReviewId(review.id);
-    setInlineEditComment(review.comment);
-  };
-
-  const handleCancelInlineEdit = () => {
-    setEditingReviewId(null);
-    setInlineEditComment('');
-  };
-
-  const handleSaveInlineEdit = async (reviewId) => {
-    if (!inlineEditComment.trim()) return alert('נא למלא את תוכן הביקורת');
-
+  const handleEditReview = (r) => { setEditingReviewId(r.id); setInlineEditComment(r.comment); };
+  const handleCancelInlineEdit = () => { setEditingReviewId(null); setInlineEditComment(''); };
+  const handleSaveInlineEdit = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/reviews/${reviewId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comment: inlineEditComment })
-      });
-
-      if (!res.ok) throw new Error('Failed to update review');
-      const updatedReview = await res.json();
-      
-      setReviews(reviews.map(r => r.id === reviewId ? updatedReview : r));
-      setAllReviews(allReviews.map(r => r.id === reviewId ? updatedReview : r));
-      
-      setEditingReviewId(null);
-      setInlineEditComment('');
-      alert('הביקורת עודכנה בהצלחה!');
-    } catch (err) {
-      alert('שגיאה בעדכון הביקורת');
-    }
+      const res = await fetch(`http://localhost:3000/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: inlineEditComment }) });
+      const saved = await res.json();
+      setReviews(reviews.map(r => r.id === id ? saved : r));
+      setAllReviews(allReviews.map(r => r.id === id ? saved : r));
+      setEditingReviewId(null); setInlineEditComment(''); alert('עודכן בהצלחה');
+    } catch (err) { alert('שגיאה'); }
   };
 
   const handlePostQuestion = async () => {
-    if (!newQuestionText) return;
-    
-    const newQ = {
-      courseId: selectedCourse.id,
-      question: newQuestionText,
-      answers: [],
-      date: new Date().toLocaleDateString('he-IL')
-    };
-
-    try {
-      const res = await fetch('http://localhost:3000/questions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newQ)
-      });
-      const savedQ = await res.json();
-      setQuestions([savedQ, ...questions]);
-      setNewQuestionText('');
-      setIsQuestionModalOpen(false);
-    } catch (err) {
-      alert('שגיאה בפרסום השאלה');
-    }
+    const data = { courseId: selectedCourse.id, question: newQuestionText, answers: [], date: new Date().toLocaleDateString('he-IL') };
+    try { const res = await fetch('http://localhost:3000/questions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setQuestions([saved, ...questions]); setNewQuestionText(''); setIsQuestionModalOpen(false); } catch (err) { alert('שגיאה'); }
   };
 
-  const handlePostAnswer = async (qId, text) => {
-    if (user?.isGuest) return;
-    if (!text) return;
-
-    const question = questions.find(q => q.id === qId);
-    const updatedAnswers = [...question.answers, { 
-      text, 
-      date: new Date().toLocaleDateString('he-IL'),
-      authorId: user.id,
-      likedBy: []
-    }];
-
-    try {
-      const res = await fetch(`http://localhost:3000/questions/${qId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: updatedAnswers })
-      });
-      const updatedQ = await res.json();
-      setQuestions(questions.map(q => q.id === qId ? updatedQ : q));
-    } catch (err) {
-      alert('שגיאה בפרסום התשובה');
-    }
+  const handlePostAnswer = async (id, text) => {
+    const q = questions.find(q => q.id === id);
+    const updated = [...q.answers, { text, date: new Date().toLocaleDateString('he-IL'), authorId: user.id, likedBy: [] }];
+    try { const res = await fetch(`http://localhost:3000/questions/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updated }) }); const saved = await res.json(); setQuestions(questions.map(q => q.id === id ? saved : q)); } catch (err) { alert('שגיאה'); }
   };
 
-  const handleLikeReview = async (reviewId) => {
-    const review = reviews.find(r => r.id === reviewId);
-    if (!review || !user?.id) return;
-
-    // Prevent self-liking using authorId (most reliable) OR name match (for existing reviews without ID)
-    const userDisplayName = getAuthorDisplayName(user.name, review.identityType || 'full');
-    if (review.authorId === user.id || review.author === userDisplayName) {
-      alert('לא ניתן לעשות לייק לביקורת של עצמך');
-      return;
-    }
-
-    const likedBy = review.likedBy || [];
-    if (likedBy.includes(user.id)) return; // Already liked
-
-    const updatedLikedBy = [...likedBy, user.id];
-
-    try {
-      const res = await fetch(`http://localhost:3000/reviews/${reviewId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ likedBy: updatedLikedBy })
-      });
-      const updatedReview = await res.json();
-      setReviews(reviews.map(r => r.id === reviewId ? updatedReview : r));
-    } catch (err) {
-      console.error('Error liking review:', err);
-    }
+  const handleLikeReview = async (id) => {
+    const r = reviews.find(r => r.id === id);
+    if (!r || !user?.id || r.authorId === user.id) return;
+    const likedBy = r.likedBy || [];
+    if (likedBy.includes(user.id)) return;
+    try { const res = await fetch(`http://localhost:3000/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ likedBy: [...likedBy, user.id] }) }); const saved = await res.json(); setReviews(reviews.map(r => r.id === id ? saved : r)); } catch (err) { }
   };
 
-  const handleLikeAnswer = async (qId, answerIndex) => {
-    const question = questions.find(q => q.id === qId);
-    if (!question || !user?.id) return;
-
-    const answer = question.answers[answerIndex];
-    if (answer.authorId === user.id) {
-      alert('לא ניתן לעשות לייק לתשובה של עצמך');
-      return;
-    }
-
-    const updatedAnswers = question.answers.map((a, i) => {
-      if (i === answerIndex) {
-        const likedBy = a.likedBy || [];
-        if (likedBy.includes(user.id)) return a;
-        return { ...a, likedBy: [...likedBy, user.id] };
-      }
-      return a;
-    });
-
-    try {
-      const res = await fetch(`http://localhost:3000/questions/${qId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: updatedAnswers })
-      });
-      const updatedQ = await res.json();
-      setQuestions(questions.map(q => q.id === qId ? updatedQ : q));
-    } catch (err) {
-      console.error('Error liking answer:', err);
-    }
+  const handleLikeAnswer = async (qId, i) => {
+    const q = questions.find(q => q.id === qId);
+    const a = q.answers[i];
+    if (a.authorId === user.id) return;
+    const updated = q.answers.map((ans, idx) => i === idx ? { ...ans, likedBy: [...(ans.likedBy || []), user.id] } : ans);
+    try { const res = await fetch(`http://localhost:3000/questions/${qId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updated }) }); const saved = await res.json(); setQuestions(questions.map(q => q.id === qId ? updated : q)); } catch (err) { }
   };
-
-  const handleLikeForumAnswer = async (qId, answerIndex) => {
-    // This will be handled inside CombinationForum or via a shared logic if needed
-    // For now, let's keep it separate if necessary
-  };
-
-  const hasUserRated = reviews.some(r => 
-    (r.authorId !== undefined && String(r.authorId) === String(user?.id)) || 
-    (r.author === user?.name)
-  );
 
   const handlePostRating = async () => {
-    if (user?.isGuest || !selectedCourse) return;
-    
-    const newRating = {
-      courseId: selectedCourse.id,
-      rating: 5, // Default rating since UI only shows difficulty
-      difficulty: newReviewDifficulty,
-      attendanceEnforced: newReviewAttendance,
-      comment: "", // Empty comment for quick rating
-      semester: newReviewSemester,
-      year: newReviewYear,
-      date: new Date().toLocaleDateString('he-IL'),
-      author: getAuthorDisplayName(user.name, newReviewIdentity),
-      authorId: user.id,
-      identityType: newReviewIdentity,
-      likedBy: []
-    };
-    
-    try {
-      const res = await fetch('http://localhost:3000/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newRating)
-      });
-      
-      if (!res.ok) throw new Error('Failed to post rating');
-      
-      const savedRating = await res.json();
-      setReviews([savedRating, ...reviews]);
-      setAllReviews([savedRating, ...allReviews]);
-      
-      // Update allCourses count
-      setAllCourses(allCourses.map(c => 
-        c.id === selectedCourse.id 
-          ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } 
-          : c
-      ));
-
-      setNewReviewAttendance(null);
-      setNewReviewDifficulty(5);
-      setIsRatingModalOpen(false);
-      alert('הדירוג נשלח בהצלחה!');
-    } catch (err) {
-      console.error('Rating submission error:', err);
-      alert('שגיאה בשליחת הדירוג');
-    }
+    const data = { courseId: selectedCourse.id, rating: 5, difficulty: newReviewDifficulty, attendanceEnforced: newReviewAttendance, comment: "", semester: newReviewSemester, year: newReviewYear, date: new Date().toLocaleDateString('he-IL'), author: getAuthorDisplayName(user.name, newReviewIdentity), authorId: user.id, identityType: newReviewIdentity, likedBy: [] };
+    try { const res = await fetch('http://localhost:3000/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setReviews([saved, ...reviews]); setAllReviews([saved, ...allReviews]); setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c)); setIsRatingModalOpen(false); alert('תודה על הדירוג!'); } catch (err) { alert('שגיאה'); }
   };
 
   const handlePostMaterial = async () => {
-    if (user?.isGuest || !selectedCourse) return;
-    if (!newMaterialTitle || !newMaterialFile) return alert('נא למלא את כל הפרטים ולבחור קובץ');
-
-    const newMaterial = {
-      courseId: selectedCourse.id,
-      title: newMaterialTitle,
-      category: newMaterialCategory,
-      type: newMaterialFile.name.split('.').pop().toUpperCase(),
-      author: user.name,
-      date: new Date().toLocaleDateString('he-IL'),
-      likedBy: []
-    };
-
-    try {
-      const res = await fetch('http://localhost:3000/materials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newMaterial)
-      });
-      const savedM = await res.json();
-      setMaterials([savedM, ...materials]);
-      setNewMaterialTitle('');
-      setNewMaterialFile(null);
-      setIsMaterialModalOpen(false);
-      alert('חומר הלימוד הועלה בהצלחה!');
-    } catch (err) {
-      alert('שגיאה בהעלאת חומר הלימוד');
-    }
-  };
-
-  const handleEditLink = (link) => {
-    setEditingLinkId(link.id);
-    setNewLinkTitle(link.title);
-    setNewLinkUrl(link.url);
-    setNewLinkType(link.type.toLowerCase());
-    setIsLinkModalOpen(true);
+    const data = { courseId: selectedCourse.id, title: newMaterialTitle, category: newMaterialCategory, type: newMaterialFile.name.split('.').pop().toUpperCase(), author: user.name, date: new Date().toLocaleDateString('he-IL'), likedBy: [] };
+    try { const res = await fetch('http://localhost:3000/materials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewMaterialTitle(''); setNewMaterialFile(null); setIsMaterialModalOpen(false); alert('הועלה בהצלחה'); } catch (err) { alert('שגיאה'); }
   };
 
   const handlePostLink = async () => {
-    if (user?.isGuest || !selectedCourse) return;
-    if (!newLinkTitle || !newLinkUrl) return alert('נא למלא את כל הפרטים');
-
-    const linkData = {
-      courseId: selectedCourse.id,
-      title: newLinkTitle,
-      url: newLinkUrl,
-      category: 'links',
-      type: newLinkType.toUpperCase(),
-      author: user.name,
-      date: editingLinkId ? materials.find(m => m.id === editingLinkId)?.date : new Date().toLocaleDateString('he-IL'),
-      isLink: true,
-      likedBy: editingLinkId ? (materials.find(m => m.id === editingLinkId)?.likedBy || []) : []
-    };
-
-    try {
-      let res;
-      if (editingLinkId) {
-        res = await fetch(`http://localhost:3000/materials/${editingLinkId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(linkData)
-        });
-      } else {
-        res = await fetch('http://localhost:3000/materials', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(linkData)
-        });
-      }
-
-      if (!res.ok) throw new Error('Failed to save link');
-      const savedL = await res.json();
-      
-      if (editingLinkId) {
-        setMaterials(materials.map(m => m.id === editingLinkId ? savedL : m));
-      } else {
-        setMaterials([savedL, ...materials]);
-      }
-
-      setNewLinkTitle('');
-      setNewLinkUrl('');
-      setEditingLinkId(null);
-      setIsLinkModalOpen(false);
-      alert(editingLinkId ? 'הקישור עודכן בהצלחה!' : 'הקישור נוסף בהצלחה!');
-    } catch (err) {
-      alert('שגיאה בשמירת הקישור');
-    }
+    const data = { courseId: selectedCourse.id, title: newLinkTitle, url: newLinkUrl, category: 'links', type: newLinkType.toUpperCase(), author: user.name, date: new Date().toLocaleDateString('he-IL'), isLink: true, likedBy: [] };
+    try { const res = await fetch('http://localhost:3000/materials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewLinkTitle(''); setNewLinkUrl(''); setIsLinkModalOpen(false); alert('נוסף בהצלחה'); } catch (err) { alert('שגיאה'); }
   };
 
-  const handleDeleteMaterial = async (materialId) => {
-    if (!window.confirm('האם למחוק את הפריט?')) return;
-    try {
-      const res = await fetch(`http://localhost:3000/materials/${materialId}`, {
-        method: 'DELETE'
-      });
-      if (!res.ok) throw new Error('Failed to delete material');
-      setMaterials(materials.filter(m => m.id !== materialId));
-      alert('הפריט נמחק בהצלחה');
-    } catch (err) {
-      alert('שגיאה במחיקת הפריט');
-    }
-  };
+  const handleDeleteMaterial = async (id) => { if (window.confirm('למחוק?')) try { await fetch(`http://localhost:3000/materials/${id}`, { method: 'DELETE' }); setMaterials(materials.filter(m => m.id !== id)); alert('נמחק'); } catch (err) { alert('שגיאה'); } };
+  const handleUpdateMaterial = async (id, data) => { try { const res = await fetch(`http://localhost:3000/materials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials(materials.map(m => m.id === id ? saved : m)); alert('נשמר'); } catch (err) { alert('שגיאה'); } };
 
-  const handleUpdateMaterial = async (id, data) => {
-    try {
-      const res = await fetch(`http://localhost:3000/materials/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) throw new Error('Failed to update material');
-      const updated = await res.json();
-      setMaterials(materials.map(m => m.id === id ? updated : m));
-      alert('העדכון נשמר בהצלחה');
-    } catch (err) {
-      alert('שגיאה בשמירת העדכון');
+  const handleToggleFollow = (id, title, status) => {
+    if (status) {
+      setFollowedCourseIds([...followedCourseIds, id]);
+      setNotifications([
+        { id: `follow-${id}`, text: `מערכת העדכונים הופעלה בהצלחה עבור קורס ${title}!`, read: false, date: "עכשיו", courseId: id },
+        ...notifications
+      ]);
+    } else {
+      setFollowedCourseIds(followedCourseIds.filter(fId => fId !== id));
+      setNotifications(notifications.filter(n => n.courseId !== id));
     }
   };
 
@@ -1690,519 +1152,52 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col" dir="rtl">
-      {/* Navbar */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 transition-all">
         <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="hidden md:flex gap-4 items-center">
+          <div className="hidden md:flex gap-4 items-center flex-shrink-0">
             <div className="flex items-center gap-4 bg-slate-50 px-5 py-2 rounded-2xl border border-slate-100">
               <div className="text-right">
-                <div className="text-sm font-black text-slate-900 leading-none">
-                  {user.name} {user.isGuest && <span className="text-[10px] text-indigo-400 mr-1 font-black underline">(אורח/ת)</span>}
-                </div>
-                {!user.isGuest && (
-                  <button 
-                    onClick={() => setIsChangingTrack(!isChangingTrack)}
-                    className="text-[10px] text-indigo-600 font-black uppercase mt-1 tracking-tighter hover:underline"
-                  >
-                    {(studyTracks || []).find(t => t.value === user.track)?.label || user.track}
-                  </button>
-                )}
+                <div className="text-sm font-black text-slate-900 leading-none">{user.name} {user.isGuest && <span className="text-[10px] text-indigo-400 mr-1 font-black underline">(אורח/ת)</span>}</div>
+                {!user.isGuest && <button onClick={() => setIsChangingTrack(!isChangingTrack)} className="text-[10px] text-indigo-600 font-black uppercase mt-1 tracking-tighter hover:underline">{(studyTracks || []).find(t => t.value === user.track)?.label || user.track}</button>}
               </div>
-              <button 
-                onClick={handleLogout}
-                className="bg-white text-slate-400 px-3 py-2 rounded-xl hover:text-rose-500 hover:bg-rose-50 transition-all shadow-sm flex items-center gap-2 group"
-              >
-                <span className="text-[10px] font-black uppercase hidden lg:block">התנתקות</span>
-                <X className="h-4 w-4" />
-              </button>
+              <button onClick={handleLogout} className="bg-white text-slate-400 px-3 py-2 rounded-xl hover:text-rose-500 hover:bg-rose-50 transition-all shadow-sm flex items-center gap-2 group"><span className="text-[10px] font-black uppercase hidden lg:block">התנתקות</span><X className="h-4 w-4" /></button>
+            </div>
+            <div className="relative" ref={notifyRef}>
+              <button onClick={() => setIsNotifyOpen(!isNotifyOpen)} className="bg-white p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm active:scale-95 relative cursor-pointer">{notifications.some(n => !n.read) ? <><BellDot className="h-5 w-5 text-indigo-600" /><span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-black h-4 w-4 rounded-full flex items-center justify-center border-2 border-white">{notifications.filter(n => !n.read).length}</span></> : <Bell className="h-5 w-5" />}</button>
+              {isNotifyOpen && (
+                <div className="absolute top-14 right-0 w-80 bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-6 border-b border-slate-50 flex justify-between items-center"><h4 className="font-black text-slate-900 text-sm">התראות</h4><button onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))} className="text-[10px] font-black text-indigo-600 hover:underline">סמן הכל כנקרא</button></div>
+                  <div className="max-h-96 overflow-y-auto">{notifications.length > 0 ? notifications.map(n => (<div key={n.id} className={`p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer relative ${!n.read ? 'bg-indigo-50/30' : ''}`} onClick={() => setNotifications(notifications.map(notif => notif.id === n.id ? { ...notif, read: true } : notif))}>{!n.read && <div className="absolute top-6 right-2 w-1.5 h-1.5 bg-indigo-600 rounded-full"></div>}<p className={`text-sm leading-relaxed mb-1 ${!n.read ? 'font-black text-slate-900' : 'font-medium text-slate-600'}`}>{n.text}</p><span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{n.date}</span></div>)) : <div className="p-12 text-center"><div className="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-300"><Bell className="h-6 w-6" /></div><p className="text-slate-400 font-bold text-xs">אין התראות חדשות</p></div>}</div>
+                  {notifications.length > 0 && <div className="p-4 bg-slate-50/50 text-center"><button className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors">צפה בכל ההיסטוריה</button></div>}
+                </div>
+              )}
             </div>
           </div>
-
           <div className="flex-1"></div>
-
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { 
-            setSelectedCourse(null); 
-            if (user?.isGuest) setGuestTab('forum');
-          }}>
-            <span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span>
-            <div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
-          </div>
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { setSelectedCourse(null); if (user?.isGuest) setGuestTab('forum'); }}><span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span><div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform"><GraduationCap className="h-6 w-6 text-white" /></div></div>
         </div>
-        
-        {/* Searchable Track Selection Popover */}
         {isChangingTrack && (
           <div className="absolute top-20 left-6 bg-white rounded-3xl shadow-2xl border border-slate-200 p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]" dir="rtl">
-            <div className="flex items-center gap-3 mb-3 px-2">
-              <button onClick={() => setIsChangingTrack(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
-                <X className="h-4 w-4" />
-              </button>
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest">חפש מסלול לימוד חדש</p>
-            </div>
-            <div className="relative mb-4">
-              <input 
-                autoFocus
-                type="text"
-                placeholder="חפש מסלול..."
-                value={trackSearch}
-                onChange={(e) => setTrackSearch(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-4 outline-none focus:border-indigo-500/20 text-sm font-bold text-right font-medium"
-              />
-            </div>
-            <div className="space-y-1 max-h-60 overflow-y-auto">
-              {filteredTracks.map(t => (
-                <button
-                  key={t.value}
-                  onClick={() => {
-                    // Explicit direct mapping to ensure no jumps
-                    const targetTrack = t.value;
-                    handleChangeTrack(targetTrack);
-                  }}
-                  className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${(user.isGuest ? guestSelectedTrack : user.track) === t.value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
-                  {t.label}
-                </button>
-              ))}
-              {filteredTracks.length === 0 && <p className="text-xs text-slate-400 text-center py-2">לא נמצאו מסלולים</p>}
-            </div>
+            <div className="flex items-center gap-3 mb-3 px-2"><button onClick={() => setIsChangingTrack(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-4 w-4" /></button><p className="text-xs font-black text-slate-400 uppercase tracking-widest">חפש מסלול לימוד חדש</p></div>
+            <div className="relative mb-4"><input autoFocus type="text" placeholder="חפש מסלול..." value={trackSearch} onChange={(e) => setTrackSearch(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-4 outline-none focus:border-indigo-500/20 text-sm font-bold text-right font-medium" /></div>
+            <div className="space-y-1">{(studyTracks || []).filter(t => t.label.includes(trackSearch)).map(t => (<button key={t.value} onClick={() => { handleChangeTrack(t.value); }} className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${(user?.isGuest ? guestSelectedTrack : user?.track) === t.value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}>{t.label}</button>))}{(studyTracks || []).filter(t => t.label.includes(trackSearch)).length === 0 && <p className="text-xs text-slate-400 text-center py-2">לא נמצאו מסלולים</p>}</div>
           </div>
         )}
       </nav>
-      
       <main className="flex-grow container mx-auto px-6 py-12">
         <Routes>
-          <Route path="/lecturer/:id" element={
-            <LecturerProfile user={user} onDepartmentClick={(dept) => {
-              // Find the track value that matches the department label
-              const targetTrack = (studyTracks || []).find(t => t?.label === dept || t?.value === dept)?.value || dept;
-              handleChangeTrack(targetTrack);
-              navigate('/');
-            }} />
-          } />
-          <Route path="/course/:id" element={
-            <CourseDetail 
-              selectedCourse={selectedCourse}
-              navigate={navigate}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              reviews={reviews}
-              user={user}
-              setIsReviewModalOpen={setIsReviewModalOpen}
-              setIsRatingModalOpen={setIsRatingModalOpen}
-              handleLogout={handleLogout}
-              handleLikeReview={handleLikeReview}
-              handleDeleteReview={handleDeleteReview}
-              handleEditReview={handleEditReview}
-              editingReviewId={editingReviewId}
-              inlineEditComment={inlineEditComment}
-              setInlineEditComment={setInlineEditComment}
-              handleSaveInlineEdit={handleSaveInlineEdit}
-              handleCancelInlineEdit={handleCancelInlineEdit}
-              questions={questions}
-              setIsQuestionModalOpen={setIsQuestionModalOpen}
-              handlePostAnswer={handlePostAnswer}
-              handleLikeAnswer={handleLikeAnswer}
-              setIsMaterialModalOpen={setIsMaterialModalOpen}
-              setIsLinkModalOpen={setIsLinkModalOpen}
-              materials={materials}
-              onUpdateMaterial={handleUpdateMaterial}
-              onDeleteMaterial={handleDeleteMaterial}
-            />
-          } />
-          <Route path="/" element={
-            <>
-              {user.isGuest && (
-                <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500">
-                  <button 
-                    onClick={() => setGuestTab('forum')}
-                    className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                  >
-                    פורום שילובים
-                  </button>
-                  <button 
-                    onClick={() => setGuestTab('courses')}
-                    className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
-                  >
-                    צפייה בקורסים
-                  </button>
-                </div>
-              )}
-
-              {(user.isGuest && guestTab === 'forum') ? (
-                <CombinationForum 
-                  user={user} 
-                  onLogout={handleLogout} 
-                  onTrackSelect={handleChangeTrack} 
-                  STUDY_TRACKS={studyTracks}
-                />
-              ) : (
-                <Dashboard 
-                  user={user}
-                  guestSelectedTrack={guestSelectedTrack}
-                  setIsGuestDrawerOpen={setIsGuestDrawerOpen}
-                  allCourses={allCourses}
-                  filteredCourses={filteredCourses}
-                  courseFilter={courseFilter}
-                  setCourseFilter={setCourseFilter}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  showSuggestions={showSuggestions}
-                  setShowSuggestions={setShowSuggestions}
-                  suggestions={suggestions}
-                  navigate={navigate}
-                  studyTracks={studyTracks}
-                  filterSemester={filterSemester}
-                  setFilterSemester={setFilterSemester}
-                  filterCampus={filterCampus}
-                  setFilterCampus={setFilterCampus}
-                  filterLanguage={filterLanguage}
-                  setFilterLanguage={setFilterLanguage}
-                  filterYear={filterYear}
-                  setFilterYear={setFilterYear}
-                  studentForums={studentForums}
-                  studentForumQuestions={studentForumQuestions}
-                  newStudentForumQ={newStudentForumQ}
-                  setNewStudentForumQ={setNewStudentForumQ}
-                  onPostStudentForumQ={handlePostStudentForumQ}
-                  onPostStudentForumA={handlePostStudentForumA}
-                  expandedStudentQs={expandedStudentQs}
-                  onToggleStudentQ={toggleStudentQ}
-                  activeStudentForumId={activeStudentForumId}
-                  setActiveStudentForumId={setActiveStudentForumId}
-                  isStudentForumModalOpen={isStudentForumModalOpen}
-                  setIsStudentForumModalOpen={setIsStudentForumModalOpen}
-                />
-              )}
-            </>
-          } />
+          <Route path="/lecturer/:id" element={<LecturerProfile user={user} onDepartmentClick={(dept) => { const tT = (studyTracks || []).find(t => t?.label === dept || t?.value === dept)?.value || dept; handleChangeTrack(tT); navigate('/'); }} />} />
+          <Route path="/course/:id" element={<CourseDetail selectedCourse={selectedCourse} navigate={navigate} activeTab={activeTab} setActiveTab={setActiveTab} reviews={reviews} user={user} setIsReviewModalOpen={setIsReviewModalOpen} setIsRatingModalOpen={setIsRatingModalOpen} handleLogout={handleLogout} handleLikeReview={handleLikeReview} handleDeleteReview={handleDeleteReview} handleEditReview={handleEditReview} editingReviewId={editingReviewId} inlineEditComment={inlineEditComment} setInlineEditComment={setInlineEditComment} handleSaveInlineEdit={handleSaveInlineEdit} handleCancelInlineEdit={handleCancelInlineEdit} questions={questions} setIsQuestionModalOpen={setIsQuestionModalOpen} handlePostAnswer={handlePostAnswer} handleLikeAnswer={handleLikeAnswer} setIsMaterialModalOpen={setIsMaterialModalOpen} setIsLinkModalOpen={setIsLinkModalOpen} materials={materials} onUpdateMaterial={handleUpdateMaterial} onDeleteMaterial={handleDeleteMaterial} isFollowing={selectedCourse ? followedCourseIds.includes(selectedCourse.id) : false} onToggleFollow={handleToggleFollow} />} />
+          <Route path="/" element={<>{user.isGuest && <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500"><button onClick={() => setGuestTab('forum')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>פורום שילובים</button><button onClick={() => setGuestTab('courses')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>צפייה בקורסים</button></div>}{(user.isGuest && guestTab === 'forum') ? <CombinationForum user={user} onLogout={handleLogout} onTrackSelect={handleChangeTrack} STUDY_TRACKS={studyTracks} /> : <Dashboard user={user} guestSelectedTrack={guestSelectedTrack} setIsGuestDrawerOpen={setIsGuestDrawerOpen} allCourses={allCourses} filteredCourses={filteredCourses} courseFilter={courseFilter} setCourseFilter={setCourseFilter} searchQuery={searchQuery} setSearchQuery={setSearchQuery} showSuggestions={showSuggestions} setShowSuggestions={setShowSuggestions} suggestions={suggestions} navigate={navigate} studyTracks={studyTracks} filterSemester={filterSemester} setFilterSemester={setFilterSemester} filterCampus={filterCampus} setFilterCampus={setFilterCampus} filterLanguage={filterLanguage} setFilterLanguage={setFilterLanguage} filterYear={filterYear} setFilterYear={setFilterYear} studentForums={studentForums} studentForumQuestions={studentForumQuestions} newStudentForumQ={newStudentForumQ} setNewStudentForumQ={setNewStudentForumQ} onPostStudentForumQ={handlePostStudentForumQ} onPostStudentForumA={handlePostStudentForumA} expandedStudentQs={expandedStudentQs} onToggleStudentQ={toggleStudentQ} activeStudentForumId={activeStudentForumId} setActiveStudentForumId={setActiveStudentForumId} isStudentForumModalOpen={isStudentForumModalOpen} setIsStudentForumModalOpen={setIsStudentForumModalOpen} />}</>} />
         </Routes>
       </main>
-
-      {/* Rating Modal (Difficulty Only) */}
-      {isRatingModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsRatingModalOpen(false)}>
-          <div className="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-4 mb-8">
-              <button onClick={() => setIsRatingModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
-                <X className="h-8 w-8" />
-              </button>
-              <h3 className="text-3xl font-black text-slate-900">דירוג קורס מהיר</h3>
-            </div>
-
-            <div className="space-y-8">
-              <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative">
-                <div className="flex justify-between items-center mb-4">
-                  <label className="text-sm font-black text-slate-700 block">רמת קושי הקורס (1-10)</label>
-                  {hasUserRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}
-                </div>
-                <div className="flex items-center gap-6">
-                  <input 
-                    type="range" 
-                    min="1" 
-                    max="10" 
-                    step="1"
-                    value={newReviewDifficulty}
-                    onChange={(e) => setNewReviewDifficulty(parseInt(e.target.value))}
-                    disabled={hasUserRated}
-                    className={`flex-1 h-3 bg-slate-200 rounded-lg appearance-none accent-rose-500 ${hasUserRated ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                  />
-                  <div className={`h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0 ${hasUserRated ? 'opacity-50' : ''}`}>
-                    {newReviewDifficulty}
-                  </div>
-                </div>
-                <div className="flex justify-between mt-2 px-1">
-                  <span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-slate-300' : 'text-slate-400'}`}>קל מאוד</span>
-                  <span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-rose-300' : 'text-rose-600'}`}>
-                    {newReviewDifficulty <= 2 ? "קל מאוד" : newReviewDifficulty === 3 ? "קל" : newReviewDifficulty <= 7 ? "בינוני" : newReviewDifficulty <= 9 ? "קשה" : "קשה מאוד"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 mb-8">
-                <label className="text-sm font-black text-slate-700 mb-4 block">סמסטר</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { id: "סמסטר א'", label: "סמסטר א'" },
-                    { id: "סמסטר ב'", label: "סמסטר ב'" },
-                    { id: "סמסטר קיץ", label: "סמסטר קיץ" },
-                    { id: "שנתי", label: "שנתי" }
-                  ].map(option => (
-                    <button
-                      key={option.id}
-                      onClick={() => setNewReviewSemester(option.id)}
-                      className={`py-3 rounded-xl font-black text-sm border-2 transition-all ${
-                        newReviewSemester === option.id 
-                          ? 'bg-indigo-600 text-white border-transparent shadow-md' 
-                          : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200 hover:shadow-sm'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative">
-                <div className="flex justify-between items-center mb-4">
-                  <label className="text-sm font-black text-slate-700 block">האם נבדקה נוכחות?</label>
-                  {hasUserRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { id: true, label: 'כן', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' },
-                    { id: false, label: 'לא', color: 'bg-rose-50 text-rose-600 border-rose-100' },
-                    { id: null, label: 'לא יודע/ת', color: 'bg-slate-100 text-slate-500 border-slate-200' }
-                  ].map(option => (
-                    <button
-                      key={String(option.id)}
-                      onClick={() => setNewReviewAttendance(option.id)}
-                      disabled={hasUserRated}
-                      className={`py-3 rounded-xl font-black text-sm border-2 transition-all ${
-                        newReviewAttendance === option.id 
-                          ? `${option.id === true ? 'bg-emerald-600' : option.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md` 
-                          : `${option.color} hover:shadow-sm`
-                      } ${hasUserRated ? 'cursor-not-allowed opacity-50' : ''}`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button 
-                onClick={handlePostRating}
-                className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all"
-              >
-                שלח דירוג
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Review Modal */}
-      {isReviewModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsReviewModalOpen(false)}>
-          <div className="bg-white w-full max-w-4xl rounded-[40px] p-10 shadow-2xl overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
-            <ReviewForm 
-              comment={newReviewComment}
-              semester={newReviewSemester}
-              year={newReviewYear}
-              identityType={newReviewIdentity}
-              attendanceEnforced={newReviewAttendance}
-              difficulty={newReviewDifficulty}
-              onCommentChange={setNewReviewComment}
-              onSemesterChange={setNewReviewSemester}
-              onYearChange={setNewReviewYear}
-              onIdentityChange={setNewReviewIdentity}
-              onAttendanceChange={setNewReviewAttendance}
-              onDifficultyChange={setNewReviewDifficulty}
-              onSubmit={handlePostReview}
-              onClose={() => setIsReviewModalOpen(false)}
-              hasRated={hasUserRated}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Question Modal */}
-      {isQuestionModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsQuestionModalOpen(false)}>
-          <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-start mb-8 gap-4">
-              <button 
-                onClick={() => setIsQuestionModalOpen(false)} 
-                className="p-2 text-slate-400 hover:text-rose-500 transition-colors shrink-0 -mt-2 -mr-2"
-                title="סגור"
-              >
-                <X className="h-8 w-8" />
-              </button>
-              <div className="text-right flex-1">
-                <h3 className="text-3xl font-black text-slate-900">שאל שאלה</h3>
-                <p className="text-slate-500 font-bold text-sm mt-1">תשאלו שאלה קצרה וקולעת שיכולה לעזור לסטודנטים נוספים ותשימו לב שזאת שאלה שלא נשאלה כבר.</p>
-              </div>
-            </div>
-            <textarea 
-              value={newQuestionText}
-              onChange={(e) => setNewQuestionText(e.target.value)}
-              className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[32px] p-6 h-48 outline-none mb-8 text-right font-medium" 
-              placeholder="מה השאלה?"
-            ></textarea>
-            <div className="mt-8">
-              <button onClick={handlePostQuestion} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98]">
-                פרסם שאלה
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Material Modal */}
-      {isMaterialModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsMaterialModalOpen(false)}>
-          <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex flex-col gap-1 mb-8">
-              <div className="flex items-center gap-4">
-                <button onClick={() => setIsMaterialModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button>
-                <h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3>
-              </div>
-              <p className="text-slate-500 font-bold text-sm mt-1 pr-12">כאן תמצאו חומרים שיכולים לעזור לכם בקורס. יש לכם חומר שיכול לעזור? העלו אותו כדי שהמאגר ימשיך לגדול.</p>
-            </div>
-            <div className="space-y-6">
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת החומר</label>
-                <input type="text" value={newMaterialTitle} onChange={(e) => setNewMaterialTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: מבחן מועד א 2023" />
-              </div>
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג החומר</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {MATERIAL_CATEGORIES.filter(cat => cat.id !== 'links').map(cat => (
-                    <button 
-                      key={cat.id} 
-                      onClick={() => setNewMaterialCategory(cat.id)} 
-                      className={`flex items-center justify-start gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm ${newMaterialCategory === cat.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
-                    >
-                      <cat.icon className="h-4 w-4" />
-                      <span>{cat.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">בחירת קובץ</label>
-                <div onClick={() => fileInputRef.current?.click()} className={`border-2 border-dashed rounded-[32px] p-8 text-center cursor-pointer transition-all ${newMaterialFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 hover:border-indigo-200 bg-slate-50'}`}>
-                  <input 
-                    ref={fileInputRef}
-                    type="file" 
-                    className="hidden" 
-                    onChange={(e) => setNewMaterialFile(e.target.files[0])} 
-                  />
-                  {newMaterialFile ? (
-                    <div className="flex flex-col items-center text-emerald-600 font-bold"><CheckCircle className="h-10 w-10 mb-2" /><span className="text-sm truncate w-full px-4">{newMaterialFile.name}</span></div>
-                  ) : (
-                    <div className="flex flex-col items-center text-slate-400"><Upload className="h-10 w-10 mb-2" /><span className="text-sm font-black uppercase tracking-widest text-center">לחץ לבחירת קובץ</span></div>
-                  )}
-                </div>
-              </div>
-              <button onClick={handlePostMaterial} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">פרסם חומר לימוד</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Link Modal */}
-      {isLinkModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => { setIsLinkModalOpen(false); setEditingLinkId(null); }}>
-          <div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-4 mb-8">
-              <button onClick={() => { setIsLinkModalOpen(false); setEditingLinkId(null); }} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button>
-              <h3 className="text-3xl font-black text-slate-900">{editingLinkId ? 'עריכת קישור' : 'הוספת קישור'}</h3>
-            </div>
-            <div className="space-y-6">
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת הקישור</label>
-                <input 
-                  type="text" 
-                  value={newLinkTitle} 
-                  onChange={(e) => setNewLinkTitle(e.target.value)} 
-                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" 
-                  placeholder="למשל: קבוצת וואטסאפ של הקורס" 
-                />
-              </div>
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כתובת הקישור (URL)</label>
-                <input 
-                  type="text" 
-                  value={newLinkUrl} 
-                  onChange={(e) => setNewLinkUrl(e.target.value)} 
-                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" 
-                  placeholder="https://..." 
-                />
-              </div>
-              <div>
-                <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג הקישור</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { id: 'drive', label: 'Google Drive', icon: LinkIcon },
-                    { id: 'whatsapp', label: 'WhatsApp', icon: Share2 },
-                    { id: 'other', label: 'אחר', icon: ExternalLink }
-                  ].map(type => (
-                    <button 
-                      key={type.id} 
-                      onClick={() => setNewLinkType(type.id)} 
-                      className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all font-bold text-xs ${newLinkType === type.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
-                    >
-                      <type.icon className="h-5 w-5" />
-                      <span>{type.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button onClick={handlePostLink} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">
-                {editingLinkId ? 'עדכן קישור' : 'הוסף קישור'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <footer className="bg-white border-t border-slate-200 py-16 mt-20 text-center">
-        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2026 COURSEMATE ISRAEL 🇮🇱 מיוצר על ידי סטודנטים</p>
-      </footer>
-
-      {/* Guest Sidebar Drawer */}
-      <div 
-        className={`fixed inset-0 z-[110] transition-opacity duration-300 ${isGuestDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-        dir="rtl"
-      >
-        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsGuestDrawerOpen(false)}></div>
-        <div className={`absolute top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out transform ${isGuestDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-          <div className="p-8 h-full flex flex-col">
-            <div className="flex items-center gap-4 mb-8">
-              <button onClick={() => setIsGuestDrawerOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors">
-                <X className="h-8 w-8" />
-              </button>
-              <h2 className="text-2xl font-black text-slate-900">בחירת מסלול לימוד</h2>
-            </div>
-
-            <div className="relative mb-6">
-              <input 
-                type="text"
-                placeholder="חפש חוג/מסלול..."
-                value={trackSearch}
-                onChange={(e) => setTrackSearch(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl py-3 px-10 outline-none text-right font-bold transition-all"
-              />
-              <Search className="absolute right-3 top-3.5 h-4 w-4 text-slate-400" />
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-              {filteredTracks.map(t => (
-                <button
-                  key={t.value}
-                  onClick={() => {
-                    handleChangeTrack(t.value);
-                    setIsGuestDrawerOpen(false);
-                  }}
-                  className={`w-full text-right px-6 py-4 rounded-2xl font-bold transition-all ${guestSelectedTrack === t.value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
-                  {t.label}
-                </button>
-              ))}
-              {filteredTracks.length === 0 && (
-                <div className="text-center py-10">
-                  <p className="text-slate-400 font-bold">לא נמצאו מסלולים תואמים</p>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-              <p className="text-xs text-slate-400 font-medium">לא מוצאים את החוג שלכם? <br/>נסו לחפש "אחר" או פנו אלינו.</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {isRatingModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsRatingModalOpen(false)}><div className="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex items-center gap-4 mb-8"><button onClick={() => setIsRatingModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button><h3 className="text-3xl font-black text-slate-900">דירוג קורס מהיר</h3></div><div className="space-y-8"><div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative"><div className="flex justify-between items-center mb-4"><label className="text-sm font-black text-slate-700 block">רמת קושי הקורס (1-10)</label>{hasUserRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}</div><div className="flex items-center gap-6"><input type="range" min="1" max="10" step="1" value={newReviewDifficulty} onChange={(e) => setNewReviewDifficulty(parseInt(e.target.value))} disabled={hasUserRated} className={`flex-1 h-3 bg-slate-200 rounded-lg appearance-none accent-rose-500 ${hasUserRated ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`} /><div className={`h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0 ${hasUserRated ? 'opacity-50' : ''}`}>{newReviewDifficulty}</div></div><div className="flex justify-between mt-2 px-1"><span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-slate-300' : 'text-slate-400'}`}>קל מאוד</span><span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-rose-300' : 'text-rose-600'}`}>{newReviewDifficulty <= 2 ? "קל מאוד" : newReviewDifficulty === 3 ? "קל" : newReviewDifficulty <= 7 ? "בינוני" : newReviewDifficulty <= 9 ? "קשה" : "קשה מאוד"}</span></div></div><div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 mb-8"><label className="text-sm font-black text-slate-700 mb-4 block">סמסטר</label><div className="grid grid-cols-2 gap-3">{[{ id: "סמסטר א'", label: "סמסטר א'" }, { id: "סמסטר ב'", label: "סמסטר ב'" }, { id: "סמסטר קיץ", label: "סמסטר קיץ" }, { id: "שנתי", label: "שנתי" }].map(o => (<button key={o.id} onClick={() => setNewReviewSemester(o.id)} className={`py-3 rounded-xl font-black text-sm border-2 transition-all ${newReviewSemester === o.id ? 'bg-indigo-600 text-white border-transparent shadow-md' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200 hover:shadow-sm'}`}>{o.label}</button>))}</div></div><div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative"><div className="flex justify-between items-center mb-4"><label className="text-sm font-black text-slate-700 block">האם נבדקה נוכחות?</label>{hasUserRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}</div><div className="grid grid-cols-3 gap-3">{[{ id: true, label: 'כן', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' }, { id: false, label: 'לא', color: 'bg-rose-50 text-rose-600 border-rose-100' }, { id: null, label: 'לא יודע/ת', color: 'bg-slate-100 text-slate-500 border-slate-200' }].map(o => (<button key={String(o.id)} onClick={() => setNewReviewAttendance(o.id)} disabled={hasUserRated} className={`py-3 rounded-xl font-black text-sm border-2 transition-all ${newReviewAttendance === o.id ? `${o.id === true ? 'bg-emerald-600' : o.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md` : `${o.color} hover:shadow-sm`} ${hasUserRated ? 'cursor-not-allowed opacity-50' : ''}`}>{o.label}</button>))}</div></div><button onClick={handlePostRating} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all">שלח דירוג</button></div></div></div>}
+      {isReviewModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsReviewModalOpen(false)}><div className="bg-white w-full max-w-4xl rounded-[40px] p-10 shadow-2xl overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}><ReviewForm comment={newReviewComment} semester={newReviewSemester} year={newReviewYear} identityType={newReviewIdentity} attendanceEnforced={newReviewAttendance} difficulty={newReviewDifficulty} onCommentChange={setNewReviewComment} onSemesterChange={setNewReviewSemester} onYearChange={setNewReviewYear} onIdentityChange={setNewReviewIdentity} onAttendanceChange={setNewReviewAttendance} onDifficultyChange={setNewReviewDifficulty} onSubmit={handlePostReview} onClose={() => setIsReviewModalOpen(false)} hasRated={hasUserRated} /></div></div>}
+      {isQuestionModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsQuestionModalOpen(false)}><div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex justify-between items-start mb-8 gap-4"><button onClick={() => setIsQuestionModalOpen(false)} className="p-2 text-slate-400 hover:text-rose-500 transition-colors shrink-0 -mt-2 -mr-2" title="סגור"><X className="h-8 w-8" /></button><div className="text-right flex-1"><h3 className="text-3xl font-black text-slate-900">שאל שאלה</h3><p className="text-slate-500 font-bold text-sm mt-1">תשאלו שאלה קצרה וקולעת שיכולה לעזור לסטודנטים נוספים ותשימו לב שזאת שאלה שלא נשאלה כבר.</p></div></div><textarea value={newQuestionText} onChange={(e) => setNewQuestionText(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[32px] p-6 h-48 outline-none mb-8 text-right font-medium" placeholder="מה השאלה?"></textarea><div className="mt-8"><button onClick={handlePostQuestion} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98]">פרסם שאלה</button></div></div></div>}
+      {isMaterialModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsMaterialModalOpen(false)}><div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex flex-col gap-1 mb-8"><div className="flex items-center gap-4"><button onClick={() => setIsMaterialModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button><h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3></div><p className="text-slate-500 font-bold text-sm mt-1 pr-12">כאן תמצאו חומרים שיכולים לעזור לכם בקורס. יש לכם חומר שיכול לעזור? העלו אותו כדי שהמאגר ימשיך לגדול.</p></div><div className="space-y-6"><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת החומר</label><input type="text" value={newMaterialTitle} onChange={(e) => setNewMaterialTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: מבחן מועד א 2023" /></div><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג החומר</label><div className="grid grid-cols-2 gap-3">{MATERIAL_CATEGORIES.filter(c => c.id !== 'links').map(c => (<button key={c.id} onClick={() => setNewMaterialCategory(c.id)} className={`flex items-center justify-start gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm ${newMaterialCategory === c.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}><c.icon className="h-4 w-4" /><span>{c.label}</span></button>))}</div></div><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">בחירת קובץ</label><div onClick={() => fileInputRef.current?.click()} className={`border-2 border-dashed rounded-[32px] p-8 text-center cursor-pointer transition-all ${newMaterialFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 hover:border-indigo-200 bg-slate-50'}`}><input ref={fileInputRef} type="file" className="hidden" onChange={(e) => setNewMaterialFile(e.target.files[0])} />{newMaterialFile ? <div className="flex flex-col items-center text-emerald-600 font-bold"><CheckCircle className="h-10 w-10 mb-2" /><span className="text-sm truncate w-full px-4">{newMaterialFile.name}</span></div> : <div className="flex flex-col items-center text-slate-400"><Upload className="h-10 w-10 mb-2" /><span className="text-sm font-black uppercase tracking-widest text-center">לחץ לבחירת קובץ</span></div>}</div></div><button onClick={handlePostMaterial} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">פרסם חומר לימוד</button></div></div></div>}
+      {isLinkModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsLinkModalOpen(false)}><div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex items-center gap-4 mb-8"><button onClick={() => setIsLinkModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button><h3 className="text-3xl font-black text-slate-900">הוספת קישור</h3></div><div className="space-y-6"><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת הקישור</label><input type="text" value={newLinkTitle} onChange={(e) => setNewLinkTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: קבוצת וואטסאפ של הקורס" /></div><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כתובת הקישור (URL)</label><input type="text" value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="https://..." /></div><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג הקישור</label><div className="grid grid-cols-3 gap-3">{[{ id: 'drive', label: 'Google Drive', icon: LinkIcon }, { id: 'whatsapp', label: 'WhatsApp', icon: Share2 }, { id: 'other', label: 'אחר', icon: ExternalLink }].map(t => (<button key={t.id} onClick={() => setNewLinkType(t.id)} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all font-bold text-xs ${newLinkType === t.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}><t.icon className="h-5 w-5" /><span>{t.label}</span></button>))}</div></div><button onClick={handlePostLink} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">הוסף קישור</button></div></div></div>}
+      <footer className="bg-white border-t border-slate-200 py-16 mt-20 text-center"><p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2026 COURSEMATE ISRAEL 🇮🇱 מיוצר על ידי סטודנטים</p></footer>
+      <div className={`fixed inset-0 z-[110] transition-opacity duration-300 ${isGuestDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} dir="rtl"><div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsGuestDrawerOpen(false)}></div><div className={`absolute top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out transform ${isGuestDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}><div className="p-8 h-full flex flex-col"><div className="flex items-center gap-4 mb-8"><button onClick={() => setIsGuestDrawerOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button><h2 className="text-2xl font-black text-slate-900">בחירת מסלול לימוד</h2></div><div className="relative mb-6"><input type="text" placeholder="חפש חוג/מסלול..." value={trackSearch} onChange={(e) => setTrackSearch(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl py-3 px-10 outline-none text-right font-bold transition-all" /><Search className="absolute right-3 top-3.5 h-4 w-4 text-slate-400" /></div><div className="flex-1 overflow-y-auto space-y-2 pr-1">{(studyTracks || []).filter(t => t.label.includes(trackSearch)).map(t => (<button key={t.value} onClick={() => { handleChangeTrack(t.value); setIsGuestDrawerOpen(false); }} className={`w-full text-right px-6 py-4 rounded-2xl font-bold transition-all ${guestSelectedTrack === t.value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}>{t.label}</button>))}{(studyTracks || []).filter(t => t.label.includes(trackSearch)).length === 0 && <div className="text-center py-10"><p className="text-slate-400 font-bold">לא נמצאו מסלולים תואמים</p></div>}</div><div className="mt-8 pt-6 border-t border-slate-100 text-center"><p className="text-xs text-slate-400 font-medium">לא מוצאים את החוג שלכם? <br/>נסו לחפש "אחר" או פנו אלינו.</p></div></div></div></div>
     </div>
   );
 };
