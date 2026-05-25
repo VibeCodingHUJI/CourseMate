@@ -51,36 +51,29 @@ const AuthPage = ({ onLogin }) => {
     }
 
     try {
-      if (authMode === 'signup') {
-        const checkRes = await fetch(`http://localhost:3000/users?email=${authForm.email}`);
-        const existingUsers = await checkRes.json();
-        if (existingUsers.length > 0) {
-          throw new Error('משתמש עם אימייל זה כבר קיים במערכת');
-        }
+      const url = authMode === 'signup'
+        ? 'http://localhost:5000/api/auth/signup'
+        : 'http://localhost:5000/api/auth/login';
+      const body = authMode === 'signup'
+        ? { name: authForm.name, email: authForm.email, password: authForm.password, track: authForm.track }
+        : { email: authForm.email, password: authForm.password };
 
-        const response = await fetch(`http://localhost:3000/users`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...authForm, isGuest: false })
-        });
-        const data = await response.json();
-        onLogin(data);
-      } else {
-        const response = await fetch(`http://localhost:3000/users?email=${authForm.email}&password=${authForm.password}`);
-        const users = await response.json();
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
 
-        if (users.length === 0) {
-          throw new Error('אימייל או סיסמה שגויים');
-        }
-
-        onLogin(users[0]);
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(`שגיאת שרת (${response.status}) — ודאו שהשרת פועל על פורט 5000`);
       }
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      onLogin(data);
     } catch (err) {
-      if (err.message.includes('Failed to fetch')) {
-        alert('לא ניתן להתחבר לשרת הנתונים. וודאו ש-json-server פועל.');
-      } else {
-        alert(err.message);
-      }
+      alert(err.message || 'שגיאה בהתחברות לשרת');
     }
   };
 

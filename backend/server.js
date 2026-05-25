@@ -2,7 +2,13 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const express = require('express');
 const { Pool, Client } = require('pg');
 const cors = require('cors');
+const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -510,6 +516,81 @@ app.delete('/api/lecturers/:lecturerId/reviews/:id', async (req, res) => {
     res.json({ message: 'Review deleted successfully' });
   } catch (err) {
     console.error(`Error deleting review ${req.params.id}:`, err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Auth Routes ---
+
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { name, email, password, track } = req.body;
+
+    const combResult = await pool.query('SELECT id FROM combinations WHERE roadmap_code = $1', [track]);
+    if (combResult.rows.length === 0) {
+      return res.status(400).json({ message: 'מסלול הלימוד לא נמצא' });
+    }
+    const combinationId = combResult.rows[0].id;
+
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+    if (authError) {
+      const message = authError.message.toLowerCase().includes('already registered')
+        ? 'משתמש עם אימייל זה כבר קיים במערכת'
+        : authError.message;
+      return res.status(400).json({ message });
+    }
+
+    if (!authData.user) {
+      return res.status(400).json({ message: 'משתמש עם אימייל זה כבר קיים במערכת' });
+    }
+
+    const userId = authData.user.id;
+
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ full_name: name, combination_id: combinationId })
+      .eq('id', userId);
+
+    if (updateError) return res.status(500).json({ message: updateError.message });
+
+    res.status(201).json({ id: userId, name, email, track, isGuest: false });
+  } catch (err) {
+    console.error('Error signing up:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (authError) {
+      return res.status(401).json({ message: 'אימייל או סיסמה שגויים' });
+    }
+
+    const userId = authData.user.id;
+
+    const result = await pool.query(
+      `SELECT u.id, u.full_name, u.email, c.roadmap_code as track
+       FROM users u
+       JOIN combinations c ON u.combination_id = c.id
+       WHERE u.id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'משתמש לא נמצא' });
+    }
+
+    const user = result.rows[0];
+    res.json({ id: user.id, name: user.full_name, email: user.email, track: user.track, isGuest: false });
+  } catch (err) {
+    console.error('Error logging in:', err);
     res.status(500).json({ message: err.message });
   }
 });
