@@ -367,57 +367,144 @@ app.post('/api/reviews/:id/vote', async (req, res) => {
 
 // --- Questions Routes ---
 
+const mapQuestion = (q, answers = []) => ({
+  id: q.question_id,
+  courseId: q.course_id,
+  authorId: q.user_id,
+  author: q.full_name || 'סטודנט/ית אנונימי/ת',
+  title: q.title,
+  content: q.content,
+  date: q.created_at ? new Date(q.created_at).toLocaleDateString('he-IL') : '',
+  answers,
+});
+
+const mapAnswer = (a) => ({
+  id: a.answer_id,
+  questionId: a.question_id,
+  authorId: a.user_id,
+  author: a.full_name || 'סטודנט/ית אנונימי/ת',
+  content: a.content,
+  date: a.created_at ? new Date(a.created_at).toLocaleDateString('he-IL') : '',
+});
+
 app.get('/api/questions', async (req, res) => {
   try {
     const { courseId } = req.query;
-    let query = 'SELECT * FROM course_questions';
-    let params = [];
-    if (courseId) {
-      query += ' WHERE course_id = $1';
-      params.push(courseId);
+    let qQuery = supabase.from('forum_questions').select('*').order('created_at', { ascending: false });
+    if (courseId) qQuery = qQuery.eq('course_id', courseId);
+    const { data, error } = await qQuery;
+    if (error) throw new Error(error.message);
+    let rows = data || [];
+
+    // Collect all user IDs (questions)
+    const qUserIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+    const qIds = rows.map(r => r.question_id);
+
+    // Fetch user names and answers in parallel
+    const [userRes, answersRes] = await Promise.allSettled([
+      qUserIds.length > 0
+        ? supabase.from('users').select('id, full_name').in('id', qUserIds)
+        : Promise.resolve({ data: [] }),
+      qIds.length > 0
+        ? supabase.from('forum_answers').select('*').in('question_id', qIds).order('created_at', { ascending: true })
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    // Build question author map
+    const qUserMap = {};
+    if (userRes.status === 'fulfilled') {
+      (userRes.value.data || []).forEach(u => { qUserMap[u.id] = u.full_name; });
     }
-    query += ' ORDER BY id DESC';
-    const result = await pool.query(query, params);
-    res.json(result.rows.map(q => ({
-      ...q,
-      courseId: q.course_id
-    })));
+
+    // Build answers + fetch answer author names
+    let answersMap = {}; // question_id → mapped answers[]
+    if (answersRes.status === 'fulfilled') {
+      const rawAnswers = answersRes.value.data || [];
+      const aUserIds = [...new Set(rawAnswers.map(a => a.user_id).filter(Boolean))];
+      let aUserMap = {};
+      if (aUserIds.length > 0) {
+        try {
+          const { data: aUsers } = await supabase.from('users').select('id, full_name').in('id', aUserIds);
+          (aUsers || []).forEach(u => { aUserMap[u.id] = u.full_name; });
+        } catch {}
+      }
+      rawAnswers.forEach(a => {
+        const mapped = mapAnswer({ ...a, full_name: aUserMap[a.user_id] || null });
+        if (!answersMap[a.question_id]) answersMap[a.question_id] = [];
+        answersMap[a.question_id].push(mapped);
+      });
+    }
+
+    res.json(rows.map(r => mapQuestion(
+      { ...r, full_name: qUserMap[r.user_id] || null },
+      answersMap[r.question_id] || []
+    )));
   } catch (err) {
     console.error('Error fetching questions:', err);
     res.status(500).json({ message: err.message });
   }
 });
 
+app.post('/api/questions/:id/answers', async (req, res) => {
+  try {
+    const { id } = req.params; // question_id
+    const { userId, content } = req.body;
+    if (!userId) return res.status(400).json({ message: 'userId required' });
+    if (!content || content.trim().length < 2) return res.status(400).json({ message: 'התשובה חייבת להכיל לפחות 2 תווים' });
+    const { data, error } = await supabase
+      .from('forum_answers')
+      .insert({ question_id: id, user_id: userId, content })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+    res.status(201).json(mapAnswer({ ...data, full_name: userData?.full_name || null }));
+  } catch (err) {
+    console.error('Error creating answer:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/answers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from('forum_answers').delete().eq('answer_id', id);
+    if (error) throw new Error(error.message);
+    res.json({ message: 'Answer deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting answer:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 app.post('/api/questions', async (req, res) => {
   try {
-    const { courseId, question, answers, date } = req.body;
-    const query = `
-      INSERT INTO course_questions (course_id, question, answers, date)
-      VALUES ($1, $2, $3, $4)
-      RETURNING *
-    `;
-    const result = await pool.query(query, [courseId, question, JSON.stringify(answers || []), date]);
-    const saved = result.rows[0];
-    res.status(201).json({ ...saved, courseId: saved.course_id });
+    const { courseId, userId, title, content } = req.body;
+    if (!userId) return res.status(400).json({ message: 'userId required' });
+    if (!title || title.trim().length < 5) return res.status(400).json({ message: 'הכותרת חייבת להכיל לפחות 5 תווים' });
+    if (!content || content.trim().length < 10) return res.status(400).json({ message: 'תוכן השאלה חייב להכיל לפחות 10 תווים' });
+    const { data, error } = await supabase
+      .from('forum_questions')
+      .insert({ course_id: courseId || null, user_id: userId, title, content })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+    res.status(201).json(mapQuestion({ ...data, full_name: userData?.full_name || null }, []));
   } catch (err) {
     console.error('Error creating question:', err);
     res.status(500).json({ message: err.message });
   }
 });
 
-app.patch('/api/questions/:id', async (req, res) => {
+app.delete('/api/questions/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { answers } = req.body;
-    const result = await pool.query(
-      'UPDATE course_questions SET answers = $1 WHERE id = $2 RETURNING *',
-      [JSON.stringify(answers), id]
-    );
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Question not found' });
-    const saved = result.rows[0];
-    res.json({ ...saved, courseId: saved.course_id });
+    const { error } = await supabase.from('forum_questions').delete().eq('question_id', id);
+    if (error) throw new Error(error.message);
+    res.json({ message: 'Question deleted successfully' });
   } catch (err) {
-    console.error('Error updating question:', err);
+    console.error('Error deleting question:', err);
     res.status(500).json({ message: err.message });
   }
 });

@@ -422,10 +422,11 @@ const CourseDetail = ({
   setInlineEditComment,
   handleSaveInlineEdit,
   handleCancelInlineEdit,
-  questions, 
-  setIsQuestionModalOpen, 
-  handlePostAnswer, 
-  handleLikeAnswer, 
+  questions,
+  setIsQuestionModalOpen,
+  handleDeleteQuestion,
+  handlePostAnswer,
+  handleDeleteAnswer,
   setIsMaterialModalOpen,
   setIsLinkModalOpen,
   materials,
@@ -436,6 +437,7 @@ const CourseDetail = ({
 }) => {
   const location = useLocation();
   const [isUnfollowModalOpen, setIsUnfollowModalOpen] = useState(false);
+  const [answerInputs, setAnswerInputs] = useState({});
 
   if (!selectedCourse) return <div className="text-center py-20 animate-pulse text-2xl font-black text-slate-400">טוען נתונים...</div>;
   
@@ -742,41 +744,90 @@ const CourseDetail = ({
           <div className="space-y-6 text-right">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-black text-slate-900">שאלות מהקהילה</h2>
-              <button onClick={() => setIsQuestionModalOpen(true)} className="bg-white border-2 border-slate-200 px-6 py-2 rounded-2xl font-black text-sm hover:border-indigo-500 transition-all">שאל שאלה</button>
+              {!user.isGuest && <button onClick={() => setIsQuestionModalOpen(true)} className="bg-white border-2 border-slate-200 px-6 py-2 rounded-2xl font-black text-sm hover:border-indigo-500 transition-all">שאל שאלה</button>}
             </div>
+            {questions.length === 0 && (
+              <div className="text-center py-12 bg-slate-50 rounded-[40px] border-2 border-dashed border-slate-200">
+                <MessageSquare className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-slate-400">אין שאלות עדיין</h3>
+                <p className="text-slate-400 text-sm mt-2">היו הראשונים לשאול שאלה על הקורס!</p>
+              </div>
+            )}
             {questions.map(q => (
               <div key={q.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 overflow-hidden text-right">
-                <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
-                  <div className="flex items-center gap-4">
-                    <MessageSquare className="h-6 w-6 text-indigo-400" />
-                    <div className="text-xl font-bold text-right">{q.question}</div>
+                {/* Question header */}
+                <div className="p-8 bg-slate-900 text-white flex justify-between items-start">
+                  <div className="flex items-start gap-4 flex-1">
+                    <MessageSquare className="h-6 w-6 text-indigo-400 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="text-xl font-bold">{q.title}</div>
+                      <div className="text-sm text-white/60 mt-1 font-medium">{q.author} · {q.date}</div>
+                    </div>
                   </div>
-                  <div className="text-xs font-medium text-white/50 whitespace-nowrap">פורסם ב-{q.date}</div>
-                </div>
-                <div className="p-8 space-y-6">
-                  {q.answers.map((a, i) => (
-                    <div key={i} className="flex gap-6 border-r-4 border-slate-50 pr-6 group/ans">
-                      <div className="h-10 w-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shrink-0"><User className="h-5 w-5" /></div>
-                      <div className="flex-1 flex justify-between items-start">
-                        <p className="text-slate-700 font-medium">{a.text}</p>
-                        <button onClick={() => handleLikeAnswer(q.id, i)} className="flex items-center gap-1.5 text-slate-300 hover:text-rose-500 transition-colors">
-                          <span className="text-[10px] font-black">{a.likedBy?.length || 0}</span>
-                          <Heart className={`h-4 w-4 ${(a.likedBy || []).includes(user.id) ? 'fill-rose-500 text-rose-500' : ''}`} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {!user.isGuest && (
-                    <div className="pt-4 mr-16 flex gap-3">
-                      <input 
-                        type="text" 
-                        placeholder="תשובה..."
-                        onKeyDown={(e) => { if (e.key === 'Enter') { handlePostAnswer(q.id, e.target.value); e.target.value = ''; } }}
-                        className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-3 outline-none text-right font-medium"
-                      />
-                    </div>
+                  {String(q.authorId) === String(user?.id) && (
+                    <button onClick={() => handleDeleteQuestion(q.id)} className="text-white/30 hover:text-rose-400 transition-colors p-1 shrink-0 mr-2">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   )}
                 </div>
+                {/* Question content */}
+                <div className="px-8 pt-6 pb-4">
+                  <p className="text-slate-700 font-medium leading-relaxed">{q.content}</p>
+                </div>
+                {/* Answers */}
+                {(q.answers || []).length > 0 && (
+                  <div className="px-8 pb-4 space-y-4 border-t border-slate-100 pt-4">
+                    {(q.answers || []).map(a => (
+                      <div key={a.id} className="flex items-start gap-4 border-r-4 border-indigo-50 pr-4 group">
+                        <div className="h-8 w-8 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-500 font-black text-sm shrink-0">
+                          {(a.author || 'ס')[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-black text-slate-800 text-sm">{a.author}</span>
+                            <span className="text-[10px] text-slate-400">{a.date}</span>
+                          </div>
+                          <p className="text-slate-600 text-sm font-medium leading-relaxed">{a.content}</p>
+                        </div>
+                        {String(a.authorId) === String(user?.id) && (
+                          <button onClick={() => handleDeleteAnswer(q.id, a.id)}
+                            className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-400 transition-all p-1 shrink-0">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Answer input */}
+                {!user.isGuest && (
+                  <div className="px-8 pb-6 pt-3 border-t border-slate-100 flex gap-3 items-center">
+                    <input
+                      type="text"
+                      value={answerInputs[q.id] || ''}
+                      onChange={e => setAnswerInputs(prev => ({ ...prev, [q.id]: e.target.value }))}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && answerInputs[q.id]?.trim().length >= 2) {
+                          handlePostAnswer(q.id, answerInputs[q.id]);
+                          setAnswerInputs(prev => ({ ...prev, [q.id]: '' }));
+                        }
+                      }}
+                      placeholder="כתבו תשובה ולחצו Enter..."
+                      className="flex-1 bg-slate-50 border-2 border-transparent focus:border-indigo-200 rounded-2xl px-5 py-3 outline-none text-right font-medium text-sm transition-all"
+                    />
+                    <button
+                      onClick={() => {
+                        if (answerInputs[q.id]?.trim().length >= 2) {
+                          handlePostAnswer(q.id, answerInputs[q.id]);
+                          setAnswerInputs(prev => ({ ...prev, [q.id]: '' }));
+                        }
+                      }}
+                      className="bg-indigo-600 text-white px-5 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 active:scale-95 transition-all shrink-0"
+                    >
+                      <Send className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1020,6 +1071,7 @@ const App = () => {
   }, [selectedCourse?.id]);
 
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
+  const [newQuestionTitle, setNewQuestionTitle] = useState('');
   const [newQuestionText, setNewQuestionText] = useState('');
   const fileInputRef = useRef(null);
   const [isMaterialModalOpen, setIsMaterialModalOpen] = useState(false);
@@ -1119,14 +1171,52 @@ const App = () => {
   };
 
   const handlePostQuestion = async () => {
-    const data = { courseId: selectedCourse.id, question: newQuestionText, answers: [], date: new Date().toLocaleDateString('he-IL') };
-    try { const res = await fetch('http://localhost:5000/api/questions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setQuestions([saved, ...questions]); setNewQuestionText(''); setIsQuestionModalOpen(false); } catch (err) { alert('שגיאה'); }
+    if (!newQuestionTitle.trim() || newQuestionTitle.trim().length < 5) return alert('הכותרת חייבת להכיל לפחות 5 תווים');
+    if (!newQuestionText.trim() || newQuestionText.trim().length < 10) return alert('תוכן השאלה חייב להכיל לפחות 10 תווים');
+    try {
+      const res = await fetch('http://localhost:5000/api/questions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId: selectedCourse.id, userId: user.id, title: newQuestionTitle, content: newQuestionText }) });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
+      const saved = await res.json();
+      setQuestions([saved, ...questions]);
+      setNewQuestionTitle('');
+      setNewQuestionText('');
+      setIsQuestionModalOpen(false);
+    } catch (err) { alert('שגיאה בפרסום השאלה: ' + err.message); }
   };
 
-  const handlePostAnswer = async (id, text) => {
-    const q = questions.find(q => q.id === id);
-    const updated = [...q.answers, { text, date: new Date().toLocaleDateString('he-IL'), authorId: user.id, likedBy: [] }];
-    try { const res = await fetch(`http://localhost:5000/api/questions/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updated }) }); const saved = await res.json(); setQuestions(questions.map(q => q.id === id ? saved : q)); } catch (err) { alert('שגיאה'); }
+  const handleDeleteQuestion = async (id) => {
+    if (!window.confirm('האם למחוק את השאלה?')) return;
+    try {
+      await fetch(`http://localhost:5000/api/questions/${id}`, { method: 'DELETE' });
+      setQuestions(questions.filter(q => q.id !== id));
+    } catch { alert('שגיאה במחיקת השאלה'); }
+  };
+
+  const handlePostAnswer = async (questionId, content) => {
+    if (!content || content.trim().length < 2) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/questions/${questionId}/answers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, content })
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
+      const saved = await res.json();
+      setQuestions(questions.map(q => q.id === questionId
+        ? { ...q, answers: [...(q.answers || []), saved] }
+        : q
+      ));
+    } catch (err) { alert('שגיאה בפרסום התשובה: ' + err.message); }
+  };
+
+  const handleDeleteAnswer = async (questionId, answerId) => {
+    try {
+      await fetch(`http://localhost:5000/api/answers/${answerId}`, { method: 'DELETE' });
+      setQuestions(questions.map(q => q.id === questionId
+        ? { ...q, answers: (q.answers || []).filter(a => a.id !== answerId) }
+        : q
+      ));
+    } catch { alert('שגיאה במחיקת התשובה'); }
   };
 
   const handleLikeReview = async (id) => {
@@ -1145,13 +1235,6 @@ const App = () => {
     }
   };
 
-  const handleLikeAnswer = async (qId, i) => {
-    const q = questions.find(q => q.id === qId);
-    const a = q.answers[i];
-    if (a.authorId === user.id) return;
-    const updated = q.answers.map((ans, idx) => i === idx ? { ...ans, likedBy: [...(ans.likedBy || []), user.id] } : ans);
-    try { const res = await fetch(`http://localhost:5000/api/questions/${qId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updated }) }); const saved = await res.json(); setQuestions(questions.map(q => q.id === qId ? updated : q)); } catch (err) { }
-  };
 
   const handlePostRating = async () => {
     const data = { courseId: selectedCourse.id, authorId: user.id, difficulty: newReviewDifficulty, attendanceEnforced: newReviewAttendance, comment: null, semester: newReviewSemester, year: newReviewYear, visibility: newReviewIdentity };
@@ -1228,13 +1311,13 @@ const App = () => {
       <main className="flex-grow container mx-auto px-6 py-12">
         <Routes>
           <Route path="/lecturer/:id" element={<LecturerProfile user={user} onDepartmentClick={(dept) => { const tT = (studyTracks || []).find(t => t?.label === dept || t?.value === dept)?.value || dept; handleChangeTrack(tT); navigate('/'); }} />} />
-          <Route path="/course/:id" element={<CourseDetail selectedCourse={selectedCourse} navigate={navigate} activeTab={activeTab} setActiveTab={setActiveTab} reviews={reviews} user={user} setIsReviewModalOpen={setIsReviewModalOpen} setIsRatingModalOpen={setIsRatingModalOpen} handleLogout={handleLogout} handleLikeReview={handleLikeReview} handleDeleteReview={handleDeleteReview} handleEditReview={handleEditReview} editingReviewId={editingReviewId} inlineEditComment={inlineEditComment} setInlineEditComment={setInlineEditComment} handleSaveInlineEdit={handleSaveInlineEdit} handleCancelInlineEdit={handleCancelInlineEdit} questions={questions} setIsQuestionModalOpen={setIsQuestionModalOpen} handlePostAnswer={handlePostAnswer} handleLikeAnswer={handleLikeAnswer} setIsMaterialModalOpen={setIsMaterialModalOpen} setIsLinkModalOpen={setIsLinkModalOpen} materials={materials} onUpdateMaterial={handleUpdateMaterial} onDeleteMaterial={handleDeleteMaterial} isFollowing={selectedCourse ? followedCourseIds.includes(selectedCourse.id) : false} onToggleFollow={handleToggleFollow} />} />
+          <Route path="/course/:id" element={<CourseDetail selectedCourse={selectedCourse} navigate={navigate} activeTab={activeTab} setActiveTab={setActiveTab} reviews={reviews} user={user} setIsReviewModalOpen={setIsReviewModalOpen} setIsRatingModalOpen={setIsRatingModalOpen} handleLogout={handleLogout} handleLikeReview={handleLikeReview} handleDeleteReview={handleDeleteReview} handleEditReview={handleEditReview} editingReviewId={editingReviewId} inlineEditComment={inlineEditComment} setInlineEditComment={setInlineEditComment} handleSaveInlineEdit={handleSaveInlineEdit} handleCancelInlineEdit={handleCancelInlineEdit} questions={questions} setIsQuestionModalOpen={setIsQuestionModalOpen} handleDeleteQuestion={handleDeleteQuestion} handlePostAnswer={handlePostAnswer} handleDeleteAnswer={handleDeleteAnswer} setIsMaterialModalOpen={setIsMaterialModalOpen} setIsLinkModalOpen={setIsLinkModalOpen} materials={materials} onUpdateMaterial={handleUpdateMaterial} onDeleteMaterial={handleDeleteMaterial} isFollowing={selectedCourse ? followedCourseIds.includes(selectedCourse.id) : false} onToggleFollow={handleToggleFollow} />} />
           <Route path="/" element={<>{user.isGuest && <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500"><button onClick={() => setGuestTab('forum')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>פורום שילובים</button><button onClick={() => setGuestTab('courses')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>צפייה בקורסים</button></div>}{(user.isGuest && guestTab === 'forum') ? <CombinationForum user={user} onLogout={handleLogout} onTrackSelect={handleChangeTrack} STUDY_TRACKS={studyTracks} /> : <Dashboard user={user} guestSelectedTrack={guestSelectedTrack} setIsGuestDrawerOpen={setIsGuestDrawerOpen} allCourses={allCourses} filteredCourses={filteredCourses} courseFilter={courseFilter} setCourseFilter={setCourseFilter} searchQuery={searchQuery} setSearchQuery={setSearchQuery} showSuggestions={showSuggestions} setShowSuggestions={setShowSuggestions} suggestions={suggestions} navigate={navigate} studyTracks={studyTracks} filterSemester={filterSemester} setFilterSemester={setFilterSemester} filterCampus={filterCampus} setFilterCampus={setFilterCampus} filterLanguage={filterLanguage} setFilterLanguage={setFilterLanguage} filterYear={filterYear} setFilterYear={setFilterYear} studentForums={studentForums} studentForumQuestions={studentForumQuestions} newStudentForumQ={newStudentForumQ} setNewStudentForumQ={setNewStudentForumQ} onPostStudentForumQ={handlePostStudentForumQ} onPostStudentForumA={handlePostStudentForumA} expandedStudentQs={expandedStudentQs} onToggleStudentQ={toggleStudentQ} activeStudentForumId={activeStudentForumId} setActiveStudentForumId={setActiveStudentForumId} isStudentForumModalOpen={isStudentForumModalOpen} setIsStudentForumModalOpen={setIsStudentForumModalOpen} />}</>} />
         </Routes>
       </main>
       {isRatingModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsRatingModalOpen(false)}><div className="bg-white w-full max-w-md rounded-[40px] p-6 shadow-2xl overflow-y-auto max-h-[90vh] animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex items-center gap-3 mb-3"><button onClick={() => setIsRatingModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-6 w-6" /></button><h3 className="text-xl font-black text-slate-900">דירוג קורס מהיר</h3></div><div className="space-y-3"><div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative"><div className="flex justify-between items-center mb-2"><label className="text-sm font-black text-slate-700 block">רמת קושי הקורס (1-10)</label>{hasUserRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}</div><div className="flex items-center gap-4"><input type="range" min="1" max="10" step="1" value={newReviewDifficulty} onChange={(e) => setNewReviewDifficulty(parseInt(e.target.value))} disabled={hasUserRated} className={`flex-1 h-2 bg-slate-200 rounded-lg appearance-none accent-rose-500 ${hasUserRated ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`} /><div className={`h-10 w-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center font-black text-base border-2 border-rose-100 shadow-sm shrink-0 ${hasUserRated ? 'opacity-50' : ''}`}>{newReviewDifficulty}</div></div><div className="flex justify-between mt-2 px-1"><span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-slate-300' : 'text-slate-400'}`}>קל מאוד</span><span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-rose-300' : 'text-rose-600'}`}>{newReviewDifficulty <= 2 ? "קל מאוד" : newReviewDifficulty === 3 ? "קל" : newReviewDifficulty <= 7 ? "בינוני" : newReviewDifficulty <= 9 ? "קשה" : "קשה מאוד"}</span></div></div><div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100"><label className="text-sm font-black text-slate-700 mb-2 block">סמסטר</label><div className="grid grid-cols-2 gap-2">{[{ id: "סמסטר א'", label: "סמסטר א'" }, { id: "סמסטר ב'", label: "סמסטר ב'" }, { id: "סמסטר קיץ", label: "סמסטר קיץ" }, { id: "שנתי", label: "שנתי" }].map(o => (<button key={o.id} onClick={() => setNewReviewSemester(o.id)} className={`py-2 rounded-xl font-black text-xs border-2 transition-all ${newReviewSemester === o.id ? 'bg-indigo-600 text-white border-transparent shadow-md' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200 hover:shadow-sm'}`}>{o.label}</button>))}</div></div><div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative"><div className="flex justify-between items-center mb-2"><label className="text-sm font-black text-slate-700 block">האם נבדקה נוכחות?</label>{hasUserRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}</div><div className="grid grid-cols-3 gap-3">{[{ id: true, label: 'כן', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' }, { id: false, label: 'לא', color: 'bg-rose-50 text-rose-600 border-rose-100' }, { id: null, label: 'לא יודע/ת', color: 'bg-slate-100 text-slate-500 border-slate-200' }].map(o => (<button key={String(o.id)} onClick={() => setNewReviewAttendance(o.id)} disabled={hasUserRated} className={`py-2 rounded-xl font-black text-xs border-2 transition-all ${newReviewAttendance === o.id ? `${o.id === true ? 'bg-emerald-600' : o.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md` : `${o.color} hover:shadow-sm`} ${hasUserRated ? 'cursor-not-allowed opacity-50' : ''}`}>{o.label}</button>))}</div></div><button onClick={handlePostRating} className="w-full bg-indigo-600 text-white py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg active:scale-95 transition-all">שלח דירוג</button></div></div></div>}
       {isReviewModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsReviewModalOpen(false)}><div className="bg-white w-full max-w-4xl rounded-[40px] p-10 shadow-2xl overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}><ReviewForm comment={newReviewComment} semester={newReviewSemester} year={newReviewYear} identityType={newReviewIdentity} attendanceEnforced={newReviewAttendance} difficulty={newReviewDifficulty} onCommentChange={setNewReviewComment} onSemesterChange={setNewReviewSemester} onYearChange={setNewReviewYear} onIdentityChange={setNewReviewIdentity} onAttendanceChange={setNewReviewAttendance} onDifficultyChange={setNewReviewDifficulty} onSubmit={handlePostReview} onClose={() => setIsReviewModalOpen(false)} hasRated={hasUserRated} /></div></div>}
-      {isQuestionModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsQuestionModalOpen(false)}><div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex justify-between items-start mb-8 gap-4"><button onClick={() => setIsQuestionModalOpen(false)} className="p-2 text-slate-400 hover:text-rose-500 transition-colors shrink-0 -mt-2 -mr-2" title="סגור"><X className="h-8 w-8" /></button><div className="text-right flex-1"><h3 className="text-3xl font-black text-slate-900">שאל שאלה</h3><p className="text-slate-500 font-bold text-sm mt-1">תשאלו שאלה קצרה וקולעת שיכולה לעזור לסטודנטים נוספים ותשימו לב שזאת שאלה שלא נשאלה כבר.</p></div></div><textarea value={newQuestionText} onChange={(e) => setNewQuestionText(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[32px] p-6 h-48 outline-none mb-8 text-right font-medium" placeholder="מה השאלה?"></textarea><div className="mt-8"><button onClick={handlePostQuestion} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98]">פרסם שאלה</button></div></div></div>}
+      {isQuestionModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => { setIsQuestionModalOpen(false); setNewQuestionTitle(''); setNewQuestionText(''); }}><div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex justify-between items-start mb-8 gap-4"><button onClick={() => { setIsQuestionModalOpen(false); setNewQuestionTitle(''); setNewQuestionText(''); }} className="p-2 text-slate-400 hover:text-rose-500 transition-colors shrink-0 -mt-2 -mr-2"><X className="h-8 w-8" /></button><div className="text-right flex-1"><h3 className="text-3xl font-black text-slate-900">שאל שאלה</h3><p className="text-slate-500 font-bold text-sm mt-1">שאלה קצרה וקולעת שיכולה לעזור לסטודנטים נוספים</p></div></div><div className="mb-5"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת השאלה <span className="text-slate-300">(לפחות 5 תווים)</span></label><input type="text" value={newQuestionTitle} onChange={e => setNewQuestionTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-2xl px-6 py-4 outline-none text-right font-bold transition-all" placeholder="למשל: איך מגישים את העבודה הסופית?" /></div><div className="mb-8"><label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">פירוט השאלה <span className="text-slate-300">(לפחות 10 תווים)</span></label><textarea value={newQuestionText} onChange={e => setNewQuestionText(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[24px] p-6 h-36 outline-none text-right font-medium resize-none" placeholder="הרחיבו על השאלה שלכם..."></textarea></div><button onClick={handlePostQuestion} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98]">פרסם שאלה</button></div></div>}
       {isMaterialModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsMaterialModalOpen(false)}><div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex flex-col gap-1 mb-8"><div className="flex items-center gap-4"><button onClick={() => setIsMaterialModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button><h3 className="text-3xl font-black text-slate-900">העלאת חומר לימוד</h3></div><p className="text-slate-500 font-bold text-sm mt-1 pr-12">כאן תמצאו חומרים שיכולים לעזור לכם בקורס. יש לכם חומר שיכול לעזור? העלו אותו כדי שהמאגר ימשיך לגדול.</p></div><div className="space-y-6"><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת החומר</label><input type="text" value={newMaterialTitle} onChange={(e) => setNewMaterialTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: מבחן מועד א 2023" /></div><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג החומר</label><div className="grid grid-cols-2 gap-3">{MATERIAL_CATEGORIES.filter(c => c.id !== 'links').map(c => (<button key={c.id} onClick={() => setNewMaterialCategory(c.id)} className={`flex items-center justify-start gap-3 px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm ${newMaterialCategory === c.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}><c.icon className="h-4 w-4" /><span>{c.label}</span></button>))}</div></div><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">בחירת קובץ</label><div onClick={() => fileInputRef.current?.click()} className={`border-2 border-dashed rounded-[32px] p-8 text-center cursor-pointer transition-all ${newMaterialFile ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-200 hover:border-indigo-200 bg-slate-50'}`}><input ref={fileInputRef} type="file" className="hidden" onChange={(e) => setNewMaterialFile(e.target.files[0])} />{newMaterialFile ? <div className="flex flex-col items-center text-emerald-600 font-bold"><CheckCircle className="h-10 w-10 mb-2" /><span className="text-sm truncate w-full px-4">{newMaterialFile.name}</span></div> : <div className="flex flex-col items-center text-slate-400"><Upload className="h-10 w-10 mb-2" /><span className="text-sm font-black uppercase tracking-widest text-center">לחץ לבחירת קובץ</span></div>}</div></div><button onClick={handlePostMaterial} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">פרסם חומר לימוד</button></div></div></div>}
       {isLinkModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsLinkModalOpen(false)}><div className="bg-white w-full max-w-lg rounded-[40px] p-10 text-right animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex items-center gap-4 mb-8"><button onClick={() => setIsLinkModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-8 w-8" /></button><h3 className="text-3xl font-black text-slate-900">הוספת קישור</h3></div><div className="space-y-6"><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כותרת הקישור</label><input type="text" value={newLinkTitle} onChange={(e) => setNewLinkTitle(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="למשל: קבוצת וואטסאפ של הקורס" /></div><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">כתובת הקישור (URL)</label><input type="text" value={newLinkUrl} onChange={(e) => setNewLinkUrl(e.target.value)} className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-6 py-4 outline-none transition-all font-bold text-right" placeholder="https://..." /></div><div><label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">סוג הקישור</label><div className="grid grid-cols-3 gap-3">{[{ id: 'drive', label: 'Google Drive', icon: LinkIcon }, { id: 'whatsapp', label: 'WhatsApp', icon: Share2 }, { id: 'other', label: 'אחר', icon: ExternalLink }].map(t => (<button key={t.id} onClick={() => setNewLinkType(t.id)} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all font-bold text-xs ${newLinkType === t.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}><t.icon className="h-5 w-5" /><span>{t.label}</span></button>))}</div></div><button onClick={handlePostLink} className="w-full bg-indigo-600 text-white py-5 rounded-[28px] font-black text-lg hover:bg-indigo-700 shadow-xl active:scale-95 transition-all mt-4">הוסף קישור</button></div></div></div>}
       <footer className="bg-white border-t border-slate-200 py-16 mt-20 text-center"><p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2026 COURSEMATE ISRAEL 🇮🇱 מיוצר על ידי סטודנטים</p></footer>
