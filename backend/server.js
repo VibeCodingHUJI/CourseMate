@@ -173,50 +173,116 @@ app.get('/api/courses/:id', async (req, res) => {
 
 // --- Reviews Routes ---
 
+const mapReview = (r) => {
+  let author = 'אנונימי/ת';
+  if (r.visibility === 'full_name' && r.full_name) author = r.full_name;
+  else if (r.visibility === 'initials' && r.full_name)
+    author = r.full_name.trim().split(/\s+/).map(w => w[0] + '.').join(' ');
+  return {
+    id: r.id,
+    courseId: r.course_id,
+    authorId: r.user_id,
+    author,
+    difficulty: r.difficulty,
+    attendanceEnforced: r.attendance_enforced,
+    comment: r.comment,
+    visibility: r.visibility,
+    semester: r.semester,
+    year: r.year,
+    date: r.created_at ? new Date(r.created_at).toLocaleDateString('he-IL') : '',
+    likedBy: r.liked_by || [],
+  };
+};
+
 app.get('/api/reviews', async (req, res) => {
   try {
     const { courseId } = req.query;
-    let query = 'SELECT * FROM course_reviews';
-    let params = [];
-    if (courseId) {
-      query += ' WHERE course_id = $1';
-      params.push(courseId);
+
+    let reviewQuery = supabase.from('course_reviews').select('*').order('created_at', { ascending: false });
+    if (courseId) reviewQuery = reviewQuery.eq('course_id', courseId);
+
+    const { data: reviewData, error: reviewError } = await reviewQuery;
+    if (reviewError) {
+      console.error('🔴 Supabase error fetching reviews:', reviewError);
+      return res.status(500).json({ message: reviewError.message });
     }
-    query += ' ORDER BY id DESC';
-    const result = await pool.query(query, params);
-    res.json(result.rows.map(r => ({
-      ...r,
-      courseId: r.course_id,
-      authorId: r.author_id,
-      identityType: r.identity_type,
-      attendanceEnforced: r.attendance_enforced,
-      likedBy: r.liked_by || []
-    })));
+
+    let rows = reviewData || [];
+
+    // Fetch user full_names
+    try {
+      const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+      if (userIds.length > 0) {
+        const { data: userData } = await supabase.from('users').select('id, full_name').in('id', userIds);
+        const userMap = {};
+        (userData || []).forEach(u => { userMap[u.id] = u.full_name; });
+        rows = rows.map(r => ({ ...r, full_name: userMap[r.user_id] || null }));
+      }
+    } catch (userErr) {
+      console.error('⚠️ Could not fetch user names:', userErr.message);
+    }
+
+    // Fetch votes
+    try {
+      const ids = rows.map(r => r.id);
+      if (ids.length > 0) {
+        const { data: voteData } = await supabase
+          .from('course_review_votes')
+          .select('review_id, user_id')
+          .in('review_id', ids)
+          .eq('vote_type', 1);
+        const voteMap = {};
+        (voteData || []).forEach(v => {
+          if (!voteMap[v.review_id]) voteMap[v.review_id] = [];
+          voteMap[v.review_id].push(String(v.user_id));
+        });
+        rows = rows.map(r => ({ ...r, liked_by: voteMap[r.id] || [] }));
+      }
+    } catch (_) {
+      rows = rows.map(r => ({ ...r, liked_by: [] }));
+    }
+
+    res.json(rows.map(mapReview));
   } catch (err) {
-    console.error('Error fetching reviews:', err);
+    console.error('🔴 Unexpected error fetching reviews:', err.stack || err.message);
     res.status(500).json({ message: err.message });
   }
 });
 
 app.post('/api/reviews', async (req, res) => {
   try {
-    const { courseId, rating, difficulty, comment, date, author, authorId, semester, year, attendanceEnforced, identityType } = req.body;
-    const query = `
-      INSERT INTO course_reviews (course_id, rating, difficulty, comment, date, author, author_id, semester, year, attendance_enforced, identity_type)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-      RETURNING *
-    `;
-    const params = [courseId, rating, difficulty, comment, date, author, authorId, semester, year, attendanceEnforced, identityType];
-    const result = await pool.query(query, params);
-    const saved = result.rows[0];
-    res.status(201).json({
-      ...saved,
-      courseId: saved.course_id,
-      authorId: saved.author_id,
-      identityType: saved.identity_type,
-      attendanceEnforced: saved.attendance_enforced,
-      likedBy: saved.liked_by || []
-    });
+    const { courseId, authorId, difficulty, attendanceEnforced, comment, semester, year, visibility } = req.body;
+
+    // Check for existing review by this user for this course
+    const { data: existing } = await supabase
+      .from('course_reviews')
+      .select('id')
+      .eq('user_id', authorId)
+      .eq('course_id', courseId)
+      .maybeSingle();
+
+    let saved;
+    if (existing) {
+      const { data, error } = await supabase
+        .from('course_reviews')
+        .update({ comment: comment || null, visibility: visibility || 'full_name', semester, year })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      saved = data;
+    } else {
+      const { data, error } = await supabase
+        .from('course_reviews')
+        .insert({ user_id: authorId, course_id: courseId, difficulty, attendance_enforced: attendanceEnforced ?? null, comment: comment || null, visibility: visibility || 'full_name', semester, year })
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      saved = data;
+    }
+
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', authorId).maybeSingle();
+    res.status(201).json(mapReview({ ...saved, full_name: userData?.full_name || null }));
   } catch (err) {
     console.error('Error creating review:', err);
     res.status(500).json({ message: err.message });
@@ -226,34 +292,25 @@ app.post('/api/reviews', async (req, res) => {
 app.patch('/api/reviews/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { comment, difficulty, rating, likedBy } = req.body;
-    
-    let updates = [];
-    let params = [];
-    let index = 1;
+    const { comment, difficulty, attendanceEnforced } = req.body;
+    const updates = {};
+    if (comment !== undefined) updates.comment = comment;
+    if (difficulty !== undefined) updates.difficulty = difficulty;
+    if (attendanceEnforced !== undefined) updates.attendance_enforced = attendanceEnforced;
 
-    if (comment !== undefined) { updates.push(`comment = $${index++}`); params.push(comment); }
-    if (difficulty !== undefined) { updates.push(`difficulty = $${index++}`); params.push(difficulty); }
-    if (rating !== undefined) { updates.push(`rating = $${index++}`); params.push(rating); }
-    if (likedBy !== undefined) { updates.push(`liked_by = $${index++}`); params.push(likedBy); }
+    if (Object.keys(updates).length === 0) return res.status(400).json({ message: 'No updates provided' });
 
-    if (updates.length === 0) return res.status(400).json({ message: 'No updates provided' });
+    const { data, error } = await supabase
+      .from('course_reviews')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    if (!data) return res.status(404).json({ message: 'Review not found' });
 
-    params.push(id);
-    const query = `UPDATE course_reviews SET ${updates.join(', ')} WHERE id = $${index} RETURNING *`;
-    const result = await pool.query(query, params);
-    
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Review not found' });
-    
-    const saved = result.rows[0];
-    res.json({
-      ...saved,
-      courseId: saved.course_id,
-      authorId: saved.author_id,
-      identityType: saved.identity_type,
-      attendanceEnforced: saved.attendance_enforced,
-      likedBy: saved.liked_by || []
-    });
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', data.user_id).maybeSingle();
+    res.json(mapReview({ ...data, full_name: userData?.full_name || null }));
   } catch (err) {
     console.error('Error updating review:', err);
     res.status(500).json({ message: err.message });
@@ -263,11 +320,38 @@ app.patch('/api/reviews/:id', async (req, res) => {
 app.delete('/api/reviews/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM course_reviews WHERE id = $1', [id]);
-    if (result.rowCount === 0) return res.status(404).json({ message: 'Review not found' });
+    const { error, count } = await supabase.from('course_reviews').delete({ count: 'exact' }).eq('id', id);
+    if (error) throw new Error(error.message);
+    if (count === 0) return res.status(404).json({ message: 'Review not found' });
     res.json({ message: 'Review deleted successfully' });
   } catch (err) {
     console.error('Error deleting review:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/reviews/:id/vote', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ message: 'userId required' });
+
+    const { data: existing } = await supabase
+      .from('course_review_votes')
+      .select('review_id')
+      .eq('review_id', id)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase.from('course_review_votes').delete().eq('review_id', id).eq('user_id', userId);
+      res.json({ liked: false });
+    } else {
+      await supabase.from('course_review_votes').insert({ review_id: id, user_id: userId, vote_type: 1 });
+      res.json({ liked: true });
+    }
+  } catch (err) {
+    console.error('Error toggling vote:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -537,18 +621,34 @@ app.post('/api/auth/signup', async (req, res) => {
       password,
       email_confirm: true
     });
+
+    let userId;
+
     if (authError) {
-      const message = authError.message.toLowerCase().includes('already registered')
-        ? 'משתמש עם אימייל זה כבר קיים במערכת'
-        : authError.message;
-      return res.status(400).json({ message });
+      if (!authError.message.toLowerCase().includes('already registered')) {
+        return res.status(400).json({ message: authError.message });
+      }
+      // Email exists in auth.users — check if public.users profile is complete
+      const profileCheck = await pool.query(
+        'SELECT id FROM users WHERE email = $1 AND full_name IS NOT NULL', [email]
+      );
+      if (profileCheck.rows.length > 0) {
+        return res.status(409).json({ message: 'משתמש עם אימייל זה כבר קיים במערכת' });
+      }
+      // Zombie user — get their auth ID and re-use it
+      const authUserRow = await pool.query('SELECT id FROM auth.users WHERE email = $1', [email]);
+      if (authUserRow.rows.length === 0) {
+        return res.status(400).json({ message: authError.message });
+      }
+      userId = authUserRow.rows[0].id;
+      // Update their password to the one they just chose
+      await supabase.auth.admin.updateUserById(userId, { password });
+    } else {
+      if (!authData.user) {
+        return res.status(400).json({ message: 'לא ניתן ליצור משתמש, נסה שנית' });
+      }
+      userId = authData.user.id;
     }
-
-    if (!authData.user) {
-      return res.status(400).json({ message: 'משתמש עם אימייל זה כבר קיים במערכת' });
-    }
-
-    const userId = authData.user.id;
 
     const { error: updateError } = await supabase
       .from('users')

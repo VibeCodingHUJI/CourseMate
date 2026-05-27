@@ -31,9 +31,9 @@ const ReviewForm = ({
   ];
 
   const IDENTITY_OPTIONS = [
-    { id: 'full', label: 'שם מלא', icon: UserCircle },
+    { id: 'full_name', label: 'שם מלא', icon: UserCircle },
     { id: 'initials', label: 'ראשי תיבות', icon: User },
-    { id: 'anon', label: 'אנונימי/ת', icon: Ghost },
+    { id: 'anonymous', label: 'אנונימי/ת', icon: Ghost },
   ];
 
   const placeholderText = "ספרו בקצרה על החוויה שלכם מהקורס.";

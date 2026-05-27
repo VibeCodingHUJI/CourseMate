@@ -842,7 +842,11 @@ const CourseDetail = ({
 const App = () => {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    if (!saved) return null;
+    const parsed = JSON.parse(saved);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsed?.id);
+    if (!parsed?.isGuest && !isUuid) { localStorage.removeItem('user'); return null; }
+    return parsed;
   });
   
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -969,7 +973,8 @@ const App = () => {
         else if (currentTrack === 'Computer Science') url = 'http://localhost:5000/api/combinations/521-3010/courses';
         const [cRes, rRes] = await Promise.all([fetch(url), fetch('http://localhost:5000/api/reviews')]);
         const cData = await cRes.json();
-        const rData = (await rRes.json()) || [];
+        let rData = [];
+        try { const parsed = await rRes.json(); if (Array.isArray(parsed)) rData = parsed; } catch {}
         setAllReviews(rData);
         setAllCourses((Array.isArray(cData) ? cData : (cData.value || [])).map(c => {
           const cR = rData.filter(r => String(r?.courseId) === String(c?.id));
@@ -997,12 +1002,22 @@ const App = () => {
   }, [location.pathname, allCourses]);
 
   useEffect(() => {
-    if (selectedCourse) {
-      fetch(`http://localhost:5000/api/reviews?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setReviews(d));
-      fetch(`http://localhost:5000/api/questions?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setQuestions(d));
-      fetch(`http://localhost:5000/api/materials?courseId=${selectedCourse.id}`).then(res => res.json()).then(d => setMaterials(d));
-    }
-  }, [selectedCourse]);
+    if (!selectedCourse?.id) return;
+    setReviews([]);
+    setQuestions([]);
+    setMaterials([]);
+    const controller = new AbortController();
+    const { signal } = controller;
+    fetch(`http://localhost:5000/api/reviews?courseId=${selectedCourse.id}`, { signal })
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setReviews(d); })
+      .catch(err => { if (err.name !== 'AbortError') console.error('Failed to load reviews:', err); });
+    fetch(`http://localhost:5000/api/questions?courseId=${selectedCourse.id}`, { signal })
+      .then(r => r.json()).then(d => { if (Array.isArray(d)) setQuestions(d); }).catch(() => {});
+    fetch(`http://localhost:5000/api/materials?courseId=${selectedCourse.id}`, { signal })
+      .then(r => r.json()).then(d => { if (Array.isArray(d)) setMaterials(d); }).catch(() => {});
+    return () => controller.abort();
+  }, [selectedCourse?.id]);
 
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
@@ -1021,7 +1036,7 @@ const App = () => {
   const [newReviewComment, setNewReviewComment] = useState('');
   const [newReviewSemester, setNewReviewSemester] = useState("סמסטר א'");
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ו (2025-26)');
-  const [newReviewIdentity, setNewReviewIdentity] = useState('full');
+  const [newReviewIdentity, setNewReviewIdentity] = useState('full_name');
   const [newReviewAttendance, setNewReviewAttendance] = useState(null);
   const [newReviewDifficulty, setNewReviewDifficulty] = useState(5);
 
@@ -1056,14 +1071,27 @@ const App = () => {
 
   const handlePostReview = async () => {
     if (user?.isGuest || !newReviewComment) return;
-    const data = { courseId: selectedCourse.id, difficulty: newReviewDifficulty, comment: newReviewComment, semester: newReviewSemester, year: newReviewYear, attendanceEnforced: newReviewAttendance, date: editingReviewId ? reviews.find(r => r.id === editingReviewId)?.date : new Date().toLocaleDateString('he-IL'), author: getAuthorDisplayName(user.name, newReviewIdentity), authorId: user.id, identityType: newReviewIdentity, likedBy: editingReviewId ? (reviews.find(r => r.id === editingReviewId)?.likedBy || []) : [] };
+    const data = { courseId: selectedCourse.id, authorId: user.id, difficulty: newReviewDifficulty, comment: newReviewComment, semester: newReviewSemester, year: newReviewYear, attendanceEnforced: newReviewAttendance, visibility: newReviewIdentity };
     try {
       const res = editingReviewId ? await fetch(`http://localhost:5000/api/reviews/${editingReviewId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }) : await fetch('http://localhost:5000/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const saved = await res.json();
-      if (editingReviewId) { setReviews(reviews.map(r => r.id === editingReviewId ? saved : r)); setAllReviews(allReviews.map(r => r.id === editingReviewId ? saved : r)); }
-      else { setReviews([saved, ...reviews]); setAllReviews([saved, ...allReviews]); setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c)); }
+      if (!res.ok) throw new Error(saved.message || 'שגיאה בשמירת הביקורת');
+      if (editingReviewId) {
+        setReviews(reviews.map(r => r.id === editingReviewId ? saved : r));
+        setAllReviews(allReviews.map(r => r.id === editingReviewId ? saved : r));
+      } else {
+        const alreadyExists = reviews.some(r => r.id === saved.id);
+        if (alreadyExists) {
+          setReviews(reviews.map(r => r.id === saved.id ? saved : r));
+          setAllReviews(allReviews.map(r => r.id === saved.id ? saved : r));
+        } else {
+          setReviews([saved, ...reviews]);
+          setAllReviews([saved, ...allReviews]);
+          setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c));
+        }
+      }
       setNewReviewComment(''); setEditingReviewId(null); setIsReviewModalOpen(false); alert('הביקורת נשמרה בהצלחה!');
-    } catch (err) { alert('שגיאה בשמירת הביקורת'); }
+    } catch (err) { alert('שגיאה בשמירת הביקורת: ' + err.message); }
   };
 
   const handleDeleteReview = async (id) => {
@@ -1102,11 +1130,19 @@ const App = () => {
   };
 
   const handleLikeReview = async (id) => {
-    const r = reviews.find(r => r.id === id);
-    if (!r || !user?.id || r.authorId === user.id) return;
+    const r = reviews.find(rev => rev.id === id);
+    if (!r || !user?.id || user.isGuest || r.authorId === user.id) return;
     const likedBy = r.likedBy || [];
-    if (likedBy.includes(user.id)) return;
-    try { const res = await fetch(`http://localhost:5000/api/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ likedBy: [...likedBy, user.id] }) }); const saved = await res.json(); setReviews(reviews.map(r => r.id === id ? saved : r)); } catch (err) { }
+    const isLiked = likedBy.includes(user.id);
+    const updatedLikedBy = isLiked ? likedBy.filter(uid => uid !== user.id) : [...likedBy, user.id];
+    setReviews(reviews.map(rev => rev.id === id ? { ...rev, likedBy: updatedLikedBy } : rev));
+    setAllReviews(allReviews.map(rev => rev.id === id ? { ...rev, likedBy: updatedLikedBy } : rev));
+    try {
+      await fetch(`http://localhost:5000/api/reviews/${id}/vote`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) });
+    } catch (err) {
+      setReviews(reviews.map(rev => rev.id === id ? r : rev));
+      setAllReviews(allReviews.map(rev => rev.id === id ? r : rev));
+    }
   };
 
   const handleLikeAnswer = async (qId, i) => {
@@ -1118,7 +1154,7 @@ const App = () => {
   };
 
   const handlePostRating = async () => {
-    const data = { courseId: selectedCourse.id, rating: 5, difficulty: newReviewDifficulty, attendanceEnforced: newReviewAttendance, comment: "", semester: newReviewSemester, year: newReviewYear, date: new Date().toLocaleDateString('he-IL'), author: getAuthorDisplayName(user.name, newReviewIdentity), authorId: user.id, identityType: newReviewIdentity, likedBy: [] };
+    const data = { courseId: selectedCourse.id, authorId: user.id, difficulty: newReviewDifficulty, attendanceEnforced: newReviewAttendance, comment: null, semester: newReviewSemester, year: newReviewYear, visibility: newReviewIdentity };
     try { const res = await fetch('http://localhost:5000/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setReviews([saved, ...reviews]); setAllReviews([saved, ...allReviews]); setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c)); setIsRatingModalOpen(false); alert('תודה על הדירוג!'); } catch (err) { alert('שגיאה'); }
   };
 
