@@ -934,6 +934,15 @@ const App = () => {
   // Lifted Follow State
   const [followedCourseIds, setFollowedCourseIds] = useState([]);
 
+  // Load followed courses from DB when user logs in
+  useEffect(() => {
+    if (!user?.id || user.isGuest) { setFollowedCourseIds([]); return; }
+    fetch(`http://localhost:5000/api/follows/${user.id}`)
+      .then(r => r.json())
+      .then(ids => { if (Array.isArray(ids)) setFollowedCourseIds(ids); })
+      .catch(() => {});
+  }, [user?.id]);
+
   const [notifications, setNotifications] = useState([
     { id: 1, text: "מאיה ענתה על השאלה שלך בקורס 'יסודות השיווק'", read: false, date: "לפני 5 דק׳" },
     { id: 2, text: "שאלה חדשה עלתה בפורום מנהל עסקים + כלכלה", read: false, date: "לפני שעה" }
@@ -1254,16 +1263,40 @@ const App = () => {
   const handleDeleteMaterial = async (id) => { if (window.confirm('למחוק?')) try { await fetch(`http://localhost:5000/api/materials/${id}`, { method: 'DELETE' }); setMaterials(materials.filter(m => m.id !== id)); alert('נמחק'); } catch (err) { alert('שגיאה'); } };
   const handleUpdateMaterial = async (id, data) => { try { const res = await fetch(`http://localhost:5000/api/materials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials(materials.map(m => m.id === id ? saved : m)); alert('נשמר'); } catch (err) { alert('שגיאה'); } };
 
-  const handleToggleFollow = (id, title, status) => {
+  const handleToggleFollow = async (id, title, status) => {
+    // Optimistic update
     if (status) {
-      setFollowedCourseIds([...followedCourseIds, id]);
-      setNotifications([
+      setFollowedCourseIds(prev => [...prev, id]);
+      setNotifications(prev => [
         { id: `follow-${id}`, text: `מערכת העדכונים הופעלה בהצלחה עבור קורס ${title}!`, read: false, date: "עכשיו", courseId: id },
-        ...notifications
+        ...prev
       ]);
     } else {
-      setFollowedCourseIds(followedCourseIds.filter(fId => fId !== id));
-      setNotifications(notifications.filter(n => n.courseId !== id));
+      setFollowedCourseIds(prev => prev.filter(fId => String(fId) !== String(id)));
+      setNotifications(prev => prev.filter(n => n.courseId !== id));
+    }
+    // Persist to DB
+    try {
+      if (status) {
+        await fetch('http://localhost:5000/api/follows', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, courseId: id })
+        });
+      } else {
+        await fetch('http://localhost:5000/api/follows', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, courseId: id })
+        });
+      }
+    } catch {
+      // Revert optimistic update on error
+      if (status) {
+        setFollowedCourseIds(prev => prev.filter(fId => String(fId) !== String(id)));
+      } else {
+        setFollowedCourseIds(prev => [...prev, id]);
+      }
     }
   };
 

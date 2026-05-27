@@ -703,6 +703,58 @@ app.delete('/api/lecturers/:lecturerId/reviews/:id', async (req, res) => {
   }
 });
 
+// --- Saved Courses (Follows) Routes ---
+
+app.get('/api/follows/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { data, error } = await supabase
+      .from('saved_courses')
+      .select('course_id')
+      .eq('user_id', userId);
+    if (error) throw new Error(error.message);
+    res.json((data || []).map(r => r.course_id));
+  } catch (err) {
+    console.error('Error fetching follows:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/follows', async (req, res) => {
+  try {
+    const { userId, courseId } = req.body;
+    if (!userId || !courseId) return res.status(400).json({ message: 'userId and courseId required' });
+    const { error } = await supabase
+      .from('saved_courses')
+      .insert({ user_id: userId, course_id: courseId });
+    // Ignore duplicate-key errors (user already follows this course)
+    if (error && !error.message.toLowerCase().includes('duplicate') && !error.code === '23505') {
+      throw new Error(error.message);
+    }
+    res.json({ followed: true });
+  } catch (err) {
+    console.error('Error following course:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/follows', async (req, res) => {
+  try {
+    const { userId, courseId } = req.body;
+    if (!userId || !courseId) return res.status(400).json({ message: 'userId and courseId required' });
+    const { error } = await supabase
+      .from('saved_courses')
+      .delete()
+      .eq('user_id', userId)
+      .eq('course_id', courseId);
+    if (error) throw new Error(error.message);
+    res.json({ followed: false });
+  } catch (err) {
+    console.error('Error unfollowing course:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // --- Auth Routes ---
 
 app.post('/api/auth/signup', async (req, res) => {
