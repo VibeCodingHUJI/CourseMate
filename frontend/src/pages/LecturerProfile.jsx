@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ChevronRight, Star, BookOpen, GraduationCap, AlertCircle, MessageSquare, Plus, X, Heart, Ghost, UserCircle, User, Edit2, Trash2 } from 'lucide-react';
+import { ChevronRight, Star, BookOpen, GraduationCap, AlertCircle, MessageSquare, Plus, X, Edit2, Trash2 } from 'lucide-react';
 
 const LecturerProfile = ({ user, onDepartmentClick }) => {
   const navigate = useNavigate();
@@ -8,59 +8,19 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
   const [lecturer, setLecturer] = useState(null);
   const [courses, setCourses] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [likedReviews, setLikedReviews] = useState([]); // Track IDs of liked reviews
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
-  const [selectedReviewCourseId, setSelectedReviewCourseId] = useState('');
-  const [identityType, setIdentityType] = useState('anon'); // 'full', 'initials', 'anon'
-  const [newSemester, setNewSemester] = useState("סמסטר א'");
-  const [newYear, setNewYear] = useState('תשפ"ו (2025-26)');
 
-  // Initialize selectedReviewCourseId when courses are loaded
-  useEffect(() => {
-    if (courses.length > 0 && !selectedReviewCourseId) {
-      setSelectedReviewCourseId(courses[0].id);
-    }
-  }, [courses]);
-
-  const hasUserRated = reviews.some(r => 
-    (r.authorId !== undefined && String(r.authorId) === String(user?.id)) || 
-    (r.author === user?.name)
-  );
+  const hasUserReview = reviews.some(r => String(r.authorId) === String(user?.id));
 
   const handlePostReview = async () => {
     if (user?.isGuest) return alert('אורחים אינם יכולים להוסיף ביקורות');
-    if (!newComment.trim()) return alert('נא להוסיף תוכן לביקורת');
-    if (!selectedReviewCourseId) return alert('נא לבחור קורס רלוונטי');
-    
-    let displayName = 'סטודנט/ית אנונימי/ת';
-    if (identityType === 'full') {
-      displayName = user.name;
-    } else if (identityType === 'initials') {
-      const parts = user.name.trim().split(/\s+/);
-      if (parts.length > 1) {
-        displayName = `${parts[0][0]}.${parts[parts.length - 1][0]}`;
-      } else if (parts.length === 1 && parts[0]) {
-        displayName = `${parts[0][0]}.`;
-      }
-    }
-
-    const reviewData = {
-      course_id: selectedReviewCourseId,
-      author: displayName,
-      author_id: user.id,
-      rating: newRating,
-      comment: newComment,
-      date: editingReviewId ? reviews.find(r => r.id === editingReviewId)?.date : new Date().toLocaleDateString('he-IL'),
-      semester: newSemester,
-      year: newYear
-    };
+    if (newComment.trim().length < 10) return alert('הביקורת חייבת להכיל לפחות 10 תווים');
 
     try {
       let res;
@@ -68,51 +28,44 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
         res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews/${editingReviewId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reviewData)
+          body: JSON.stringify({ rating: newRating, comment: newComment })
         });
       } else {
         res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(reviewData)
+          body: JSON.stringify({ userId: user.id, rating: newRating, comment: newComment })
         });
       }
 
-      if (!res.ok) throw new Error('Failed to save review');
-
-      const savedReview = await res.json();
-      if (editingReviewId) {
-        setReviews(reviews.map(r => r.id === editingReviewId ? savedReview : r));
-      } else {
-        setReviews([savedReview, ...reviews]);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'שגיאה בשמירת הביקורת');
       }
-      
+
+      const saved = await res.json();
+      setReviews(prev => editingReviewId
+        ? prev.map(r => r.id === editingReviewId ? saved : r)
+        : [saved, ...prev]
+      );
       setIsModalOpen(false);
       setNewComment('');
       setNewRating(5);
-      setIdentityType('anon');
       setEditingReviewId(null);
       alert(editingReviewId ? 'הביקורת עודכנה בהצלחה!' : 'הביקורת פורסמה בהצלחה!');
     } catch (err) {
-      console.error('Error saving review:', err);
-      alert('שגיאה בשמירת הביקורת. אנא נסו שוב.');
+      alert('שגיאה בשמירת הביקורת: ' + err.message);
     }
   };
 
   const handleDeleteReview = async (reviewId) => {
     if (!window.confirm('האם אתם בטוחים שברצונכם למחוק את הביקורת?')) return;
-
     try {
-      const res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews/${reviewId}`, {
-        method: 'DELETE'
-      });
-
-      if (!res.ok) throw new Error('Failed to delete review');
-
-      setReviews(reviews.filter(r => r.id !== reviewId));
+      const res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews/${reviewId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setReviews(prev => prev.filter(r => r.id !== reviewId));
       alert('הביקורת נמחקה בהצלחה');
-    } catch (err) {
-      console.error('Error deleting review:', err);
+    } catch {
       alert('שגיאה במחיקת הביקורת');
     }
   };
@@ -121,58 +74,37 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
     setEditingReviewId(review.id);
     setNewRating(review.rating);
     setNewComment(review.comment);
-    setSelectedReviewCourseId(review.course_id);
-    setNewSemester(review.semester);
-    setNewYear(review.year);
-    // Note: identityType is harder to recover perfectly from author string, defaulting to anon or current name
     setIsModalOpen(true);
   };
 
-  const handleLikeReview = (reviewId) => {
-    const review = reviews.find(r => r.id === reviewId);
-    if (review?.isUserReview) {
-      alert('לא ניתן לעשות לייק לביקורת של עצמך');
-      return;
-    }
-
-    if (likedReviews.includes(reviewId)) {
-      setLikedReviews(likedReviews.filter(id => id !== reviewId));
-      setReviews(reviews.map(r => r.id === reviewId ? { ...r, likes: (r.likes || 1) - 1 } : r));
-    } else {
-      setLikedReviews([...likedReviews, reviewId]);
-      setReviews(reviews.map(r => r.id === reviewId ? { ...r, likes: (r.likes || 0) + 1 } : r));
-    }
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setNewComment('');
+    setNewRating(5);
+    setEditingReviewId(null);
   };
 
   useEffect(() => {
     const fetchLecturerData = async () => {
       try {
         setLoading(true);
-        
         const [lecturerRes, coursesRes, reviewsRes] = await Promise.all([
           fetch(`http://localhost:5000/api/lecturers/${id}`),
           fetch(`http://localhost:5000/api/lecturers/${id}/courses`),
           fetch(`http://localhost:5000/api/lecturers/${id}/reviews`)
         ]);
-
         if (!lecturerRes.ok) throw new Error('Lecturer not found');
-
-        const lecturerData = await lecturerRes.json();
-        const coursesData = await coursesRes.json();
+        setLecturer(await lecturerRes.json());
+        setCourses(await coursesRes.json());
         const reviewsData = await reviewsRes.json();
-
-        setLecturer(lecturerData);
-        setCourses(coursesData);
-        setReviews(reviewsData);
+        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
         setError(null);
       } catch (err) {
-        console.error('Fetch error:', err);
         setError('מרצה לא נמצא');
       } finally {
         setLoading(false);
       }
     };
-
     fetchLecturerData();
   }, [id]);
 
@@ -191,10 +123,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
           <AlertCircle className="h-16 w-16 text-rose-500 mx-auto mb-6" />
           <h2 className="text-3xl font-black text-slate-900 mb-4">{error}</h2>
           <p className="text-slate-500 mb-10 font-medium">מצטערים, לא הצלחנו למצוא את המרצה שחיפשתם.</p>
-          <button 
-            onClick={() => navigate('/')}
-            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg active:scale-95"
-          >
+          <button onClick={() => navigate('/')} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-lg active:scale-95">
             חזרה לדף הבית
           </button>
         </div>
@@ -202,26 +131,20 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
     );
   }
 
-  const avgRating = courses.length > 0 
-    ? (courses.reduce((acc, c) => acc + (c.avgRating || 0), 0) / courses.length).toFixed(1)
-    : '0.0';
-
-  const textReviews = reviews.filter(r => r.comment && r.comment.trim() !== '');
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length).toFixed(1)
+    : '—';
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#f8fafc]">
       <div className="max-w-4xl mx-auto py-12 px-6">
-        {/* Back Button */}
+
         <div className="flex justify-start mb-8">
-          <button 
+          <button
             onClick={() => {
-              if (lecturer && lecturer.department) {
+              if (lecturer?.department) {
                 const dept = Array.isArray(lecturer.department) ? lecturer.department[0] : lecturer.department;
-                if (onDepartmentClick) {
-                  onDepartmentClick(dept);
-                } else {
-                  navigate('/');
-                }
+                onDepartmentClick ? onDepartmentClick(dept) : navigate('/');
               } else {
                 navigate(-1);
               }
@@ -233,7 +156,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
           </button>
         </div>
 
-        {/* Header Section */}
+        {/* Header */}
         <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 p-10 mb-10 relative overflow-hidden text-right">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
           <div className="relative z-10">
@@ -244,34 +167,25 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
               </div>
               <div className="flex flex-wrap gap-2 justify-start">
                 {Array.isArray(lecturer.department) ? (
-                  lecturer.department.map((dept, index) => (
-                    <button 
-                      key={index} 
-                      onClick={() => onDepartmentClick && onDepartmentClick(dept)}
-                      className="bg-white border border-slate-200 text-slate-600 px-4 py-1 rounded-2xl text-sm font-bold shadow-sm hover:border-indigo-500 hover:text-indigo-600 transition-all cursor-pointer"
-                    >
+                  lecturer.department.map((dept, i) => (
+                    <button key={i} onClick={() => onDepartmentClick && onDepartmentClick(dept)}
+                      className="bg-white border border-slate-200 text-slate-600 px-4 py-1 rounded-2xl text-sm font-bold shadow-sm hover:border-indigo-500 hover:text-indigo-600 transition-all">
                       {dept}
                     </button>
                   ))
                 ) : (
-                  <button 
-                    onClick={() => onDepartmentClick && onDepartmentClick(lecturer.department)}
-                    className="bg-white border border-slate-200 text-slate-600 px-4 py-1 rounded-2xl text-sm font-bold shadow-sm hover:border-indigo-500 hover:text-indigo-600 transition-all cursor-pointer"
-                  >
+                  <button onClick={() => onDepartmentClick && onDepartmentClick(lecturer.department)}
+                    className="bg-white border border-slate-200 text-slate-600 px-4 py-1 rounded-2xl text-sm font-bold shadow-sm hover:border-indigo-500 hover:text-indigo-600 transition-all">
                     {lecturer.department}
                   </button>
                 )}
               </div>
             </div>
-            {lecturer.bio && (
-              <p className="text-slate-600 leading-relaxed max-w-2xl text-lg font-medium italic">
-                {lecturer.bio}
-              </p>
-            )}
+            {lecturer.bio && <p className="text-slate-600 leading-relaxed max-w-2xl text-lg font-medium italic">{lecturer.bio}</p>}
           </div>
         </header>
 
-        {/* Stats Row */}
+        {/* Stats */}
         <div className="grid grid-cols-2 gap-6 mb-12">
           <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm flex items-center justify-start gap-6">
             <div className="bg-amber-50 p-4 rounded-2xl">
@@ -282,7 +196,6 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
               <div className="text-xs font-black text-slate-400 uppercase tracking-widest">דירוג ממוצע</div>
             </div>
           </div>
-          
           <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm flex items-center justify-start gap-6">
             <div className="bg-indigo-50 p-4 rounded-2xl">
               <BookOpen className="h-8 w-8 text-indigo-600" />
@@ -294,7 +207,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
           </div>
         </div>
 
-        {/* Course List Section */}
+        {/* Courses */}
         <section className="w-full text-right mb-16">
           <div className="mb-8 relative">
             <h2 className="text-3xl font-black text-slate-800 pb-4 inline-block relative">
@@ -303,26 +216,20 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
             </h2>
             <div className="absolute bottom-0 right-0 left-0 h-px bg-slate-200 -z-10"></div>
           </div>
-
           <div className="space-y-4">
-            {courses.length > 0 ? (
-              courses.map(course => (
-                <Link 
-                  to={`/course/${course.id}`}
-                  state={{ from: 'lecturer', lecturerId: id, lecturerName: lecturer.name }}
-                  key={course.id}
-                  className="bg-white p-6 rounded-[24px] border border-slate-200 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md transition-all group flex items-center justify-start gap-6"
-                >
-                  <div className="bg-slate-50 p-4 rounded-2xl group-hover:bg-indigo-50 transition-colors">
-                    <BookOpen className="h-6 w-6 text-slate-400 group-hover:text-indigo-600" />
-                  </div>
-                  <div className="text-right flex-1">
-                    <div className="font-black text-slate-900 text-xl mb-1">{course.title}</div>
-                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">קוד קורס: {course.code}</div>
-                  </div>
-                </Link>
-              ))
-            ) : (
+            {courses.length > 0 ? courses.map(course => (
+              <Link key={course.id} to={`/course/${course.id}`}
+                state={{ from: 'lecturer', lecturerId: id, lecturerName: lecturer.name }}
+                className="bg-white p-6 rounded-[24px] border border-slate-200 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md transition-all group flex items-center justify-start gap-6">
+                <div className="bg-slate-50 p-4 rounded-2xl group-hover:bg-indigo-50 transition-colors">
+                  <BookOpen className="h-6 w-6 text-slate-400 group-hover:text-indigo-600" />
+                </div>
+                <div className="text-right flex-1">
+                  <div className="font-black text-slate-900 text-xl mb-1">{course.title}</div>
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">קוד קורס: {course.code}</div>
+                </div>
+              </Link>
+            )) : (
               <div className="text-center py-10 bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 text-slate-400 font-bold">
                 אין קורסים רשומים עבור מרצה זה
               </div>
@@ -330,7 +237,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
           </div>
         </section>
 
-        {/* Review System Section */}
+        {/* Reviews */}
         <section className="w-full text-right">
           <div className="flex justify-between items-end mb-8 relative">
             <div className="flex-1">
@@ -339,11 +246,9 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
                 <div className="absolute bottom-0 right-0 w-24 h-1.5 bg-indigo-600 rounded-full"></div>
               </h2>
             </div>
-            {!user?.isGuest && (
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 active:scale-95 transition-all flex items-center gap-2 mb-4"
-              >
+            {!user?.isGuest && !hasUserReview && (
+              <button onClick={() => setIsModalOpen(true)}
+                className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-200 active:scale-95 transition-all flex items-center gap-2 mb-4">
                 <Plus className="h-4 w-4" />
                 הוספת ביקורת
               </button>
@@ -352,112 +257,44 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
           </div>
 
           <div className="space-y-6">
-            {textReviews.length > 0 ? (
-              textReviews.map(review => (
-                <div key={review.id} className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm text-right relative overflow-hidden">
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black">
-                        {(review.author || 'ש')[0]}
-                      </div>
-                      <div className="text-right">
-                        <div className="font-black text-slate-900">{review.author || 'סטודנט/ית אנונימי/ת'}</div>
-                        <div className="flex items-center gap-1 text-amber-500">
-                          {[...Array(5)].map((_, i) => (
-                            <Star 
-                              key={i} 
-                              className={`h-3 w-3 ${i < (review.rating || 5) ? 'fill-current' : 'text-slate-200'}`} 
-                            />
-                          ))}
-                        </div>
-                      </div>
+            {reviews.length > 0 ? reviews.map(review => (
+              <div key={review.id} className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm text-right relative overflow-hidden">
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black">
+                      {(review.author || 'ס')[0]}
                     </div>
-                    <div className="flex items-center gap-4">
-                      {((review.author_id !== undefined && String(review.author_id) === String(user?.id)) || (review.authorId !== undefined && String(review.authorId) === String(user?.id)) || (review.author === user?.name)) && (
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => handleEditReview(review)}
-                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
-                            title="עריכה"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteReview(review.id)}
-                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                            title="מחיקה"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )}
-                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{review.date}</div>
+                    <div className="text-right">
+                      <div className="font-black text-slate-900">{review.author}</div>
+                      <div className="flex items-center gap-1 text-amber-500">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`h-3 w-3 ${i < (review.rating || 0) ? 'fill-current' : 'text-slate-200'}`} />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="mb-8 pr-4 border-r-2 border-indigo-50 mt-4">
-                    {editingReviewId === review.id ? (
-                      <div className="space-y-4">
-                        <textarea 
-                          value={newComment}
-                          onChange={(e) => setNewComment(e.target.value)}
-                          className="w-full bg-slate-50 border-2 border-indigo-100 focus:border-indigo-500 rounded-[24px] p-6 h-32 outline-none text-right font-medium text-slate-700 resize-none transition-all"
-                        />
-                        <div className="flex items-center gap-3 justify-end">
-                          <button 
-                            onClick={() => { setEditingReviewId(null); setNewComment(''); }}
-                            className="px-6 py-2 rounded-xl text-slate-500 font-bold hover:bg-slate-100 transition-all text-sm"
-                          >
-                            ביטול
-                          </button>
-                          <button 
-                            onClick={handlePostReview}
-                            className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all text-sm shadow-md"
-                          >
-                            שמירה
-                          </button>
-                        </div>
+                  <div className="flex items-center gap-4">
+                    {String(review.authorId) === String(user?.id) && (
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleEditReview(review)}
+                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="עריכה">
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => handleDeleteReview(review.id)}
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="מחיקה">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
-                    ) : (
-                      <p className="text-slate-600 text-lg font-medium leading-relaxed mb-6">
-                        {review.comment}
-                      </p>
                     )}
-                  </div>
-                  
-                  <div className="flex items-center justify-between border-t border-slate-50 pt-6">
-                    <div className="flex items-center gap-2">
-                      {review.course_id && (
-                        <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-1 rounded-full uppercase tracking-widest">
-                          {courses.find(c => String(c.id) === String(review.course_id))?.title || 'קורס כללי'}
-                        </span>
-                      )}
-                      <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">
-                        {review.semester && `${review.semester}, `}{review.year && `${review.year}`}
-                      </span>
-                    </div>
-
-                    <button 
-                      onClick={() => handleLikeReview(review.id)}
-                      className={`flex items-center gap-2 transition-all active:scale-110 ${
-                        (String(review.author_id) === String(user?.id) || String(review.authorId) === String(user?.id))
-                          ? 'text-slate-300 cursor-not-allowed opacity-50' 
-                          : likedReviews.includes(review.id)
-                            ? 'text-rose-500'
-                            : 'text-slate-400 hover:text-rose-500'
-                      }`}
-                      title={(String(review.author_id) === String(user?.id) || String(review.authorId) === String(user?.id)) ? 'לא ניתן לעשות לייק לביקורת שלך' : ''}
-                      disabled={(String(review.author_id) === String(user?.id) || String(review.authorId) === String(user?.id))}
-                    >
-                      <span className="text-xs font-black">{review.likes || 0}</span>
-                      <Heart 
-                        className={`h-5 w-5 ${likedReviews.includes(review.id) ? 'fill-current' : ''}`} 
-                      />
-                    </button>
+                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{review.date}</div>
                   </div>
                 </div>
-              ))
-            ) : (
+
+                <div className="pr-4 border-r-2 border-indigo-50">
+                  <p className="text-slate-600 text-lg font-medium leading-relaxed">{review.comment}</p>
+                </div>
+              </div>
+            )) : (
               <div className="text-center py-12 bg-slate-50 rounded-[40px] border-2 border-dashed border-slate-200">
                 <MessageSquare className="h-12 w-12 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-slate-400">אין ביקורות עדיין</h3>
@@ -468,151 +305,49 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
         </section>
       </div>
 
-      {/* Review Modal */}
+      {/* Modal */}
       {isModalOpen && (
-        <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" 
-          dir="rtl"
-          onClick={() => {
-            setIsModalOpen(false);
-            setNewComment('');
-            setNewRating(5);
-            setEditingReviewId(null);
-          }}
-        >
-          <div 
-            className="bg-white w-full max-w-md rounded-[40px] p-8 text-right animate-in zoom-in-95 duration-200 shadow-2xl relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button - REPOSITIONED TO TOP-RIGHT */}
-            <button 
-              onClick={(e) => {
-                e.preventDefault();
-                setIsModalOpen(false);
-                setNewComment('');
-                setNewRating(5);
-                setEditingReviewId(null);
-              }}
-              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-full cursor-pointer z-[110]"
-              type="button"
-            >
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm"
+          dir="rtl" onClick={closeModal}>
+          <div className="bg-white w-full max-w-md rounded-[40px] p-8 text-right animate-in zoom-in-95 duration-200 shadow-2xl relative"
+            onClick={e => e.stopPropagation()}>
+            <button onClick={closeModal}
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-100 rounded-full z-[110]">
               <X className="h-6 w-6" />
             </button>
 
-            <h3 className="text-2xl font-black text-slate-900 mb-6 mr-10 text-right">
+            <h3 className="text-2xl font-black text-slate-900 mb-6 mr-10">
               {editingReviewId ? 'עריכת ביקורת' : 'הוספת ביקורת על המרצה'}
             </h3>
-            
-            <div className="mb-6 relative">
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">דירוג המרצה</label>
-                {hasUserRated && !editingReviewId && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת מרצה זה בעבר.</span>}
-              </div>
-              <div className={`flex items-center gap-1.5 flex-row-reverse justify-end ${(hasUserRated && !editingReviewId) ? 'opacity-50' : ''}`}>
-                {[5, 4, 3, 2, 1].map((num) => (
-                  <button
-                    key={num}
-                    type="button"
-                    disabled={hasUserRated && !editingReviewId}
-                    onClick={() => {
-                      setNewRating(num);
-                    }}
-                    className={`transition-transform ${(hasUserRated && !editingReviewId) ? 'cursor-not-allowed' : 'active:scale-110 cursor-pointer'}`}
-                  >
-                    <Star 
-                      className={`h-7 w-7 ${num <= newRating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} 
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
 
+            {/* Star rating */}
             <div className="mb-6">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">בחר קורס רלוונטי</label>
-              <select 
-                value={selectedReviewCourseId}
-                onChange={(e) => setSelectedReviewCourseId(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[22px] px-5 py-3 outline-none text-right font-bold text-sm appearance-none cursor-pointer"
-              >
-                {courses.map(course => (
-                  <option key={course.id} value={course.id}>{course.title}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">סמסטר</label>
-                <select 
-                  value={newSemester}
-                  onChange={(e) => setNewSemester(e.target.value)}
-                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[22px] px-5 py-3 outline-none text-right font-bold text-sm appearance-none cursor-pointer"
-                >
-                  <option value="סמסטר א'">סמסטר א'</option>
-                  <option value="סמסטר ב'">סמסטר ב'</option>
-                  <option value="שנתי">שנתי</option>
-                  <option value="קיץ">קיץ</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">שנה</label>
-                <select 
-                  value={newYear}
-                  onChange={(e) => setNewYear(e.target.value)}
-                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[22px] px-5 py-3 outline-none text-right font-bold text-sm appearance-none cursor-pointer"
-                >
-                  <option value='תשפ"ו (2025-26)'>תשפ"ו (2025-26)</option>
-                  <option value='תשפ"ה (2024-25)'>תשפ"ה (2024-25)</option>
-                  <option value='תשפ"ד (2023-24)'>תשפ"ד (2023-24)</option>
-                  <option value='תשפ"ג (2022-23)'>תשפ"ג (2022-23)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="mb-8">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">תוכן הביקורת</label>
-              <textarea 
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[24px] p-5 h-32 outline-none text-right font-medium text-sm" 
-                placeholder="ספרו לנו על המרצה..."
-              ></textarea>
-            </div>
-
-            {/* Identity Selector */}
-            <div className="mb-8">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block text-right">איך להציג את שמך?</label>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { id: 'full', label: 'שם מלא', icon: User },
-                  { id: 'initials', label: 'ראשי תיבות', icon: UserCircle },
-                  { id: 'anon', label: 'אנונימי/ת', icon: Ghost }
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setIdentityType(opt.id)}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-2 transition-all ${
-                      identityType === opt.id 
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-600' 
-                        : 'border-slate-100 bg-white text-slate-400 hover:border-slate-200'
-                    }`}
-                  >
-                    <opt.icon className={`h-5 w-5 ${identityType === opt.id ? 'text-indigo-600' : 'text-slate-300'}`} />
-                    <span className="font-bold text-[10px]">{opt.label}</span>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">דירוג המרצה</label>
+              <div className="flex items-center gap-1.5 flex-row-reverse justify-end">
+                {[5, 4, 3, 2, 1].map(num => (
+                  <button key={num} type="button" onClick={() => setNewRating(num)} className="active:scale-110 cursor-pointer transition-transform">
+                    <Star className={`h-7 w-7 ${num <= newRating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
                   </button>
                 ))}
               </div>
             </div>
 
-            <button 
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                handlePostReview();
-              }}
-              className="w-full bg-indigo-600 text-white py-4 rounded-[22px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98] cursor-pointer text-sm"
-            >
+            {/* Review text */}
+            <div className="mb-8">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
+                תוכן הביקורת <span className="text-slate-300">(לפחות 10 תווים)</span>
+              </label>
+              <textarea
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[24px] p-5 h-36 outline-none text-right font-medium text-sm resize-none"
+                placeholder="ספרו לנו על המרצה..."
+              />
+              <div className="text-[10px] text-slate-400 mt-1 text-left">{newComment.trim().length}/10 תווים מינימום</div>
+            </div>
+
+            <button type="button" onClick={handlePostReview}
+              className="w-full bg-indigo-600 text-white py-4 rounded-[22px] font-black hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 active:scale-[0.98] text-sm">
               {editingReviewId ? 'עדכן ביקורת' : 'שלח ביקורת'}
             </button>
           </div>

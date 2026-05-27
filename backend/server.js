@@ -173,6 +173,15 @@ app.get('/api/courses/:id', async (req, res) => {
 
 // --- Reviews Routes ---
 
+const mapLecturerReview = (r) => ({
+  id: r.lecturer_review_id,
+  authorId: r.user_id,
+  author: r.full_name || 'סטודנט/ית אנונימי/ת',
+  rating: r.rating_general,
+  comment: r.review_text,
+  date: r.created_at ? new Date(r.created_at).toLocaleDateString('he-IL') : '',
+});
+
 const mapReview = (r) => {
   let author = 'אנונימי/ת';
   if (r.visibility === 'full_name' && r.full_name) author = r.full_name;
@@ -524,11 +533,25 @@ app.get('/api/lecturers/:id/courses', async (req, res) => {
 app.get('/api/lecturers/:id/reviews', async (req, res) => {
   try {
     const { id } = req.params;
-    const query = 'SELECT * FROM lecturer_reviews WHERE lecturer_id = $1 ORDER BY id DESC';
-    const result = await pool.query(query, [id]);
-    res.json(result.rows);
+    const { data, error } = await supabase
+      .from('lecturer_reviews')
+      .select('*')
+      .eq('lecturer_id', id)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    let rows = data || [];
+    try {
+      const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+      if (userIds.length > 0) {
+        const { data: userData } = await supabase.from('users').select('id, full_name').in('id', userIds);
+        const userMap = {};
+        (userData || []).forEach(u => { userMap[u.id] = u.full_name; });
+        rows = rows.map(r => ({ ...r, full_name: userMap[r.user_id] || null }));
+      }
+    } catch {}
+    res.json(rows.map(mapLecturerReview));
   } catch (err) {
-    console.error(`Error fetching reviews for lecturer ${id}:`, err);
+    console.error(`Error fetching reviews for lecturer ${req.params.id}:`, err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -536,34 +559,21 @@ app.get('/api/lecturers/:id/reviews', async (req, res) => {
 app.post('/api/lecturers/:id/reviews', async (req, res) => {
   try {
     const { id } = req.params;
-    const { course_id, author, author_id, rating, comment, date, semester, year } = req.body;
-    const query = `
-      INSERT INTO lecturer_reviews (lecturer_id, course_id, author, author_id, rating, comment, date, semester, year)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING *
-    `;
-    const result = await pool.query(query, [id, course_id, author, author_id, rating, comment, date, semester, year]);
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error creating review:', err);
-    res.status(500).json({ message: err.message });
-  }
-});
+    const { userId, rating, comment } = req.body;
+    if (!userId) return res.status(400).json({ message: 'userId required' });
+    if (!comment || comment.trim().length < 10) return res.status(400).json({ message: 'הביקורת חייבת להכיל לפחות 10 תווים' });
 
-app.patch('/api/lecturer_reviews/:id/like', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { increment } = req.body;
-    const delta = increment ? 1 : -1;
-    
-    const query = 'UPDATE lecturer_reviews SET likes = GREATEST(0, likes + $1) WHERE id = $2 RETURNING *';
-    const result = await pool.query(query, [delta, id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Review not found' });
-    }
-    res.json(result.rows[0]);
+    const { data, error } = await supabase
+      .from('lecturer_reviews')
+      .insert({ lecturer_id: parseInt(id), user_id: userId, rating_general: rating, review_text: comment })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+    res.status(201).json(mapLecturerReview({ ...data, full_name: userData?.full_name || null }));
   } catch (err) {
-    console.error(`Error updating likes for review ${id}:`, err);
+    console.error('Error creating lecturer review:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -571,21 +581,25 @@ app.patch('/api/lecturer_reviews/:id/like', async (req, res) => {
 app.patch('/api/lecturers/:lecturerId/reviews/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { rating, comment, semester, year, course_id } = req.body;
-    
-    const query = `
-      UPDATE lecturer_reviews 
-      SET rating = $1, comment = $2, semester = $3, year = $4, course_id = $5 
-      WHERE id = $6 
-      RETURNING *
-    `;
-    const result = await pool.query(query, [rating, comment, semester, year, course_id, id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Review not found' });
-    }
-    res.json(result.rows[0]);
+    const { rating, comment } = req.body;
+    const updates = {};
+    if (rating !== undefined) updates.rating_general = rating;
+    if (comment !== undefined) updates.review_text = comment;
+    if (Object.keys(updates).length === 0) return res.status(400).json({ message: 'No updates provided' });
+
+    const { data, error } = await supabase
+      .from('lecturer_reviews')
+      .update(updates)
+      .eq('lecturer_review_id', id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    if (!data) return res.status(404).json({ message: 'Review not found' });
+
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', data.user_id).maybeSingle();
+    res.json(mapLecturerReview({ ...data, full_name: userData?.full_name || null }));
   } catch (err) {
-    console.error(`Error updating review ${id}:`, err);
+    console.error(`Error updating lecturer review ${req.params.id}:`, err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -593,10 +607,8 @@ app.patch('/api/lecturers/:lecturerId/reviews/:id', async (req, res) => {
 app.delete('/api/lecturers/:lecturerId/reviews/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM lecturer_reviews WHERE id = $1', [id]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ message: 'Review not found' });
-    }
+    const { error } = await supabase.from('lecturer_reviews').delete().eq('lecturer_review_id', id);
+    if (error) throw new Error(error.message);
     res.json({ message: 'Review deleted successfully' });
   } catch (err) {
     console.error(`Error deleting review ${req.params.id}:`, err);
