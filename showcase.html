@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ממולאים — UI Design Showcase</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --burg: #7D2E1E;
+      --terra: #A84030;
+      --terra-mid: #C05A3D;
+      --terra-light: #D4785A;
+      --rose: #F8E6E2;
+      --rose-border: #E8C5BC;
+      --cream: #FDFBF7;
+      --beige: #F4EDE4;
+      --beige-card: #EEE5D9;
+      --charcoal: #1A2332;
+      --slate: #2D3E52;
+      --gray: #6B7A8D;
+      --lgray: #A0ADB8;
+      --portfolio-bg: #10141C;
+      --portfolio-mid: #1C2435;
+      --green: #065F46;
+      --green-bg: #ECFDF5;
+      --green-border: #A7F3D0;
+      --amber-bg: #FFFAED;
+      --amber-border: #F5D68A;
+    }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: var(--portfolio-bg);
+      padding: 48px 40px;
+      min-width: 1380px;
+    }
+
+    /* ── PORTFOLIO SHEET ── */
+    .sheet {
+      max-width: 1380px;
+      margin: 0 auto;
+      background: var(--cream);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 60px 160px rgba(0,0,0,0.6), 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    /* ── HEADER ── */
+    .ph {
+      background: linear-gradient(140deg, #0D1018 0%, #1A2640 60%, #0F1820 100%);
+      padding: 44px 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .ph-logo-wrap { display: flex; align-items: center; gap: 16px; }
+    .ph-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 34px; font-weight: 900; color: white; letter-spacing: -0.5px;
+    }
+    .ph-logo span.acc { color: #D4785A; }
+    .ph-sub { color: rgba(255,255,255,0.38); font-size: 13px; margin-top: 5px; letter-spacing: 0.3px; }
+    .ph-badges { display: flex; gap: 8px; margin-top: 10px; }
+    .ph-badge {
+      background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.5);
+      font-size: 10px; font-weight: 600; padding: 4px 10px;
+      border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+      letter-spacing: 0.5px;
+    }
+    .ph-right { text-align: left; }
+    .ph-right strong { display: block; color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .ph-right p { color: rgba(255,255,255,0.3); font-size: 11.5px; line-height: 1.9; }
+
+    /* ── SECTION LABEL ── */
+    .slabel {
+      background: #1C2435;
+      color: rgba(255,255,255,0.35);
+      padding: 9px 56px;
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase;
+    }
+
+    /* ── SHOWCASE GRID ── */
+    .sg {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 40px;
+      background: var(--beige);
+      padding: 44px 56px;
+    }
+
+    /* ── BROWSER MOCKUP ── */
+    .browser-wrap { display: flex; flex-direction: column; gap: 24px; }
+    .browser-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--lgray); margin-bottom: -16px;
+      direction: rtl;
+    }
+    .browser {
+      background: white;
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.11), 0 4px 14px rgba(0,0,0,0.07);
+    }
+    .b-chrome {
+      background: #EDEAD4;
+      padding: 10px 14px;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid #DDD6C4;
+    }
+    .b-dots { display: flex; gap: 5px; }
+    .b-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .b-dot.r { background: #FF5F56; }
+    .b-dot.y { background: #FFBD2E; }
+    .b-dot.g { background: #27C93F; }
+    .b-url {
+      flex: 1; background: rgba(255,255,255,0.7); border-radius: 6px;
+      padding: 5px 12px; font-size: 11px; color: #888;
+      text-align: center; font-family: monospace; letter-spacing: 0.3px;
+    }
+
+    /* ── APP NAVBAR ── */
+    .app-nav {
+      background: white; border-bottom: 1px solid rgba(0,0,0,0.055);
+      padding: 13px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      direction: rtl;
+    }
+    .app-logo {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 21px; font-weight: 900; color: var(--charcoal);
+    }
+    .app-logo .acc { color: var(--terra); }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+    .nav-user { font-size: 12px; direction: rtl; text-align: right; }
+    .nav-user .name { color: var(--terra); font-weight: 700; font-size: 13px; }
+    .nav-user .role { color: var(--gray); font-size: 11px; }
+    .n-btn {
+      width: 32px; height: 32px;
+      border: 1.5px solid #DDD6C4; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gray);
+    }
+    .n-lang {
+      width: 40px; height: 28px;
+      border: 1.5px solid #DDD6C4; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gray); font-size: 10px; font-weight: 700;
+    }
+
+    /* ── LANDING PAGE ── */
+    .landing-body {
+      background: var(--cream);
+      padding: 52px 40px;
+      text-align: center; direction: rtl;
+    }
+    .lh1 { font-size: 38px; font-weight: 900; color: var(--charcoal); letter-spacing: -0.5px; margin-bottom: 8px; }
+    .lh2 { font-size: 15px; color: var(--gray); margin-bottom: 44px; }
+    .lcard {
+      background: white; border-radius: 22px; padding: 32px 36px;
+      max-width: 460px; margin: 0 auto;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.08), 0 1px 6px rgba(0,0,0,0.04);
+    }
+    .btn-p {
+      display: block; width: 100%;
+      background: linear-gradient(140deg, #A84030, #7D2E1E);
+      color: white; font-family: inherit; font-size: 15.5px; font-weight: 700;
+      padding: 16px 24px; border: none; border-radius: 14px; cursor: pointer;
+      margin-bottom: 11px; letter-spacing: 0.2px;
+      box-shadow: 0 5px 18px rgba(125,46,30,0.32);
+    }
+    .btn-s {
+      display: block; width: 100%;
+      background: var(--rose); color: var(--terra);
+      font-family: inherit; font-size: 15.5px; font-weight: 600;
+      padding: 16px 24px; border: 1.5px solid var(--rose-border);
+      border-radius: 14px; cursor: pointer;
+    }
+    .llink { margin-top: 18px; font-size: 12.5px; color: var(--gray); }
+    .llink a { color: var(--terra); font-weight: 700; text-decoration: none; }
+
+    /* stats bar */
+    .stats-bar {
+      background: white; border-top: 1px solid #EDE8DF;
+      padding: 18px 40px;
+      display: flex; justify-content: center; gap: 56px; direction: rtl;
+    }
+    .stat { text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 900; color: var(--terra); }
+    .stat-lbl { font-size: 11px; color: var(--gray); margin-top: 1px; }
+
+    /* ── SOLDIER DASHBOARD ── */
+    .dash-body {
+      background: var(--cream); padding: 28px 36px; direction: rtl;
+    }
+    .dash-h1 { font-size: 29px; font-weight: 900; color: var(--charcoal); margin-bottom: 5px; }
+    .dash-sub { font-size: 13px; color: var(--gray); margin-bottom: 22px; }
+    .req-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .req-card {
+      background: white; border-radius: 14px; padding: 15px 18px;
+      display: flex; align-items: center; gap: 12px; cursor: pointer;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+      border: 1px solid #EDE8DF;
+    }
+    .req-icon {
+      width: 34px; height: 34px; border: 1.5px solid #DDD6C4;
+      border-radius: 9px; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; color: var(--gray);
+    }
+    .req-info { flex: 1; }
+    .req-title { font-size: 13px; font-weight: 700; color: var(--charcoal); }
+    .req-status { font-size: 11px; margin-top: 1px; }
+    .req-status.searching { color: var(--terra-light); }
+    .req-status.matched { color: var(--green); }
+    .req-arr { color: var(--terra); font-size: 16px; }
+    .new-req-card {
+      background: var(--beige); border-radius: 14px; padding: 15px 18px;
+      display: flex; align-items: center; gap: 12px; cursor: pointer;
+      border: 1.5px dashed #C8C0B4;
+    }
+    .plus-icon {
+      width: 34px; height: 34px; background: var(--rose);
+      border-radius: 9px; display: flex; align-items: center;
+      justify-content: center; color: var(--terra); font-size: 22px;
+      flex-shrink: 0; border: 1px solid var(--rose-border);
+    }
+    .new-req-t { font-size: 13px; font-weight: 700; color: var(--charcoal); }
+    .new-req-s { font-size: 11px; color: var(--gray); margin-top: 1px; }
+
+    /* ── MOBILE COLUMN ── */
+    .mob-col { display: flex; flex-direction: column; gap: 22px; }
+    .mob-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--lgray); text-align: center; margin-top: -14px;
+    }
+
+    /* Phone frame */
+    .phone {
+      background: #181C26;
+      border-radius: 36px; padding: 9px;
+      box-shadow:
+        0 24px 60px rgba(0,0,0,0.3),
+        0 6px 18px rgba(0,0,0,0.18),
+        inset 0 0 0 1px rgba(255,255,255,0.08),
+        inset 0 0 0 3px #0D1018;
+    }
+    .pscreen { background: var(--cream); border-radius: 28px; overflow: hidden; }
+    .pnotch {
+      background: #181C26; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pnotch-inner { width: 75px; height: 12px; background: #0D1018; border-radius: 0 0 10px 10px; }
+
+    /* phone nav */
+    .p-nav {
+      background: white; border-bottom: 1px solid rgba(0,0,0,0.055);
+      padding: 9px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      direction: rtl;
+    }
+    .p-logo { font-size: 15px; font-weight: 900; color: var(--charcoal); }
+    .p-logo .acc { color: var(--terra); }
+    .p-user { font-size: 10px; }
+    .p-user .name { color: var(--terra); font-weight: 700; display: block; }
+    .p-user .role { color: var(--gray); display: block; }
+
+    /* phone body */
+    .p-body { padding: 16px 14px; direction: rtl; }
+    .p-h1 { font-size: 18px; font-weight: 900; color: var(--charcoal); line-height: 1.15; margin-bottom: 3px; }
+    .p-sub { font-size: 10.5px; color: var(--gray); margin-bottom: 14px; }
+
+    /* phone cards */
+    .p-card {
+      background: white; border-radius: 12px; padding: 11px 13px;
+      margin-bottom: 8px; display: flex; align-items: center; gap: 9px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.055);
+      direction: rtl;
+    }
+    .p-card-icon {
+      width: 26px; height: 26px; border: 1.5px solid #DDD6C4;
+      border-radius: 7px; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; color: var(--gray); font-size: 11px;
+    }
+    .p-card-info { flex: 1; }
+    .p-card-title { font-size: 11.5px; font-weight: 700; color: var(--charcoal); }
+    .p-card-sub { font-size: 10px; margin-top: 1px; }
+    .p-card-sub.s { color: var(--terra-light); }
+    .p-card-sub.m { color: var(--green); }
+    .p-arr { color: var(--terra); font-size: 13px; }
+    .p-new-card {
+      background: var(--beige); border-radius: 12px; padding: 11px 13px;
+      display: flex; align-items: center; gap: 9px;
+      border: 1px dashed #C8C0B4; direction: rtl;
+    }
+    .p-plus {
+      width: 30px; height: 30px; background: var(--rose);
+      border-radius: 9px; display: flex; align-items: center;
+      justify-content: center; color: var(--terra); font-size: 20px;
+      flex-shrink: 0; border: 1px solid var(--rose-border);
+    }
+    .p-new-t { font-size: 11.5px; font-weight: 700; color: var(--charcoal); }
+    .p-new-s { font-size: 10px; color: var(--gray); line-height: 1.3; }
+
+    /* Host dashboard phone */
+    .p-alert {
+      background: var(--amber-bg);
+      border: 1px solid var(--amber-border);
+      border-radius: 11px; padding: 11px 12px;
+      display: flex; align-items: flex-start; gap: 9px;
+      margin-bottom: 14px; direction: rtl;
+    }
+    .p-bell {
+      width: 28px; height: 28px; background: #FFF0C0;
+      border-radius: 7px; display: flex; align-items: center;
+      justify-content: center; font-size: 13px; flex-shrink: 0;
+    }
+    .p-alert-t { font-size: 11.5px; font-weight: 700; color: var(--charcoal); }
+    .p-alert-s { font-size: 9.5px; color: var(--gray); line-height: 1.3; margin-top: 2px; }
+
+    .p-sec-title {
+      font-size: 12px; font-weight: 700; color: var(--charcoal);
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .p-open-btn {
+      background: linear-gradient(140deg, #A84030, #7D2E1E);
+      color: white; font-family: inherit; font-size: 9.5px; font-weight: 700;
+      padding: 5px 10px; border: none; border-radius: 20px;
+      white-space: nowrap;
+    }
+    .p-host-card {
+      background: white; border-radius: 12px; padding: 11px 13px;
+      margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.055);
+      direction: rtl;
+    }
+    .p-host-top {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;
+    }
+    .p-host-date { font-size: 12px; font-weight: 700; color: var(--charcoal); }
+    .pill {
+      font-size: 9px; font-weight: 700; padding: 3px 8px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .pill.full { background: var(--rose); color: var(--terra); border: 1px solid var(--rose-border); }
+    .pill.cancelled { background: #F3F4F6; color: #9CA3AF; border: 1px solid #E5E7EB; }
+    .pill.active { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+    .p-host-sub { font-size: 10px; color: var(--gray); }
+    .p-host-actions {
+      display: flex; gap: 8px; margin-top: 8px;
+      padding-top: 7px; border-top: 1px solid #EDE8DF;
+      align-items: center;
+    }
+    .p-act-link { font-size: 10px; color: var(--terra); font-weight: 600; }
+    .p-act-link.cancel { color: var(--gray); }
+    .p-act-div { color: #DDD; font-size: 10px; }
+    .p-act-btn {
+      font-size: 9.5px; color: var(--charcoal); font-weight: 600;
+      background: var(--beige); border: 1px solid #DDD6C4;
+      padding: 3px 9px; border-radius: 7px; font-family: inherit;
+    }
+
+    /* Match screen */
+    .match-hdr {
+      background: linear-gradient(155deg, #6E2018, #A84030 60%, #C05A3D);
+      padding: 18px 14px 16px; text-align: center; direction: rtl;
+    }
+    .match-chip {
+      display: inline-block; background: rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.88); font-size: 9px; font-weight: 700;
+      padding: 3px 11px; border-radius: 20px; letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 7px;
+    }
+    .match-t { color: white; font-size: 14px; font-weight: 800; }
+    .match-s { color: rgba(255,255,255,0.65); font-size: 10px; margin-top: 3px; }
+    .match-avatars {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; margin-top: 12px;
+    }
+    .m-av {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: white;
+    }
+    .m-av.a { background: rgba(255,255,255,0.25); }
+    .m-av.b { background: rgba(255,255,255,0.18); margin-right: -8px; }
+    .m-av.c { background: rgba(255,255,255,0.13); margin-right: -8px; }
+    .m-arrow { color: rgba(255,255,255,0.45); font-size: 16px; margin: 0 2px; }
+    .m-fam {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2.5px solid rgba(255,255,255,0.7);
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+
+    .match-body { padding: 14px; direction: rtl; }
+    .m-info-card {
+      background: white; border-radius: 12px; padding: 12px;
+      margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .m-row {
+      display: flex; align-items: center; gap: 8px; padding: 5px 0;
+      border-bottom: 1px solid #EDE8DF; direction: rtl;
+    }
+    .m-row:last-child { border-bottom: none; }
+    .m-ico { font-size: 13px; flex-shrink: 0; color: var(--terra-light); }
+    .m-lbl { font-size: 9.5px; color: var(--gray); min-width: 52px; }
+    .m-val { font-size: 11px; font-weight: 600; color: var(--charcoal); }
+    .m-confirm {
+      display: block; width: 100%;
+      background: linear-gradient(140deg, #A84030, #7D2E1E);
+      color: white; font-family: inherit; font-size: 11.5px; font-weight: 700;
+      padding: 11px 24px; border: none; border-radius: 11px; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(125,46,30,0.28); text-align: center;
+    }
+
+    /* ── DESIGN SYSTEM ── */
+    .ds {
+      background: white; padding: 44px 56px;
+      border-top: 1px solid #EDE8DF;
+    }
+    .ds-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px; }
+    .ds-head {
+      font-size: 9.5px; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase; color: var(--lgray);
+      margin-bottom: 18px; padding-bottom: 8px;
+      border-bottom: 1px solid #EDE8DF;
+    }
+
+    /* Colors */
+    .c-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+    .c-swatch {
+      width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.14);
+    }
+    .c-name { font-size: 11.5px; font-weight: 700; color: var(--charcoal); }
+    .c-hex { font-size: 10px; color: var(--gray); font-family: monospace; margin-top: 2px; }
+    .c-role { font-size: 9.5px; color: var(--lgray); }
+
+    /* Typography */
+    .t-sample { margin-bottom: 14px; }
+    .t-lbl {
+      font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--lgray); margin-bottom: 3px;
+    }
+    .t-d1 { font-size: 28px; font-weight: 900; color: var(--charcoal); line-height: 1; }
+    .t-h2 { font-size: 18px; font-weight: 800; color: var(--charcoal); line-height: 1; }
+    .t-h3 { font-size: 14px; font-weight: 700; color: var(--charcoal); line-height: 1; }
+    .t-b  { font-size: 12px; font-weight: 400; color: var(--slate); line-height: 1; }
+    .t-c  { font-size: 10px; font-weight: 400; color: var(--gray); line-height: 1; }
+    .t-lnk { font-size: 12px; font-weight: 700; color: var(--terra); line-height: 1; }
+
+    /* Icons */
+    .i-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .i-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .i-box {
+      width: 46px; height: 46px; border: 1.5px solid #E8E0D4; border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--charcoal); background: var(--beige);
+    }
+    .i-lbl { font-size: 9px; color: var(--gray); text-align: center; font-weight: 500; }
+
+    /* Patterns */
+    .pat-lbl {
+      font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--lgray); margin-bottom: 7px;
+    }
+    .pat-row { margin-bottom: 14px; }
+    .mb-p {
+      display: inline-block;
+      background: linear-gradient(140deg, #A84030, #7D2E1E);
+      color: white; font-family: inherit; font-size: 12px; font-weight: 700;
+      padding: 9px 20px; border: none; border-radius: 10px; cursor: pointer;
+      box-shadow: 0 3px 10px rgba(125,46,30,0.26); margin-left: 8px;
+    }
+    .mb-s {
+      display: inline-block; background: var(--rose); color: var(--terra);
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      padding: 9px 20px; border: 1.5px solid var(--rose-border);
+      border-radius: 10px; cursor: pointer;
+    }
+    .pills-row { display: flex; gap: 7px; flex-wrap: wrap; }
+    .m-card-pat {
+      background: var(--beige); border-radius: 12px; padding: 12px;
+      border: 1px solid #EDE8DF; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-top: 6px; direction: rtl;
+    }
+    .m-card-top {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;
+    }
+    .m-card-t { font-size: 12px; font-weight: 700; color: var(--charcoal); }
+    .m-card-s { font-size: 10.5px; color: var(--gray); }
+    .m-card-actions {
+      display: flex; gap: 8px; margin-top: 8px; padding-top: 8px;
+      border-top: 1px solid #E4DDD4; align-items: center;
+    }
+    .m-card-lnk { font-size: 10px; color: var(--terra); font-weight: 600; }
+    .m-card-btn {
+      font-size: 10px; background: white; color: var(--charcoal); font-weight: 600;
+      padding: 3px 9px; border-radius: 7px; border: 1px solid #DDD6C4;
+      font-family: inherit;
+    }
+
+    /* ── FOOTER ── */
+    .pf {
+      background: #0A0D14; padding: 22px 56px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .pf-brand { font-size: 15px; font-weight: 900; color: rgba(255,255,255,0.3); }
+    .pf-info { font-size: 11px; color: rgba(255,255,255,0.2); text-align: center; line-height: 1.7; }
+    .pf-ver { font-size: 11px; color: rgba(255,255,255,0.2); font-family: monospace; text-align: left; line-height: 1.7; }
+
+    /* SVGs */
+    svg { display: block; }
+  </style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- ─── PORTFOLIO HEADER ─── -->
+  <div class="ph">
+    <div class="ph-logo-wrap">
+      <div>
+        <div class="ph-logo">
+          <!-- Stuffed pepper SVG logo -->
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <ellipse cx="22" cy="28" rx="13" ry="14" fill="#A84030"/>
+            <ellipse cx="22" cy="27" rx="11" ry="12" fill="#C05A3D"/>
+            <rect x="19" y="12" width="6" height="5" rx="2.5" fill="#3D7A45"/>
+            <path d="M22 12 C22 7, 29 6, 28 11" stroke="#3D7A45" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <ellipse cx="22" cy="26" rx="8" ry="9" fill="#E87055" opacity="0.55"/>
+            <ellipse cx="17.5" cy="23" rx="2.5" ry="4" fill="rgba(255,255,255,0.18)"/>
+            <ellipse cx="26" cy="29" rx="1.5" ry="2.5" fill="rgba(255,255,255,0.1)"/>
+          </svg>
+          <span><span class="acc">מ</span>מולאים</span>
+        </div>
+        <div class="ph-sub">מחבר חיילים עם משפחות מארחות לשבת • Shabbat Hosting Platform</div>
+        <div class="ph-badges">
+          <span class="ph-badge">Hebrew RTL</span>
+          <span class="ph-badge">React Web App</span>
+          <span class="ph-badge">Mobile Responsive</span>
+          <span class="ph-badge">Supabase Backend</span>
+        </div>
+      </div>
+    </div>
+    <div class="ph-right">
+      <strong>UI / UX Design Showcase</strong>
+      <p>
+        Design System v2.0<br>
+        Desktop + Mobile Screens<br>
+        Component Library<br>
+        Color & Typography Guide
+      </p>
+    </div>
+  </div>
+
+  <div class="slabel">SCREENS &amp; INTERACTIONS</div>
+
+  <!-- ─── MAIN SHOWCASE GRID ─── -->
+  <div class="sg">
+
+    <!-- LEFT: Desktop mockups -->
+    <div class="browser-wrap">
+
+      <!-- Desktop 1: Landing -->
+      <div class="browser-label">Desktop View — Landing / Registration</div>
+      <div class="browser">
+        <div class="b-chrome">
+          <div class="b-dots">
+            <div class="b-dot r"></div>
+            <div class="b-dot y"></div>
+            <div class="b-dot g"></div>
+          </div>
+          <div class="b-url">mimulaim.co.il</div>
+          <div style="display:flex;gap:5px;">
+            <div style="width:16px;height:16px;border-radius:3px;background:#DDD6C4;"></div>
+            <div style="width:16px;height:16px;border-radius:3px;background:#DDD6C4;"></div>
+          </div>
+        </div>
+        <!-- App Nav -->
+        <div class="app-nav">
+          <div class="nav-right" style="gap:8px;">
+            <div class="n-lang">EN</div>
+            <div class="n-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div class="n-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </div>
+          </div>
+          <div class="app-logo">
+            <svg width="21" height="21" viewBox="0 0 44 44" fill="none">
+              <ellipse cx="22" cy="28" rx="13" ry="14" fill="#A84030"/>
+              <ellipse cx="22" cy="27" rx="11" ry="12" fill="#C05A3D"/>
+              <rect x="19" y="12" width="6" height="5" rx="2.5" fill="#3D7A45"/>
+              <path d="M22 12 C22 7, 29 6, 28 11" stroke="#3D7A45" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+              <ellipse cx="22" cy="26" rx="8" ry="9" fill="#E87055" opacity="0.5"/>
+            </svg>
+            <span>מ<span class="acc">מ</span>ולאים</span>
+          </div>
+        </div>
+        <!-- Landing body -->
+        <div class="landing-body">
+          <h1 class="lh1">מארחי שבת</h1>
+          <p class="lh2">הצטרף לקהילת האירוח שלנו</p>
+          <div class="lcard">
+            <button class="btn-p">הרשמה כחייל</button>
+            <button class="btn-s">הרשמה כמשפחה מארחת</button>
+            <div class="llink">כבר יש לך חשבון? <a href="#">התחברות</a></div>
+          </div>
+          <p style="font-size:12px;color:var(--lgray);margin-top:24px;">
+            הצטרף לקהילה שמחברת חיילים עם משפחות מארחות לשבת
+          </p>
+        </div>
+        <!-- Stats bar -->
+        <div class="stats-bar">
+          <div class="stat"><div class="stat-num">1,240+</div><div class="stat-lbl">חיילים מאוכסנו</div></div>
+          <div class="stat"><div class="stat-num">380+</div><div class="stat-lbl">משפחות מארחות</div></div>
+          <div class="stat"><div class="stat-num">96%</div><div class="stat-lbl">שביעות רצון</div></div>
+        </div>
+      </div>
+
+      <!-- Desktop 2: Soldier Dashboard -->
+      <div class="browser-label">Desktop View — Soldier Dashboard</div>
+      <div class="browser">
+        <div class="b-chrome">
+          <div class="b-dots">
+            <div class="b-dot r"></div>
+            <div class="b-dot y"></div>
+            <div class="b-dot g"></div>
+          </div>
+          <div class="b-url">mimulaim.co.il/soldier/dashboard</div>
+        </div>
+        <div class="app-nav">
+          <div class="nav-right">
+            <div class="n-lang">EN</div>
+            <div class="n-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div class="n-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </div>
+          </div>
+          <div class="app-logo">
+            <svg width="21" height="21" viewBox="0 0 44 44" fill="none">
+              <ellipse cx="22" cy="28" rx="13" ry="14" fill="#A84030"/>
+              <ellipse cx="22" cy="27" rx="11" ry="12" fill="#C05A3D"/>
+              <rect x="19" y="12" width="6" height="5" rx="2.5" fill="#3D7A45"/>
+              <path d="M22 12 C22 7, 29 6, 28 11" stroke="#3D7A45" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            </svg>
+            <span>מ<span class="acc">מ</span>ולאים</span>
+          </div>
+          <div class="nav-user">
+            <span class="name">שלום, יונתן כהן</span>
+          </div>
+        </div>
+        <div class="dash-body">
+          <h1 class="dash-h1">מה תרצה לעשות היום?</h1>
+          <p class="dash-sub">יש לך 2 בקשות פעילות</p>
+          <div class="req-grid">
+            <div class="req-card">
+              <div class="req-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </div>
+              <div class="req-info">
+                <div class="req-title">2026-06-22 — חיפה</div>
+                <div class="req-status searching">אנחנו מחפשים עבורך משפחה...</div>
+              </div>
+              <div class="req-arr">›</div>
+            </div>
+            <div class="req-card">
+              <div class="req-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </div>
+              <div class="req-info">
+                <div class="req-title">2026-06-29 — חיפה</div>
+                <div class="req-status matched">מצאנו לך משפחה מתאימה ✓</div>
+              </div>
+              <div class="req-arr">›</div>
+            </div>
+            <div class="new-req-card">
+              <div class="plus-icon">+</div>
+              <div style="flex:1;">
+                <div class="new-req-t">בקשת אירוח חדשה</div>
+                <div class="new-req-s">מלא את הפרטים כדי שנמצא לך המשפחה המתאימה</div>
+              </div>
+              <div style="color:var(--lgray);font-size:16px;">›</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /browser-wrap -->
+
+    <!-- RIGHT: Mobile phones -->
+    <div class="mob-col">
+
+      <!-- Phone 1: Soldier Dashboard -->
+      <div class="phone">
+        <div class="pscreen">
+          <div class="pnotch"><div class="pnotch-inner"></div></div>
+          <div class="p-nav">
+            <div class="p-user">
+              <span class="name">שלום, יונתן</span>
+            </div>
+            <div class="p-logo">מ<span class="acc">מ</span>ולאים</div>
+            <div style="display:flex;gap:6px;">
+              <div class="n-lang" style="width:32px;height:24px;font-size:9.5px;">EN</div>
+            </div>
+          </div>
+          <div class="p-body">
+            <div class="p-h1">מה תרצה<br>לעשות היום?</div>
+            <div class="p-sub">יש לך 2 בקשות פעילות</div>
+
+            <div class="p-card">
+              <div class="p-arr">›</div>
+              <div class="p-card-info">
+                <div class="p-card-title">2026-06-22 — חיפה</div>
+                <div class="p-card-sub s">אנחנו מחפשים עבורך משפחה...</div>
+              </div>
+              <div class="p-card-icon">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="p-card">
+              <div class="p-arr">›</div>
+              <div class="p-card-info">
+                <div class="p-card-title">2026-06-29 — חיפה</div>
+                <div class="p-card-sub m">מצאנו לך משפחה מתאימה ✓</div>
+              </div>
+              <div class="p-card-icon">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="p-new-card">
+              <div style="color:var(--lgray);font-size:13px;">›</div>
+              <div style="flex:1;">
+                <div class="p-new-t">בקשת אירוח חדשה</div>
+                <div class="p-new-s">מלא את הפרטים כדי שנמצא<br>לך המשפחה המתאימה</div>
+              </div>
+              <div class="p-plus">+</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mob-label">Soldier Dashboard</div>
+
+      <!-- Phone 2: Host Family -->
+      <div class="phone">
+        <div class="pscreen">
+          <div class="pnotch"><div class="pnotch-inner"></div></div>
+          <div class="p-nav">
+            <div class="p-user">
+              <span class="name">שלום, משפחת כהן</span>
+              <span class="role">משפחה מארחת מאומתת</span>
+            </div>
+            <div class="p-logo">מ<span class="acc">מ</span>ולאים</div>
+          </div>
+          <div class="p-body">
+            <div style="font-size:9.5px;color:var(--gray);font-weight:600;margin-bottom:8px;">התראות חכמות</div>
+            <div class="p-alert">
+              <div class="p-bell">🔔</div>
+              <div>
+                <div class="p-alert-t">התאמה פוטנציאלית קרובה</div>
+                <div class="p-alert-s">יש 3 חיילים באזורכם שמחפשים ארוחה לשבת הקרובה.</div>
+              </div>
+            </div>
+
+            <div class="p-sec-title">
+              <span>האירוחים שלי</span>
+              <button class="p-open-btn">פתח אירוח לשישי הקרוב</button>
+            </div>
+
+            <div class="p-host-card">
+              <div class="p-host-top">
+                <div class="p-host-date">יום שבת, 27 ביוני</div>
+                <span class="pill full">3/3 מקומות תפוסים</span>
+              </div>
+              <div class="p-host-sub">ערב שישי</div>
+              <div class="p-host-actions">
+                <span class="p-act-link">ערוך אירוח</span>
+                <span class="p-act-div">|</span>
+                <button class="p-act-btn">פרטי אורחים (3)</button>
+                <span class="p-act-div">|</span>
+                <span class="p-act-link cancel">בטל</span>
+              </div>
+            </div>
+
+            <div class="p-host-card" style="opacity:0.6;">
+              <div class="p-host-top">
+                <div class="p-host-date">יום שבת, 4 ביולי</div>
+                <span class="pill cancelled">מבוטל</span>
+              </div>
+              <div class="p-host-sub">ערב שישי</div>
+              <div style="margin-top:7px;">
+                <span style="font-size:10px;color:var(--terra);font-weight:600;">שחזר אירוח</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mob-label">Host Family Dashboard</div>
+
+      <!-- Phone 3: Match Confirmation -->
+      <div class="phone">
+        <div class="pscreen">
+          <div class="pnotch"><div class="pnotch-inner"></div></div>
+          <div class="match-hdr">
+            <div class="match-chip">✓ התאמה מאושרת</div>
+            <div class="match-t">נמצאה לך משפחה מארחת!</div>
+            <div class="match-s">שבת, 29 ביוני 2026 • חיפה</div>
+            <div class="match-avatars">
+              <div class="m-fam">🏠</div>
+              <div class="m-arrow">⟷</div>
+              <div class="m-av a">א</div>
+              <div class="m-av b">ב</div>
+              <div class="m-av c">+1</div>
+            </div>
+          </div>
+          <div class="match-body">
+            <div class="m-info-card">
+              <div class="m-row">
+                <span class="m-ico">📍</span>
+                <span class="m-lbl">מיקום</span>
+                <span class="m-val">חיפה, הכרמל</span>
+              </div>
+              <div class="m-row">
+                <span class="m-ico">📅</span>
+                <span class="m-lbl">תאריך</span>
+                <span class="m-val">שישי 27.6.26 / 18:30</span>
+              </div>
+              <div class="m-row">
+                <span class="m-ico">👨‍👩‍👧</span>
+                <span class="m-lbl">משפחה</span>
+                <span class="m-val">משפחת לוי • 3 מקומות</span>
+              </div>
+              <div class="m-row">
+                <span class="m-ico">🤝</span>
+                <span class="m-lbl">סטטוס</span>
+                <span class="pill active" style="font-size:9px;">מאושר ✓</span>
+              </div>
+            </div>
+            <button class="m-confirm">צור קשר עם המשפחה</button>
+          </div>
+        </div>
+      </div>
+      <div class="mob-label">Match Confirmation</div>
+
+    </div><!-- /mob-col -->
+  </div><!-- /sg -->
+
+  <!-- ─── DESIGN SYSTEM ─── -->
+  <div class="slabel">DESIGN SYSTEM &amp; UI KIT</div>
+  <div class="ds">
+    <div class="ds-grid">
+
+      <!-- COLOR SYSTEM -->
+      <div>
+        <div class="ds-head">Color System</div>
+        <div class="c-row">
+          <div class="c-swatch" style="background:#7D2E1E;"></div>
+          <div>
+            <div class="c-name">Deep Burgundy</div>
+            <div class="c-hex">#7D2E1E</div>
+            <div class="c-role">Primary Action</div>
+          </div>
+        </div>
+        <div class="c-row">
+          <div class="c-swatch" style="background:#A84030;"></div>
+          <div>
+            <div class="c-name">Rich Terracotta</div>
+            <div class="c-hex">#A84030</div>
+            <div class="c-role">Accent / Links</div>
+          </div>
+        </div>
+        <div class="c-row">
+          <div class="c-swatch" style="background:#F8E6E2;border:1px solid #E8C5BC;"></div>
+          <div>
+            <div class="c-name">Soft Rose Pink</div>
+            <div class="c-hex">#F8E6E2</div>
+            <div class="c-role">Secondary Action</div>
+          </div>
+        </div>
+        <div class="c-row">
+          <div class="c-swatch" style="background:#FDFBF7;border:1px solid #E8E0D4;"></div>
+          <div>
+            <div class="c-name">Warm Cream</div>
+            <div class="c-hex">#FDFBF7</div>
+            <div class="c-role">Background</div>
+          </div>
+        </div>
+        <div class="c-row">
+          <div class="c-swatch" style="background:#1A2332;"></div>
+          <div>
+            <div class="c-name">Dark Charcoal</div>
+            <div class="c-hex">#1A2332</div>
+            <div class="c-role">Typography</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TYPOGRAPHY -->
+      <div>
+        <div class="ds-head">Typography — Heebo</div>
+        <div class="t-sample"><div class="t-lbl">Display H1 · 900</div><div class="t-d1">מארחי שבת</div></div>
+        <div class="t-sample"><div class="t-lbl">Heading H2 · 800</div><div class="t-h2">האירוחים שלי</div></div>
+        <div class="t-sample"><div class="t-lbl">Subheading H3 · 700</div><div class="t-h3">יום שבת, 27 ביוני</div></div>
+        <div class="t-sample"><div class="t-lbl">Body Regular · 400</div><div class="t-b">הצטרף לקהילת האירוח שלנו</div></div>
+        <div class="t-sample"><div class="t-lbl">Caption · 400</div><div class="t-c">ערב שישי • חיפה, הכרמל</div></div>
+        <div class="t-sample"><div class="t-lbl">Link / Action · 700</div><div class="t-lnk">כבר יש לך חשבון? התחברות</div></div>
+      </div>
+
+      <!-- ICON SET -->
+      <div>
+        <div class="ds-head">Icon Set — Outline 1.8px</div>
+        <div class="i-grid">
+          <div class="i-item">
+            <div class="i-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </div>
+            <div class="i-lbl">Home</div>
+          </div>
+          <div class="i-item">
+            <div class="i-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+            </div>
+            <div class="i-lbl">Calendar</div>
+          </div>
+          <div class="i-item">
+            <div class="i-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div class="i-lbl">Profile</div>
+          </div>
+          <div class="i-item">
+            <div class="i-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </div>
+            <div class="i-lbl">Bell</div>
+          </div>
+          <div class="i-item">
+            <div class="i-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </div>
+            <div class="i-lbl">Edit</div>
+          </div>
+          <div class="i-item">
+            <div class="i-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <polyline points="9 11 12 14 22 4"/>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+            </div>
+            <div class="i-lbl">Confirm</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- UI PATTERNS -->
+      <div>
+        <div class="ds-head">UI Patterns &amp; Components</div>
+
+        <div class="pat-row">
+          <div class="pat-lbl">Buttons</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="mb-p">הרשמה כחייל</button>
+            <button class="mb-s">כמשפחה מארחת</button>
+          </div>
+        </div>
+
+        <div class="pat-row">
+          <div class="pat-lbl">Status Pills</div>
+          <div class="pills-row">
+            <span class="pill full">3/3 מקומות תפוסים</span>
+            <span class="pill cancelled">מבוטל</span>
+            <span class="pill active">מאושר ✓</span>
+          </div>
+        </div>
+
+        <div class="pat-row">
+          <div class="pat-lbl">Match Card Component</div>
+          <div class="m-card-pat">
+            <div class="m-card-top">
+              <div class="m-card-t">יום שבת, 27 ביוני</div>
+              <span class="pill full" style="font-size:9px;">3/3 מקומות תפוסים</span>
+            </div>
+            <div class="m-card-s">ערב שישי • חיפה, הכרמל</div>
+            <div class="m-card-actions">
+              <span class="m-card-lnk">ערוך אירוח</span>
+              <span style="color:#DDD;font-size:10px;">|</span>
+              <button class="m-card-btn">פרטי אורחים (3)</button>
+              <span style="color:#DDD;font-size:10px;">|</span>
+              <span class="m-card-lnk" style="color:var(--gray);">בטל</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pat-row">
+          <div class="pat-lbl">Smart Alert</div>
+          <div style="background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:11px;padding:10px 12px;display:flex;align-items:flex-start;gap:9px;direction:rtl;">
+            <div style="width:28px;height:28px;background:#FFF0C0;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">🔔</div>
+            <div>
+              <div style="font-size:11.5px;font-weight:700;color:var(--charcoal);">התאמה פוטנציאלית קרובה</div>
+              <div style="font-size:10px;color:var(--gray);margin-top:2px;">יש 3 חיילים באזורכם שמחפשים ארוחה</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── FOOTER ─── -->
+  <div class="pf">
+    <div class="pf-brand">ממולאים 🫑</div>
+    <div class="pf-info">
+      UI / UX Design Showcase — Shabbat Hosting Platform<br>
+      Hebrew RTL Interface • React + Supabase
+    </div>
+    <div class="pf-ver">
+      Design System v2.0<br>
+      2026 · Heebo Typeface
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

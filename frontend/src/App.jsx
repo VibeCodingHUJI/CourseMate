@@ -937,7 +937,7 @@ const App = () => {
   // Load followed courses from DB when user logs in
   useEffect(() => {
     if (!user?.id || user.isGuest) { setFollowedCourseIds([]); return; }
-    fetch(`http://localhost:5000/api/follows/${user.id}`)
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/follows/${user.id}`)
       .then(r => r.json())
       .then(ids => { if (Array.isArray(ids)) setFollowedCourseIds(ids); })
       .catch(() => {});
@@ -960,9 +960,9 @@ const App = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/combinations')
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinations`)
       .then(res => res.json())
-      .then(data => setStudyTracks(data.value || data))
+      .then(data => setStudyTracks(Array.isArray(data) ? data : (data.value || [])))
       .catch(err => console.error('Error fetching combinations:', err));
   }, []);
 
@@ -970,8 +970,7 @@ const App = () => {
     if (!user || user.isGuest || !user.track) { setStudentForums([]); return; }
     const fetchStudentForums = async () => {
       try {
-        const res = await fetch('http://localhost:3000/combinations');
-        const forums = await res.json();
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinations`);        const forums = await res.json();
         const getLabel = (val) => {
           const raw = String(val || "").trim();
           const match = (studyTracks || []).find(t => t.value === raw || t.label === raw);
@@ -993,7 +992,7 @@ const App = () => {
 
   useEffect(() => {
     if (!activeStudentForumId) { setStudentForumQuestions([]); return; }
-    fetch(`http://localhost:3000/combinationQuestions?combinationId=${activeStudentForumId}`)
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinationQuestions?combinationId=${activeStudentForumId}`)
       .then(res => res.json())
       .then(qs => setStudentForumQuestions(qs.reverse()))
       .catch(err => console.error('Error fetching questions:', err));
@@ -1003,8 +1002,7 @@ const App = () => {
     if (!newStudentForumQ.trim() || !activeStudentForumId) return;
     const newQ = { combinationId: activeStudentForumId, question: newStudentForumQ, answers: [], date: new Date().toLocaleDateString('he-IL'), author: user.name };
     try {
-      const res = await fetch('http://localhost:3000/combinationQuestions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newQ) });
-      const savedQ = await res.json();
+const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinationQuestions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newQ) });      const savedQ = await res.json();
       setStudentForumQuestions([savedQ, ...studentForumQuestions]);
       setNewStudentForumQ('');
       alert('השאלה פורסמה בהצלחה!');
@@ -1017,7 +1015,7 @@ const App = () => {
     if (!q) return;
     const updatedAnswers = [...q.answers, { text, date: new Date().toLocaleDateString('he-IL'), author: user.name, authorId: user.id, likedBy: [] }];
     try {
-      const res = await fetch(`http://localhost:3000/combinationQuestions/${qId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updatedAnswers }) });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinationQuestions/${qId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updatedAnswers }) });
       const updatedQ = await res.json();
       setStudentForumQuestions(studentForumQuestions.map(q => q.id === qId ? updatedQ : q));
     } catch (err) { alert('שגיאה בפרסום התשובה'); }
@@ -1031,8 +1029,7 @@ const App = () => {
         let url = 'http://localhost:3000/courses';
         if (/^\d{3}-\d{4}$/.test(currentTrack)) url = `http://localhost:5000/api/combinations/${currentTrack}/courses`;
         else if (currentTrack === 'Computer Science') url = 'http://localhost:5000/api/combinations/521-3010/courses';
-        const [cRes, rRes] = await Promise.all([fetch(url), fetch('http://localhost:5000/api/reviews')]);
-        const cData = await cRes.json();
+        const [cRes, rRes] = await Promise.all([fetch(url), fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews`)]);        const cData = await cRes.json();
         let rData = [];
         try { const parsed = await rRes.json(); if (Array.isArray(parsed)) rData = parsed; } catch {}
         setAllReviews(rData);
@@ -1053,8 +1050,7 @@ const App = () => {
         const id = m[1];
         let c = allCourses.find(c => String(c.id) === String(id));
         if (!c) {
-          try { const res = await fetch(`http://localhost:5000/api/courses/${id}`); if (res.ok) c = await res.json(); } catch (err) { console.error('Error:', err); }
-        }
+          try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/courses/${id}`); if (res.ok) c = await res.json(); } catch (err) { console.error('Error:', err); }        }
         if (c) setSelectedCourse(c); else if (allCourses.length > 0) setSelectedCourse(null);
       } else if (location.pathname === '/') setSelectedCourse(null);
     };
@@ -1068,13 +1064,13 @@ const App = () => {
     setMaterials([]);
     const controller = new AbortController();
     const { signal } = controller;
-    fetch(`http://localhost:5000/api/reviews?courseId=${selectedCourse.id}`, { signal })
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews?courseId=${selectedCourse.id}`, { signal })
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setReviews(d); })
       .catch(err => { if (err.name !== 'AbortError') console.error('Failed to load reviews:', err); });
-    fetch(`http://localhost:5000/api/questions?courseId=${selectedCourse.id}`, { signal })
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/questions?courseId=${selectedCourse.id}`, { signal })
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setQuestions(d); }).catch(() => {});
-    fetch(`http://localhost:5000/api/materials?courseId=${selectedCourse.id}`, { signal })
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials?courseId=${selectedCourse.id}`, { signal })
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setMaterials(d); }).catch(() => {});
     return () => controller.abort();
   }, [selectedCourse?.id]);
@@ -1109,7 +1105,7 @@ const App = () => {
     setIsChangingTrack(false); setTrackSearch(''); setSelectedCourse(null); navigate('/');
   };
 
-  const filteredTracks = studyTracks.filter(t => t.label.includes(trackSearch));
+  const filteredTracks = (studyTracks || []).filter(t => t.label.includes(trackSearch));
   const suggestions = searchQuery.length > 1 ? allCourses.filter(c => c.title.includes(searchQuery) || c.code.includes(searchQuery)).slice(0, 5) : [];
 
   const filteredCourses = allCourses.filter(c => {
@@ -1134,7 +1130,7 @@ const App = () => {
     if (user?.isGuest || !newReviewComment) return;
     const data = { courseId: selectedCourse.id, authorId: user.id, difficulty: newReviewDifficulty, comment: newReviewComment, semester: newReviewSemester, year: newReviewYear, attendanceEnforced: newReviewAttendance, visibility: newReviewIdentity };
     try {
-      const res = editingReviewId ? await fetch(`http://localhost:5000/api/reviews/${editingReviewId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }) : await fetch('http://localhost:5000/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const res = editingReviewId ? await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${editingReviewId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }) : await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const saved = await res.json();
       if (!res.ok) throw new Error(saved.message || 'שגיאה בשמירת הביקורת');
       if (editingReviewId) {
@@ -1158,7 +1154,7 @@ const App = () => {
   const handleDeleteReview = async (id) => {
     if (!window.confirm('האם למחוק?')) return;
     try {
-      await fetch(`http://localhost:5000/api/reviews/${id}`, { method: 'DELETE' });
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${id}`, { method: 'DELETE' });
       setReviews(reviews.filter(r => r.id !== id));
       setAllReviews(allReviews.filter(r => r.id !== id));
       setAllCourses(allCourses.map(c => c.id === selectedCourse?.id ? { ...c, reviewCount: Math.max(0, (c.reviewCount || 0) - 1) } : c));
@@ -1171,7 +1167,7 @@ const App = () => {
   const handleCancelInlineEdit = () => { setEditingReviewId(null); setInlineEditComment(''); };
   const handleSaveInlineEdit = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: inlineEditComment }) });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: inlineEditComment }) });
       const saved = await res.json();
       setReviews(reviews.map(r => r.id === id ? saved : r));
       setAllReviews(allReviews.map(r => r.id === id ? saved : r));
@@ -1183,8 +1179,7 @@ const App = () => {
     if (!newQuestionTitle.trim() || newQuestionTitle.trim().length < 5) return alert('הכותרת חייבת להכיל לפחות 5 תווים');
     if (!newQuestionText.trim() || newQuestionText.trim().length < 10) return alert('תוכן השאלה חייב להכיל לפחות 10 תווים');
     try {
-      const res = await fetch('http://localhost:5000/api/questions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId: selectedCourse.id, userId: user.id, title: newQuestionTitle, content: newQuestionText }) });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/questions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId: selectedCourse.id, userId: user.id, title: newQuestionTitle, content: newQuestionText }) });      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
       const saved = await res.json();
       setQuestions([saved, ...questions]);
       setNewQuestionTitle('');
@@ -1196,7 +1191,7 @@ const App = () => {
   const handleDeleteQuestion = async (id) => {
     if (!window.confirm('האם למחוק את השאלה?')) return;
     try {
-      await fetch(`http://localhost:5000/api/questions/${id}`, { method: 'DELETE' });
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/questions/${id}`, { method: 'DELETE' });
       setQuestions(questions.filter(q => q.id !== id));
     } catch { alert('שגיאה במחיקת השאלה'); }
   };
@@ -1204,8 +1199,8 @@ const App = () => {
   const handlePostAnswer = async (questionId, content) => {
     if (!content || content.trim().length < 2) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/questions/${questionId}/answers`, {
-        method: 'POST',
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/questions/${questionId}/answers`, {
+      method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, content })
       });
@@ -1220,8 +1215,7 @@ const App = () => {
 
   const handleDeleteAnswer = async (questionId, answerId) => {
     try {
-      await fetch(`http://localhost:5000/api/answers/${answerId}`, { method: 'DELETE' });
-      setQuestions(questions.map(q => q.id === questionId
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/answers/${answerId}`, { method: 'DELETE' });      setQuestions(questions.map(q => q.id === questionId
         ? { ...q, answers: (q.answers || []).filter(a => a.id !== answerId) }
         : q
       ));
@@ -1237,7 +1231,7 @@ const App = () => {
     setReviews(reviews.map(rev => rev.id === id ? { ...rev, likedBy: updatedLikedBy } : rev));
     setAllReviews(allReviews.map(rev => rev.id === id ? { ...rev, likedBy: updatedLikedBy } : rev));
     try {
-      await fetch(`http://localhost:5000/api/reviews/${id}/vote`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) });
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${id}/vote`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) });
     } catch (err) {
       setReviews(reviews.map(rev => rev.id === id ? r : rev));
       setAllReviews(allReviews.map(rev => rev.id === id ? r : rev));
@@ -1247,21 +1241,21 @@ const App = () => {
 
   const handlePostRating = async () => {
     const data = { courseId: selectedCourse.id, authorId: user.id, difficulty: newReviewDifficulty, attendanceEnforced: newReviewAttendance, comment: null, semester: newReviewSemester, year: newReviewYear, visibility: newReviewIdentity };
-    try { const res = await fetch('http://localhost:5000/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setReviews([saved, ...reviews]); setAllReviews([saved, ...allReviews]); setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c)); setIsRatingModalOpen(false); alert('תודה על הדירוג!'); } catch (err) { alert('שגיאה'); }
+    try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setReviews([saved, ...reviews]); setAllReviews([saved, ...allReviews]); setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c)); setIsRatingModalOpen(false); alert('תודה על הדירוג!'); } catch (err) { alert('שגיאה'); }
   };
 
   const handlePostMaterial = async () => {
     const data = { courseId: selectedCourse.id, title: newMaterialTitle, category: newMaterialCategory, type: newMaterialFile.name.split('.').pop().toUpperCase(), author: user.name, date: new Date().toLocaleDateString('he-IL'), likedBy: [] };
-    try { const res = await fetch('http://localhost:5000/api/materials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewMaterialTitle(''); setNewMaterialFile(null); setIsMaterialModalOpen(false); alert('הועלה בהצלחה'); } catch (err) { alert('שגיאה'); }
+    try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewMaterialTitle(''); setNewMaterialFile(null); setIsMaterialModalOpen(false); alert('הועלה בהצלחה'); } catch (err) { alert('שגיאה'); }
   };
 
   const handlePostLink = async () => {
     const data = { courseId: selectedCourse.id, title: newLinkTitle, url: newLinkUrl, category: 'links', type: newLinkType.toUpperCase(), author: user.name, date: new Date().toLocaleDateString('he-IL'), isLink: true, likedBy: [] };
-    try { const res = await fetch('http://localhost:5000/api/materials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewLinkTitle(''); setNewLinkUrl(''); setIsLinkModalOpen(false); alert('נוסף בהצלחה'); } catch (err) { alert('שגיאה'); }
+    try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewLinkTitle(''); setNewLinkUrl(''); setIsLinkModalOpen(false); alert('נוסף בהצלחה'); } catch (err) { alert('שגיאה'); }
   };
 
-  const handleDeleteMaterial = async (id) => { if (window.confirm('למחוק?')) try { await fetch(`http://localhost:5000/api/materials/${id}`, { method: 'DELETE' }); setMaterials(materials.filter(m => m.id !== id)); alert('נמחק'); } catch (err) { alert('שגיאה'); } };
-  const handleUpdateMaterial = async (id, data) => { try { const res = await fetch(`http://localhost:5000/api/materials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials(materials.map(m => m.id === id ? saved : m)); alert('נשמר'); } catch (err) { alert('שגיאה'); } };
+  const handleDeleteMaterial = async (id) => { if (window.confirm('למחוק?')) try { await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials/${id}`, { method: 'DELETE' }); setMaterials(materials.filter(m => m.id !== id)); alert('נמחק'); } catch (err) { alert('שגיאה'); } };
+  const handleUpdateMaterial = async (id, data) => { try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials(materials.map(m => m.id === id ? saved : m)); alert('נשמר'); } catch (err) { alert('שגיאה'); } };
 
   const handleToggleFollow = async (id, title, status) => {
     // Optimistic update
@@ -1278,13 +1272,13 @@ const App = () => {
     // Persist to DB
     try {
       if (status) {
-        await fetch('http://localhost:5000/api/follows', {
+        await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/follows`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: user.id, courseId: id })
         });
       } else {
-        await fetch('http://localhost:5000/api/follows', {
+        await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/follows`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: user.id, courseId: id })
