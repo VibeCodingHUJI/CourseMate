@@ -31,7 +31,11 @@ pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
 });
 
-app.use(cors());
+app.use(cors({
+    origin: '*', // מאשר לכל הדומיינים (כולל הפרונטאנד הציבורי שלך) לפנות לבאקאנד
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Helper to standardize course data
