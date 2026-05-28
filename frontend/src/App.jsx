@@ -1026,9 +1026,10 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
       try {
         const currentTrack = user?.isGuest ? guestSelectedTrack : user?.track;
         if (!currentTrack || (user?.isGuest && !guestSelectedTrack)) { setAllCourses([]); return; }
-        let url = 'http://localhost:3000/courses';
-        if (/^\d{3}-\d{4}$/.test(currentTrack)) url = `http://localhost:5000/api/combinations/${currentTrack}/courses`;
-        else if (currentTrack === 'Computer Science') url = 'http://localhost:5000/api/combinations/521-3010/courses';
+        const _API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        let url = `${_API}/api/courses`;
+        if (/^\d{3}-\d{4}$/.test(currentTrack)) url = `${_API}/api/combinations/${currentTrack}/courses`;
+        else if (currentTrack === 'Computer Science') url = `${_API}/api/combinations/521-3010/courses`;
         const [cRes, rRes] = await Promise.all([fetch(url), fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews`)]);        const cData = await cRes.json();
         let rData = [];
         try { const parsed = await rRes.json(); if (Array.isArray(parsed)) rData = parsed; } catch {}

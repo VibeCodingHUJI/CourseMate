@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GraduationCap, ChevronDown, Check, Search } from 'lucide-react';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const AuthPage = ({ onLogin }) => {
   const [authMode, setAuthMode] = useState('login');
   const [authForm, setAuthForm] = useState({
@@ -17,7 +19,7 @@ const AuthPage = ({ onLogin }) => {
 
   // Fetch real study tracks on mount
   useEffect(() => {
-    fetch('http://localhost:5000/api/combinations')
+    fetch(`${API}/api/combinations`)
       .then(res => res.json())
       .then(data => {
         // SQL backend returns { value: [...] }
@@ -52,8 +54,8 @@ const AuthPage = ({ onLogin }) => {
 
     try {
       const url = authMode === 'signup'
-        ? 'http://localhost:5000/api/auth/signup'
-        : 'http://localhost:5000/api/auth/login';
+        ? `${API}/api/auth/signup`
+        : `${API}/api/auth/login`;
       const body = authMode === 'signup'
         ? { name: authForm.name, email: authForm.email, password: authForm.password, track: authForm.track }
         : { email: authForm.email, password: authForm.password };
@@ -66,7 +68,7 @@ const AuthPage = ({ onLogin }) => {
 
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
-        throw new Error(`שגיאת שרת (${response.status}) — ודאו שהשרת פועל על פורט 5000`);
+        throw new Error(`שגיאת שרת (${response.status}) — ודאו שהשרת פועל`);
       }
 
       const data = await response.json();

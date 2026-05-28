@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ChevronRight, Star, BookOpen, GraduationCap, AlertCircle, MessageSquare, Plus, X, Edit2, Trash2 } from 'lucide-react';
 
+const API = import.meta.env.VITE_API_URL || '${API}';
+
 const LecturerProfile = ({ user, onDepartmentClick }) => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -25,13 +27,13 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
     try {
       let res;
       if (editingReviewId) {
-        res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews/${editingReviewId}`, {
+        res = await fetch(`${API}/api/lecturers/${id}/reviews/${editingReviewId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ rating: newRating, comment: newComment })
         });
       } else {
-        res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews`, {
+        res = await fetch(`${API}/api/lecturers/${id}/reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: user.id, rating: newRating, comment: newComment })
@@ -61,7 +63,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
   const handleDeleteReview = async (reviewId) => {
     if (!window.confirm('האם אתם בטוחים שברצונכם למחוק את הביקורת?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/lecturers/${id}/reviews/${reviewId}`, { method: 'DELETE' });
+      const res = await fetch(`${API}/api/lecturers/${id}/reviews/${reviewId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       setReviews(prev => prev.filter(r => r.id !== reviewId));
       alert('הביקורת נמחקה בהצלחה');
@@ -89,9 +91,9 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
       try {
         setLoading(true);
         const [lecturerRes, coursesRes, reviewsRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/lecturers/${id}`),
-          fetch(`http://localhost:5000/api/lecturers/${id}/courses`),
-          fetch(`http://localhost:5000/api/lecturers/${id}/reviews`)
+          fetch(`${API}/api/lecturers/${id}`),
+          fetch(`${API}/api/lecturers/${id}/courses`),
+          fetch(`${API}/api/lecturers/${id}/reviews`)
         ]);
         if (!lecturerRes.ok) throw new Error('Lecturer not found');
         setLecturer(await lecturerRes.json());

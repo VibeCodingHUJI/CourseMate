@@ -100,6 +100,8 @@ const SearchableSelect = ({ options, value, onChange, placeholder, label }) => {
   );
 };
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   const [combinations, setCombinations] = useState([]);
   const [selectedCombination, setSelectedCombination] = useState(null);
@@ -143,7 +145,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   };
 
   useEffect(() => {
-    fetch('http://localhost:3000/combinations')
+    fetch(`${API}/api/combinations`)
       .then(res => res.json())
       .then(data => setCombinations(data.reverse()))
       .catch(err => console.error('Error fetching combinations:', err));
@@ -151,7 +153,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
 
   useEffect(() => {
     if (selectedCombination) {
-      fetch(`http://localhost:3000/combinationQuestions?combinationId=${selectedCombination.id}`)
+      fetch(`${API}/api/combinationQuestions?combinationId=${selectedCombination.id}`)
         .then(res => res.json())
         .then(data => setCombinationQuestions(data.reverse()))
         .catch(err => console.error('Error fetching combination questions:', err));
@@ -161,7 +163,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   const handleUpdateQuestion = async (qId) => {
     if (!editingQuestionText) return;
     try {
-      const res = await fetch(`http://localhost:3000/combinationQuestions/${qId}`, {
+      const res = await fetch(`${API}/api/combinationQuestions/${qId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: editingQuestionText })
@@ -186,7 +188,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
     };
 
     try {
-      const res = await fetch('http://localhost:3000/combinations', {
+      const res = await fetch(`${API}/api/combinations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newComb)
@@ -201,7 +203,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
         author: user.isGuest ? 'אורח/ת' : user.name
       };
       
-      await fetch('http://localhost:3000/combinationQuestions', {
+      await fetch(`${API}/api/combinationQuestions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newQ)
@@ -227,7 +229,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
     };
 
     try {
-      const res = await fetch('http://localhost:3000/combinationQuestions', {
+      const res = await fetch(`${API}/api/combinationQuestions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newQ)
@@ -253,7 +255,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
     }];
 
     try {
-      const res = await fetch(`http://localhost:3000/combinationQuestions/${qId}`, {
+      const res = await fetch(`${API}/api/combinationQuestions/${qId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answers: updatedAnswers })
@@ -285,7 +287,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
     });
 
     try {
-      const res = await fetch(`http://localhost:3000/combinationQuestions/${qId}`, {
+      const res = await fetch(`${API}/api/combinationQuestions/${qId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answers: updatedAnswers })
