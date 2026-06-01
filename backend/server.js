@@ -527,7 +527,7 @@ const mapMaterial = (m) => ({
   type: m.file_extension ? m.file_extension.toUpperCase() : (m.material_type === 'link' ? 'LINK' : 'FILE'),
   fileSizeBytes: m.file_size_bytes,
   date: m.created_at ? new Date(m.created_at).toLocaleDateString('he-IL') : '',
-  category: m.material_type === 'link' ? 'links' : 'summaries',
+  category: m.category || (m.material_type === 'link' ? 'links' : 'misc'),
   likedBy: []
 });
 
@@ -548,13 +548,14 @@ app.get('/api/materials', async (req, res) => {
 
 app.post('/api/materials', async (req, res) => {
   try {
-    const { courseId, userId, title, materialType, url, fileExtension, fileSizeBytes } = req.body;
+    const { courseId, userId, title, materialType, url, fileExtension, fileSizeBytes, category } = req.body;
+    console.log('POST /api/materials - received category:', category);
     const query = `
-      INSERT INTO course_materials (course_id, user_id, title, material_type, url, file_extension, file_size_bytes)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO course_materials (course_id, user_id, title, material_type, url, file_extension, file_size_bytes, category)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
-    const result = await pool.query(query, [courseId, userId, title, materialType, url, fileExtension || null, fileSizeBytes || null]);
+    const result = await pool.query(query, [courseId, userId, title, materialType, url, fileExtension || null, fileSizeBytes || null, category || 'misc']);
     res.status(201).json(mapMaterial(result.rows[0]));
   } catch (err) {
     console.error('Error creating material:', err);
@@ -856,6 +857,249 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({ id: user.id, name: user.full_name, email: user.email, track: user.track, isGuest: false });
   } catch (err) {
     console.error('Error logging in:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ==== GENERAL FORUMS ====
+
+const generateForumSlug = (title) =>
+  title.replace(/\s+/g, '-').substring(0, 50) + '-' + Date.now();
+
+const parseForumMeta = (description) => {
+  try { return JSON.parse(description) || {}; } catch { return {}; }
+};
+
+app.get('/api/general-forums', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('general_forums')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    res.json((data || []).map(f => {
+      const meta = parseForumMeta(f.description);
+      return {
+        id: f.forum_id,
+        title: f.title,
+        slug: f.slug,
+        majorA: meta.majorA || '',
+        majorB: meta.majorB || '',
+        academicYear: meta.academicYear || '',
+        date: new Date(f.created_at).toLocaleDateString('he-IL'),
+        replies: 0
+      };
+    }));
+  } catch (err) {
+    console.error('Error fetching general forums:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/general-forums', async (req, res) => {
+  try {
+    const { title, majorA, majorB, academicYear } = req.body;
+    if (!title) return res.status(400).json({ message: 'title is required' });
+
+    const slug = generateForumSlug(title);
+    const description = JSON.stringify({ majorA, majorB, academicYear });
+
+    const { data, error } = await supabase
+      .from('general_forums')
+      .insert({ title, slug, description })
+      .select()
+      .single();
+    if (error) throw error;
+
+    res.json({
+      id: data.forum_id,
+      title: data.title,
+      slug: data.slug,
+      majorA,
+      majorB,
+      academicYear,
+      date: new Date(data.created_at).toLocaleDateString('he-IL'),
+      replies: 0
+    });
+  } catch (err) {
+    console.error('Error creating general forum:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/general-forum-questions', async (req, res) => {
+  try {
+    const { forumId } = req.query;
+    if (!forumId) return res.status(400).json({ message: 'forumId is required' });
+
+    const { data: questions, error: qErr } = await supabase
+      .from('general_forum_questions')
+      .select('*')
+      .eq('forum_id', forumId)
+      .order('created_at', { ascending: false });
+    if (qErr) throw qErr;
+
+    if (!questions || questions.length === 0) return res.json([]);
+
+    const questionIds = questions.map(q => q.question_id);
+    const { data: answers, error: aErr } = await supabase
+      .from('general_forum_answers')
+      .select('*')
+      .in('question_id', questionIds)
+      .order('created_at', { ascending: true });
+    if (aErr) throw aErr;
+
+    const answersMap = {};
+    (answers || []).forEach(a => {
+      if (!answersMap[a.question_id]) answersMap[a.question_id] = [];
+      answersMap[a.question_id].push({
+        id: a.answer_id,
+        text: a.content,
+        author: a.guest_nickname || 'אורח/ת',
+        authorId: a.user_id,
+        date: new Date(a.created_at).toLocaleDateString('he-IL'),
+        likedBy: []
+      });
+    });
+
+    res.json(questions.map(q => ({
+      id: q.question_id,
+      combinationId: q.forum_id,
+      question: q.title,
+      author: q.guest_nickname || 'אורח/ת',
+      authorId: q.user_id,
+      date: new Date(q.created_at).toLocaleDateString('he-IL'),
+      answers: answersMap[q.question_id] || []
+    })));
+  } catch (err) {
+    console.error('Error fetching forum questions:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/general-forum-questions', async (req, res) => {
+  try {
+    const { forumId, question, author, userId } = req.body;
+    if (!forumId || !question) return res.status(400).json({ message: 'forumId and question are required' });
+
+    const paddedContent = question.length >= 10 ? question : question + ' '.repeat(10 - question.length);
+
+    const { data, error } = await supabase
+      .from('general_forum_questions')
+      .insert({
+        forum_id: forumId,
+        user_id: userId || null,
+        guest_nickname: author || 'אורח/ת',
+        title: question,
+        content: paddedContent
+      })
+      .select()
+      .single();
+    if (error) throw error;
+
+    res.json({
+      id: data.question_id,
+      combinationId: data.forum_id,
+      question: data.title,
+      author: data.guest_nickname,
+      authorId: data.user_id,
+      date: new Date(data.created_at).toLocaleDateString('he-IL'),
+      answers: []
+    });
+  } catch (err) {
+    console.error('Error creating forum question:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch('/api/general-forum-questions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { question } = req.body;
+    if (!question) return res.status(400).json({ message: 'question text is required' });
+
+    const { data, error } = await supabase
+      .from('general_forum_questions')
+      .update({ title: question })
+      .eq('question_id', id)
+      .select()
+      .single();
+    if (error) throw error;
+
+    const { data: answers } = await supabase
+      .from('general_forum_answers')
+      .select('*')
+      .eq('question_id', id)
+      .order('created_at', { ascending: true });
+
+    res.json({
+      id: data.question_id,
+      combinationId: data.forum_id,
+      question: data.title,
+      author: data.guest_nickname,
+      authorId: data.user_id,
+      date: new Date(data.created_at).toLocaleDateString('he-IL'),
+      answers: (answers || []).map(a => ({
+        id: a.answer_id,
+        text: a.content,
+        author: a.guest_nickname || 'אורח/ת',
+        authorId: a.user_id,
+        date: new Date(a.created_at).toLocaleDateString('he-IL'),
+        likedBy: []
+      }))
+    });
+  } catch (err) {
+    console.error('Error updating forum question:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/general-forum-answers', async (req, res) => {
+  try {
+    const { questionId, text, author, userId } = req.body;
+    if (!questionId || !text) return res.status(400).json({ message: 'questionId and text are required' });
+
+    const { error: insertErr } = await supabase
+      .from('general_forum_answers')
+      .insert({
+        question_id: questionId,
+        user_id: userId || null,
+        guest_nickname: author || 'אורח/ת',
+        content: text
+      });
+    if (insertErr) throw insertErr;
+
+    const { data: question } = await supabase
+      .from('general_forum_questions')
+      .select('*')
+      .eq('question_id', questionId)
+      .single();
+
+    const { data: answers } = await supabase
+      .from('general_forum_answers')
+      .select('*')
+      .eq('question_id', questionId)
+      .order('created_at', { ascending: true });
+
+    res.json({
+      id: question.question_id,
+      combinationId: question.forum_id,
+      question: question.title,
+      author: question.guest_nickname,
+      authorId: question.user_id,
+      date: new Date(question.created_at).toLocaleDateString('he-IL'),
+      answers: (answers || []).map(a => ({
+        id: a.answer_id,
+        text: a.content,
+        author: a.guest_nickname || 'אורח/ת',
+        authorId: a.user_id,
+        date: new Date(a.created_at).toLocaleDateString('he-IL'),
+        likedBy: []
+      }))
+    });
+  } catch (err) {
+    console.error('Error adding forum answer:', err);
     res.status(500).json({ message: err.message });
   }
 });
