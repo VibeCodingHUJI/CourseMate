@@ -1269,7 +1269,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
   };
 
   const handleDeleteMaterial = async (id) => { if (window.confirm('למחוק?')) try { await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials/${id}`, { method: 'DELETE' }); setMaterials(materials.filter(m => m.id !== id)); alert('נמחק'); } catch (err) { alert('שגיאה'); } };
-  const handleOpenMaterialUpload = (categoryId) => { materialCategoryRef.current = categoryId; setNewMaterialCategory(categoryId); setIsMaterialModalOpen(true); };
+  const handleOpenMaterialUpload = (categoryId) => { console.log('Opening upload for category:', categoryId); materialCategoryRef.current = categoryId; setNewMaterialCategory(categoryId); setIsMaterialModalOpen(true); };
   const handleUpdateMaterial = async (id, data) => { try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials(materials.map(m => m.id === id ? saved : m)); alert('נשמר'); } catch (err) { alert('שגיאה'); } };
 
   const handleToggleFollow = async (id, title, status) => {
