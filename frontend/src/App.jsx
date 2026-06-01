@@ -1250,7 +1250,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
     if (!newMaterialFile || !newMaterialTitle.trim()) return alert('נא למלא כותרת ולבחור קובץ');
     try {
       const fileExt = newMaterialFile.name.split('.').pop().toLowerCase();
-      const filePath = `${selectedCourse.id}/${Date.now()}_${newMaterialFile.name}`;
+      const filePath = `${selectedCourse.id}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from('course-files').upload(filePath, newMaterialFile);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('course-files').getPublicUrl(filePath);
