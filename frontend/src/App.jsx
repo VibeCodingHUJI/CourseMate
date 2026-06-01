@@ -428,7 +428,7 @@ const CourseDetail = ({
   handleDeleteQuestion,
   handlePostAnswer,
   handleDeleteAnswer,
-  setIsMaterialModalOpen,
+  onOpenMaterialUpload,
   setIsLinkModalOpen,
   materials,
   onUpdateMaterial,
@@ -838,12 +838,6 @@ const CourseDetail = ({
           <div className="space-y-10 text-right">
             <div className="flex justify-between items-start mb-6">
               <h2 className="text-2xl font-black text-slate-900">חומרי לימוד</h2>
-              {!user.isGuest && (
-                <button onClick={() => setIsMaterialModalOpen(true)} className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-2">
-                  <Upload className="h-4 w-4" />
-                  העלאת חומר לימוד
-                </button>
-              )}
             </div>
 
             {user.isGuest ? (
@@ -865,11 +859,18 @@ const CourseDetail = ({
                           <h3 className="text-xl font-black text-slate-800">{category.label}</h3>
                           <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black">{categoryMaterials.length}</span>
                         </div>
-                        {category.id === 'links' && !user.isGuest && (
-                          <button onClick={() => setIsLinkModalOpen(true)} className="text-indigo-600 hover:text-indigo-700 font-black text-xs flex items-center gap-1.5 transition-all px-3 py-1.5 bg-indigo-50 rounded-xl">
-                            <LinkIcon className="h-3 w-3" />
-                            הוספת קישור
-                          </button>
+                        {!user.isGuest && (
+                          category.id === 'links' ? (
+                            <button onClick={() => setIsLinkModalOpen(true)} className="text-indigo-600 hover:text-indigo-700 font-black text-xs flex items-center gap-1.5 transition-all px-3 py-1.5 bg-indigo-50 rounded-xl">
+                              <LinkIcon className="h-3 w-3" />
+                              הוספת קישור
+                            </button>
+                          ) : (
+                            <button onClick={() => onOpenMaterialUpload(category.id)} className="text-indigo-600 hover:text-indigo-700 font-black text-xs flex items-center gap-1.5 transition-all px-3 py-1.5 bg-indigo-50 rounded-xl">
+                              <Upload className="h-3 w-3" />
+                              העלאה
+                            </button>
+                          )
                         )}
                       </div>
                       <div className="grid grid-cols-1 gap-4">
@@ -1254,7 +1255,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
       const { error: uploadError } = await supabase.storage.from('course-files').upload(filePath, newMaterialFile);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('course-files').getPublicUrl(filePath);
-      const data = { courseId: selectedCourse.id, userId: user.id, title: newMaterialTitle, materialType: 'file', url: publicUrl, fileExtension: fileExt, fileSizeBytes: newMaterialFile.size };
+      const data = { courseId: selectedCourse.id, userId: user.id, title: newMaterialTitle, materialType: 'file', url: publicUrl, fileExtension: fileExt, fileSizeBytes: newMaterialFile.size, category: newMaterialCategory };
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const saved = await res.json();
       setMaterials([saved, ...materials]); setNewMaterialTitle(''); setNewMaterialFile(null); setIsMaterialModalOpen(false); alert('הועלה בהצלחה');
@@ -1267,6 +1268,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
   };
 
   const handleDeleteMaterial = async (id) => { if (window.confirm('למחוק?')) try { await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials/${id}`, { method: 'DELETE' }); setMaterials(materials.filter(m => m.id !== id)); alert('נמחק'); } catch (err) { alert('שגיאה'); } };
+  const handleOpenMaterialUpload = (categoryId) => { setNewMaterialCategory(categoryId); setIsMaterialModalOpen(true); };
   const handleUpdateMaterial = async (id, data) => { try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials(materials.map(m => m.id === id ? saved : m)); alert('נשמר'); } catch (err) { alert('שגיאה'); } };
 
   const handleToggleFollow = async (id, title, status) => {
@@ -1350,7 +1352,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
       <main className="flex-grow container mx-auto px-6 py-12">
         <Routes>
           <Route path="/lecturer/:id" element={<LecturerProfile user={user} onDepartmentClick={(dept) => { const tT = (studyTracks || []).find(t => t?.label === dept || t?.value === dept)?.value || dept; handleChangeTrack(tT); navigate('/'); }} />} />
-          <Route path="/course/:id" element={<CourseDetail selectedCourse={selectedCourse} navigate={navigate} activeTab={activeTab} setActiveTab={setActiveTab} reviews={reviews} user={user} setIsReviewModalOpen={setIsReviewModalOpen} setIsRatingModalOpen={setIsRatingModalOpen} handleLogout={handleLogout} handleLikeReview={handleLikeReview} handleDeleteReview={handleDeleteReview} handleEditReview={handleEditReview} editingReviewId={editingReviewId} inlineEditComment={inlineEditComment} setInlineEditComment={setInlineEditComment} handleSaveInlineEdit={handleSaveInlineEdit} handleCancelInlineEdit={handleCancelInlineEdit} questions={questions} setIsQuestionModalOpen={setIsQuestionModalOpen} handleDeleteQuestion={handleDeleteQuestion} handlePostAnswer={handlePostAnswer} handleDeleteAnswer={handleDeleteAnswer} setIsMaterialModalOpen={setIsMaterialModalOpen} setIsLinkModalOpen={setIsLinkModalOpen} materials={materials} onUpdateMaterial={handleUpdateMaterial} onDeleteMaterial={handleDeleteMaterial} isFollowing={selectedCourse ? followedCourseIds.includes(selectedCourse.id) : false} onToggleFollow={handleToggleFollow} />} />
+          <Route path="/course/:id" element={<CourseDetail selectedCourse={selectedCourse} navigate={navigate} activeTab={activeTab} setActiveTab={setActiveTab} reviews={reviews} user={user} setIsReviewModalOpen={setIsReviewModalOpen} setIsRatingModalOpen={setIsRatingModalOpen} handleLogout={handleLogout} handleLikeReview={handleLikeReview} handleDeleteReview={handleDeleteReview} handleEditReview={handleEditReview} editingReviewId={editingReviewId} inlineEditComment={inlineEditComment} setInlineEditComment={setInlineEditComment} handleSaveInlineEdit={handleSaveInlineEdit} handleCancelInlineEdit={handleCancelInlineEdit} questions={questions} setIsQuestionModalOpen={setIsQuestionModalOpen} handleDeleteQuestion={handleDeleteQuestion} handlePostAnswer={handlePostAnswer} handleDeleteAnswer={handleDeleteAnswer} onOpenMaterialUpload={handleOpenMaterialUpload} setIsLinkModalOpen={setIsLinkModalOpen} materials={materials} onUpdateMaterial={handleUpdateMaterial} onDeleteMaterial={handleDeleteMaterial} isFollowing={selectedCourse ? followedCourseIds.includes(selectedCourse.id) : false} onToggleFollow={handleToggleFollow} />} />
           <Route path="/" element={<>{user.isGuest && <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500"><button onClick={() => setGuestTab('forum')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>פורום שילובים</button><button onClick={() => setGuestTab('courses')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>צפייה בקורסים</button></div>}{(user.isGuest && guestTab === 'forum') ? <CombinationForum user={user} onLogout={handleLogout} onTrackSelect={handleChangeTrack} STUDY_TRACKS={studyTracks} /> : <Dashboard user={user} guestSelectedTrack={guestSelectedTrack} setIsGuestDrawerOpen={setIsGuestDrawerOpen} allCourses={allCourses} filteredCourses={filteredCourses} courseFilter={courseFilter} setCourseFilter={setCourseFilter} searchQuery={searchQuery} setSearchQuery={setSearchQuery} showSuggestions={showSuggestions} setShowSuggestions={setShowSuggestions} suggestions={suggestions} navigate={navigate} studyTracks={studyTracks} filterSemester={filterSemester} setFilterSemester={setFilterSemester} filterCampus={filterCampus} setFilterCampus={setFilterCampus} filterLanguage={filterLanguage} setFilterLanguage={setFilterLanguage} filterYear={filterYear} setFilterYear={setFilterYear} studentForums={studentForums} studentForumQuestions={studentForumQuestions} newStudentForumQ={newStudentForumQ} setNewStudentForumQ={setNewStudentForumQ} onPostStudentForumQ={handlePostStudentForumQ} onPostStudentForumA={handlePostStudentForumA} expandedStudentQs={expandedStudentQs} onToggleStudentQ={toggleStudentQ} activeStudentForumId={activeStudentForumId} setActiveStudentForumId={setActiveStudentForumId} isStudentForumModalOpen={isStudentForumModalOpen} setIsStudentForumModalOpen={setIsStudentForumModalOpen} />}</>} />
         </Routes>
       </main>
