@@ -1257,6 +1257,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('course-files').getPublicUrl(filePath);
       const data = { courseId: selectedCourse.id, userId: user.id, title: newMaterialTitle, materialType: 'file', url: publicUrl, fileExtension: fileExt, fileSizeBytes: newMaterialFile.size, category: materialCategoryRef.current };
+      console.log('Submitting material with category:', materialCategoryRef.current);
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const saved = await res.json();
       setMaterials([saved, ...materials]); setNewMaterialTitle(''); setNewMaterialFile(null); setIsMaterialModalOpen(false); alert('הועלה בהצלחה');
