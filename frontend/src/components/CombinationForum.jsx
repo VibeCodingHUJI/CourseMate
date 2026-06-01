@@ -227,6 +227,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
       const updatedQ = await res.json();
       setCombinationQuestions(combinationQuestions.map(q => q.id === qId ? updatedQ : q));
       setAnswerTexts(prev => ({ ...prev, [qId]: '' }));
+      setExpandedQuestions(prev => ({ ...prev, [qId]: true }));
     } catch (err) {
       alert('שגיאה בפרסום התשובה');
     }
