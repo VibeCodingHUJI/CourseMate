@@ -1090,6 +1090,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
   const [newLinkType, setNewLinkType] = useState('drive');
   const [newMaterialTitle, setNewMaterialTitle] = useState('');
   const [newMaterialCategory, setNewMaterialCategory] = useState('summaries');
+  const materialCategoryRef = useRef('summaries');
   const [newMaterialFile, setNewMaterialFile] = useState(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState(null);
@@ -1255,7 +1256,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
       const { error: uploadError } = await supabase.storage.from('course-files').upload(filePath, newMaterialFile);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('course-files').getPublicUrl(filePath);
-      const data = { courseId: selectedCourse.id, userId: user.id, title: newMaterialTitle, materialType: 'file', url: publicUrl, fileExtension: fileExt, fileSizeBytes: newMaterialFile.size, category: newMaterialCategory };
+      const data = { courseId: selectedCourse.id, userId: user.id, title: newMaterialTitle, materialType: 'file', url: publicUrl, fileExtension: fileExt, fileSizeBytes: newMaterialFile.size, category: materialCategoryRef.current };
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const saved = await res.json();
       setMaterials([saved, ...materials]); setNewMaterialTitle(''); setNewMaterialFile(null); setIsMaterialModalOpen(false); alert('הועלה בהצלחה');
@@ -1268,7 +1269,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
   };
 
   const handleDeleteMaterial = async (id) => { if (window.confirm('למחוק?')) try { await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials/${id}`, { method: 'DELETE' }); setMaterials(materials.filter(m => m.id !== id)); alert('נמחק'); } catch (err) { alert('שגיאה'); } };
-  const handleOpenMaterialUpload = (categoryId) => { setNewMaterialCategory(categoryId); setIsMaterialModalOpen(true); };
+  const handleOpenMaterialUpload = (categoryId) => { materialCategoryRef.current = categoryId; setNewMaterialCategory(categoryId); setIsMaterialModalOpen(true); };
   const handleUpdateMaterial = async (id, data) => { try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials(materials.map(m => m.id === id ? saved : m)); alert('נשמר'); } catch (err) { alert('שגיאה'); } };
 
   const handleToggleFollow = async (id, title, status) => {
