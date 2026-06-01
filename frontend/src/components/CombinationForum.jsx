@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  MessageSquare, ChevronLeft, X, Send, User, BookOpen, Search, Heart, Pencil, Check, RotateCcw, ChevronDown
+import React, { useState, useEffect } from 'react';
+import {
+  MessageSquare, ChevronLeft, X, User, Heart, ChevronDown
 } from 'lucide-react';
 
 const FIXED_DEPARTMENTS = [
@@ -129,19 +129,12 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
     { value: 'תשפ"ז (2026-27)', label: 'תשפ"ז (2026-27)' }
   ];
 
-  // Editing logic
-  const [editingQuestionId, setEditingQuestionId] = useState(null);
-  const [editingQuestionText, setEditingQuestionText] = useState('');
-
   // Collapsible logic
   const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [answerTexts, setAnswerTexts] = useState({});
 
   const toggleQuestion = (qId) => {
-    if (editingQuestionId) return; // Don't toggle while editing
-    setExpandedQuestions(prev => ({
-      ...prev,
-      [qId]: !prev[qId]
-    }));
+    setExpandedQuestions(prev => ({ ...prev, [qId]: !prev[qId] }));
   };
 
   useEffect(() => {
@@ -159,22 +152,6 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
         .catch(err => console.error('Error fetching forum questions:', err));
     }
   }, [selectedCombination]);
-
-  const handleUpdateQuestion = async (qId) => {
-    if (!editingQuestionText) return;
-    try {
-      const res = await fetch(`${API}/api/general-forum-questions/${qId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: editingQuestionText })
-      });
-      const updatedQ = await res.json();
-      setCombinationQuestions(combinationQuestions.map(q => q.id === qId ? updatedQ : q));
-      setEditingQuestionId(null);
-    } catch (err) {
-      alert('שגיאה בעדכון השאלה');
-    }
-  };
 
   const handlePostCombination = async () => {
     if (!majorA || !majorB || !initialQuestion) return alert('נא למלא את כל השדות');
@@ -233,7 +210,8 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
     }
   };
 
-  const handlePostAnswer = async (qId, text) => {
+  const handlePostAnswer = async (qId) => {
+    const text = (answerTexts[qId] || '').trim();
     if (!text) return;
     try {
       const res = await fetch(`${API}/api/general-forum-answers`, {
@@ -248,6 +226,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
       });
       const updatedQ = await res.json();
       setCombinationQuestions(combinationQuestions.map(q => q.id === qId ? updatedQ : q));
+      setAnswerTexts(prev => ({ ...prev, [qId]: '' }));
     } catch (err) {
       alert('שגיאה בפרסום התשובה');
     }
@@ -408,68 +387,33 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
           <div className="space-y-6">
             {combinationQuestions.map(q => (
               <div key={q.id} className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden text-right">
-                <div 
+                <div
                   onClick={() => toggleQuestion(q.id)}
                   className="p-8 bg-slate-900 text-white flex justify-between items-center cursor-pointer hover:bg-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-4 flex-1">
                     <MessageSquare className={`h-6 w-6 transition-colors ${expandedQuestions[q.id] ? 'text-indigo-400' : 'text-slate-500'}`} />
-                    {editingQuestionId === q.id ? (
-                      <div className="flex items-center gap-2 flex-1" onClick={e => e.stopPropagation()}>
-                        <input
-                          autoFocus
-                          type="text"
-                          value={editingQuestionText}
-                          onChange={(e) => setEditingQuestionText(e.target.value)}
-                          className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 outline-none focus:border-indigo-400 text-white font-bold"
-                        />
-                        <div className="flex gap-2">
-                          <button onClick={() => handleUpdateQuestion(q.id)} className="bg-emerald-500 text-white p-2 rounded-xl hover:bg-emerald-600 transition-all"><Check className="h-4 w-4" /></button>
-                          <button onClick={() => setEditingQuestionId(null)} className="bg-white/10 text-white p-2 rounded-xl hover:bg-white/20 transition-all"><RotateCcw className="h-4 w-4" /></button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-xl font-bold">{q.question}</div>
-                    )}
+                    <div className="text-xl font-bold">{q.question}</div>
                   </div>
                   <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-4">
-                      <div className="text-xs text-white/50">פורסם ב-{q.date} על ידי {q.author}</div>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingQuestionId(q.id);
-                          setEditingQuestionText(q.question);
-                        }}
-                        className="text-white/30 hover:text-white transition-colors"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <div className="text-xs text-white/50">פורסם ב-{q.date} על ידי {q.author}</div>
                     <ChevronLeft className={`h-5 w-5 text-slate-500 transition-transform duration-300 ${expandedQuestions[q.id] ? '-rotate-90' : 'rotate-0'}`} />
                   </div>
                 </div>
 
                 <div className="p-6 border-b border-slate-100" style={{ backgroundColor: '#f0f2f5' }}>
                   <div className="flex items-center gap-4" dir="rtl">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
+                      value={answerTexts[q.id] || ''}
+                      onChange={(e) => setAnswerTexts(prev => ({ ...prev, [q.id]: e.target.value }))}
                       placeholder="הוסף תגובה..."
-                      onKeyDown={(e) => { 
-                        if (e.key === 'Enter') { 
-                          handlePostAnswer(q.id, e.target.value); 
-                          e.target.value = ''; 
-                        } 
-                      }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handlePostAnswer(q.id); }}
                       className="flex-1 bg-white border border-slate-200 rounded-2xl py-3 px-6 outline-none text-right font-medium focus:border-indigo-500 transition-all"
                       style={{ direction: 'rtl' }}
                     />
-                    <button 
-                      onClick={(e) => {
-                        const input = e.currentTarget.previousSibling;
-                        handlePostAnswer(q.id, input.value);
-                        input.value = '';
-                      }}
+                    <button
+                      onClick={() => handlePostAnswer(q.id)}
                       className="bg-indigo-600 text-white px-10 py-3 rounded-2xl font-black hover:bg-indigo-700 transition-all active:scale-95 shadow-md"
                     >
                       שלח
