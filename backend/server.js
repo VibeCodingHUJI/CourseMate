@@ -515,22 +515,31 @@ app.delete('/api/questions/:id', async (req, res) => {
 
 // --- Materials Routes ---
 
+const mapMaterial = (m) => ({
+  id: m.material_id,
+  courseId: m.course_id,
+  userId: m.user_id,
+  title: m.title,
+  materialType: m.material_type,
+  isLink: m.material_type === 'link',
+  url: m.url,
+  fileExtension: m.file_extension,
+  type: m.file_extension ? m.file_extension.toUpperCase() : (m.material_type === 'link' ? 'LINK' : 'FILE'),
+  fileSizeBytes: m.file_size_bytes,
+  date: m.created_at ? new Date(m.created_at).toLocaleDateString('he-IL') : '',
+  category: m.material_type === 'link' ? 'links' : 'summaries',
+  likedBy: []
+});
+
 app.get('/api/materials', async (req, res) => {
   try {
     const { courseId } = req.query;
     let query = 'SELECT * FROM course_materials';
     let params = [];
-    if (courseId) {
-      query += ' WHERE course_id = $1';
-      params.push(courseId);
-    }
+    if (courseId) { query += ' WHERE course_id = $1'; params.push(courseId); }
+    query += ' ORDER BY created_at DESC';
     const result = await pool.query(query, params);
-    res.json(result.rows.map(m => ({
-      ...m,
-      courseId: m.course_id,
-      isLink: m.is_link,
-      likedBy: m.liked_by || []
-    })));
+    res.json(result.rows.map(mapMaterial));
   } catch (err) {
     console.error('Error fetching materials:', err);
     res.status(500).json({ message: err.message });
@@ -539,15 +548,14 @@ app.get('/api/materials', async (req, res) => {
 
 app.post('/api/materials', async (req, res) => {
   try {
-    const { courseId, title, category, type, author, date, url, isLink } = req.body;
+    const { courseId, userId, title, materialType, url, fileExtension, fileSizeBytes } = req.body;
     const query = `
-      INSERT INTO course_materials (course_id, title, category, type, author, date, url, is_link)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO course_materials (course_id, user_id, title, material_type, url, file_extension, file_size_bytes)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
-    const result = await pool.query(query, [courseId, title, category, type, author, date, url, isLink || false]);
-    const saved = result.rows[0];
-    res.status(201).json({ ...saved, courseId: saved.course_id, isLink: saved.is_link, likedBy: saved.liked_by || [] });
+    const result = await pool.query(query, [courseId, userId, title, materialType, url, fileExtension || null, fileSizeBytes || null]);
+    res.status(201).json(mapMaterial(result.rows[0]));
   } catch (err) {
     console.error('Error creating material:', err);
     res.status(500).json({ message: err.message });
@@ -557,21 +565,17 @@ app.post('/api/materials', async (req, res) => {
 app.patch('/api/materials/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, url, likedBy } = req.body;
+    const { title, url } = req.body;
     let updates = [];
     let params = [];
     let index = 1;
     if (title !== undefined) { updates.push(`title = $${index++}`); params.push(title); }
     if (url !== undefined) { updates.push(`url = $${index++}`); params.push(url); }
-    if (likedBy !== undefined) { updates.push(`liked_by = $${index++}`); params.push(likedBy); }
-    
     if (updates.length === 0) return res.status(400).json({ message: 'No updates provided' });
     params.push(id);
-    const query = `UPDATE course_materials SET ${updates.join(', ')} WHERE id = $${index} RETURNING *`;
-    const result = await pool.query(query, params);
+    const result = await pool.query(`UPDATE course_materials SET ${updates.join(', ')} WHERE material_id = $${index} RETURNING *`, params);
     if (result.rows.length === 0) return res.status(404).json({ message: 'Material not found' });
-    const saved = result.rows[0];
-    res.json({ ...saved, courseId: saved.course_id, isLink: saved.is_link, likedBy: saved.liked_by || [] });
+    res.json(mapMaterial(result.rows[0]));
   } catch (err) {
     console.error('Error updating material:', err);
     res.status(500).json({ message: err.message });
@@ -581,8 +585,14 @@ app.patch('/api/materials/:id', async (req, res) => {
 app.delete('/api/materials/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM course_materials WHERE id = $1', [id]);
-    if (result.rowCount === 0) return res.status(404).json({ message: 'Material not found' });
+    const check = await pool.query('SELECT material_type, url FROM course_materials WHERE material_id = $1', [id]);
+    if (check.rows.length === 0) return res.status(404).json({ message: 'Material not found' });
+    const { material_type, url } = check.rows[0];
+    if (material_type === 'file') {
+      const path = url.split('/course-files/')[1];
+      if (path) await supabase.storage.from('course-files').remove([decodeURIComponent(path)]);
+    }
+    await pool.query('DELETE FROM course_materials WHERE material_id = $1', [id]);
     res.json({ message: 'Material deleted successfully' });
   } catch (err) {
     console.error('Error deleting material:', err);
