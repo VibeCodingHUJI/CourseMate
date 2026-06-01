@@ -145,25 +145,25 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   };
 
   useEffect(() => {
-    fetch(`${API}/api/combinations`)
+    fetch(`${API}/api/general-forums`)
       .then(res => res.json())
-      .then(data => setCombinations(data.reverse()))
-      .catch(err => console.error('Error fetching combinations:', err));
+      .then(data => setCombinations(data))
+      .catch(err => console.error('Error fetching forums:', err));
   }, []);
 
   useEffect(() => {
     if (selectedCombination) {
-      fetch(`${API}/api/combinationQuestions?combinationId=${selectedCombination.id}`)
+      fetch(`${API}/api/general-forum-questions?forumId=${selectedCombination.id}`)
         .then(res => res.json())
-        .then(data => setCombinationQuestions(data.reverse()))
-        .catch(err => console.error('Error fetching combination questions:', err));
+        .then(data => setCombinationQuestions(data))
+        .catch(err => console.error('Error fetching forum questions:', err));
     }
   }, [selectedCombination]);
 
   const handleUpdateQuestion = async (qId) => {
     if (!editingQuestionText) return;
     try {
-      const res = await fetch(`${API}/api/combinationQuestions/${qId}`, {
+      const res = await fetch(`${API}/api/general-forum-questions/${qId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: editingQuestionText })
@@ -178,35 +178,28 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
 
   const handlePostCombination = async () => {
     if (!majorA || !majorB || !initialQuestion) return alert('נא למלא את כל השדות');
-    
-    const newComb = {
-      majorA, majorB,
-      academicYear: filterYear,
-      title: `${majorA} + ${majorB}`,
-      date: new Date().toLocaleDateString('he-IL'),
-      replies: 1
-    };
 
     try {
-      const res = await fetch(`${API}/api/combinations`, {
+      const forumRes = await fetch(`${API}/api/general-forums`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newComb)
+        body: JSON.stringify({
+          title: `${majorA} + ${majorB}`,
+          majorA, majorB,
+          academicYear: filterYear
+        })
       });
-      const savedComb = await res.json();
-      
-      const newQ = {
-        combinationId: savedComb.id,
-        question: initialQuestion,
-        answers: [],
-        date: new Date().toLocaleDateString('he-IL'),
-        author: user.isGuest ? 'אורח/ת' : user.name
-      };
-      
-      await fetch(`${API}/api/combinationQuestions`, {
+      const savedComb = await forumRes.json();
+
+      await fetch(`${API}/api/general-forum-questions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newQ)
+        body: JSON.stringify({
+          forumId: savedComb.id,
+          question: initialQuestion,
+          author: user.isGuest ? 'אורח/ת' : user.name,
+          userId: user.isGuest ? null : user.id
+        })
       });
 
       setCombinations([savedComb, ...combinations]);
@@ -220,19 +213,16 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
 
   const handlePostQuestion = async () => {
     if (!newQText) return;
-    const newQ = {
-      combinationId: selectedCombination.id,
-      question: newQText,
-      answers: [],
-      date: new Date().toLocaleDateString('he-IL'),
-      author: user.isGuest ? 'אורח/ת' : user.name
-    };
-
     try {
-      const res = await fetch(`${API}/api/combinationQuestions`, {
+      const res = await fetch(`${API}/api/general-forum-questions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newQ)
+        body: JSON.stringify({
+          forumId: selectedCombination.id,
+          question: newQText,
+          author: user.isGuest ? 'אורח/ת' : user.name,
+          userId: user.isGuest ? null : user.id
+        })
       });
       const savedQ = await res.json();
       setCombinationQuestions([savedQ, ...combinationQuestions]);
@@ -245,20 +235,16 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
 
   const handlePostAnswer = async (qId, text) => {
     if (!text) return;
-    const question = combinationQuestions.find(q => q.id === qId);
-    const updatedAnswers = [...question.answers, { 
-      text, 
-      date: new Date().toLocaleDateString('he-IL'), 
-      author: user.isGuest ? 'אורח/ת' : user.name,
-      authorId: user.isGuest ? null : user.id,
-      likedBy: []
-    }];
-
     try {
-      const res = await fetch(`${API}/api/combinationQuestions/${qId}`, {
-        method: 'PATCH',
+      const res = await fetch(`${API}/api/general-forum-answers`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: updatedAnswers })
+        body: JSON.stringify({
+          questionId: qId,
+          text,
+          author: user.isGuest ? 'אורח/ת' : user.name,
+          userId: user.isGuest ? null : user.id
+        })
       });
       const updatedQ = await res.json();
       setCombinationQuestions(combinationQuestions.map(q => q.id === qId ? updatedQ : q));
@@ -267,7 +253,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
     }
   };
 
-  const handleLikeAnswer = async (qId, answerIndex) => {
+  const handleLikeAnswer = (qId, answerIndex) => {
     const question = combinationQuestions.find(q => q.id === qId);
     if (!question || !user?.id) return;
 
@@ -286,17 +272,9 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
       return a;
     });
 
-    try {
-      const res = await fetch(`${API}/api/combinationQuestions/${qId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers: updatedAnswers })
-      });
-      const updatedQ = await res.json();
-      setCombinationQuestions(combinationQuestions.map(q => q.id === qId ? updatedQ : q));
-    } catch (err) {
-      console.error('Error liking combination answer:', err);
-    }
+    setCombinationQuestions(combinationQuestions.map(q =>
+      q.id === qId ? { ...q, answers: updatedAnswers } : q
+    ));
   };
 
   const filteredCombinations = combinations.filter(c => 
