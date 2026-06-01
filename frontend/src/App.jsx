@@ -944,10 +944,7 @@ const App = () => {
       .catch(() => {});
   }, [user?.id]);
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: "מאיה ענתה על השאלה שלך בקורס 'יסודות השיווק'", read: false, date: "לפני 5 דק׳" },
-    { id: 2, text: "שאלה חדשה עלתה בפורום מנהל עסקים + כלכלה", read: false, date: "לפני שעה" }
-  ]);
+  const [notifications, setNotifications] = useState([]);
   const [isNotifyOpen, setIsNotifyOpen] = useState(false);
   const notifyRef = useRef(null);
 
@@ -956,6 +953,14 @@ const App = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!user?.id || user?.isGuest) return;
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications?userId=${user.id}`)
+      .then(res => res.json())
+      .then(data => setNotifications(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [user?.id]);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -1332,7 +1337,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
               <button onClick={() => setIsNotifyOpen(!isNotifyOpen)} className="bg-white p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm active:scale-95 relative cursor-pointer">{notifications.some(n => !n.read) ? <><BellDot className="h-5 w-5 text-indigo-600" /><span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-black h-4 w-4 rounded-full flex items-center justify-center border-2 border-white">{notifications.filter(n => !n.read).length}</span></> : <Bell className="h-5 w-5" />}</button>
               {isNotifyOpen && (
                 <div className="absolute top-14 right-0 w-80 bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="p-6 border-b border-slate-50 flex justify-between items-center"><h4 className="font-black text-slate-900 text-sm">התראות</h4><button onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))} className="text-[10px] font-black text-indigo-600 hover:underline">סמן הכל כנקרא</button></div>
+                  <div className="p-6 border-b border-slate-50 flex justify-between items-center"><h4 className="font-black text-slate-900 text-sm">התראות</h4><button onClick={() => { setNotifications(notifications.map(n => ({ ...n, read: true }))); fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications/read`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) }).catch(() => {}); }} className="text-[10px] font-black text-indigo-600 hover:underline">סמן הכל כנקרא</button></div>
                   <div className="max-h-96 overflow-y-auto">{notifications.length > 0 ? notifications.map(n => (<div key={n.id} className={`p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer relative ${!n.read ? 'bg-indigo-50/30' : ''}`} onClick={() => setNotifications(notifications.map(notif => notif.id === n.id ? { ...notif, read: true } : notif))}>{!n.read && <div className="absolute top-6 right-2 w-1.5 h-1.5 bg-indigo-600 rounded-full"></div>}<p className={`text-sm leading-relaxed mb-1 ${!n.read ? 'font-black text-slate-900' : 'font-medium text-slate-600'}`}>{n.text}</p><span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{n.date}</span></div>)) : <div className="p-12 text-center"><div className="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-300"><Bell className="h-6 w-6" /></div><p className="text-slate-400 font-bold text-xs">אין התראות חדשות</p></div>}</div>
                   {notifications.length > 0 && <div className="p-4 bg-slate-50/50 text-center"><button className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors">צפה בכל ההיסטוריה</button></div>}
                 </div>
