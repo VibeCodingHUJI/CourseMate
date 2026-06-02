@@ -912,6 +912,36 @@ app.post('/api/general-forums', async (req, res) => {
       .single();
     if (error) throw error;
 
+    // Notify registered users whose combination matches both departments
+    if (majorA && majorB) {
+      try {
+        const combResult = await pool.query(
+          `SELECT id FROM combinations WHERE name ILIKE $1 AND name ILIKE $2`,
+          [`%${majorA}%`, `%${majorB}%`]
+        );
+        if (combResult.rows.length > 0) {
+          const combinationIds = combResult.rows.map(r => r.id);
+          const { data: matchedUsers } = await supabase
+            .from('users')
+            .select('id')
+            .in('combination_id', combinationIds);
+
+          if (matchedUsers && matchedUsers.length > 0) {
+            await supabase.from('notifications').insert(
+              matchedUsers.map(u => ({
+                user_id: u.id,
+                text: `פורום חדש נפתח עבור השילוב שלך: ${title}`,
+                forum_id: data.forum_id
+              }))
+            );
+          }
+        }
+      } catch (notifErr) {
+        console.error('Error sending forum notifications:', notifErr);
+        // Don't fail the whole request if notifications fail
+      }
+    }
+
     res.json({
       id: data.forum_id,
       title: data.title,
@@ -924,6 +954,51 @@ app.post('/api/general-forums', async (req, res) => {
     });
   } catch (err) {
     console.error('Error creating general forum:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ message: 'userId is required' });
+
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+
+    res.json((data || []).map(n => ({
+      id: n.id,
+      text: n.text,
+      read: n.read,
+      forumId: n.forum_id,
+      date: new Date(n.created_at).toLocaleDateString('he-IL', { hour: '2-digit', minute: '2-digit' })
+    })));
+  } catch (err) {
+    console.error('Error fetching notifications:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch('/api/notifications/read', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ message: 'userId is required' });
+
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', userId)
+      .eq('read', false);
+    if (error) throw error;
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error marking notifications as read:', err);
     res.status(500).json({ message: err.message });
   }
 });
