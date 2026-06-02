@@ -268,15 +268,19 @@ app.get('/api/reviews', async (req, res) => {
 
 app.post('/api/reviews', async (req, res) => {
   try {
-    const { courseId, authorId, difficulty, attendanceEnforced, comment, semester, year, visibility } = req.body;
+    const { courseId, userId, difficulty, attendanceEnforced, comment, semester, year, visibility } = req.body;
 
-    // Check for existing review by this user for this course
-    const { data: existing } = await supabase
-      .from('course_reviews')
-      .select('id')
-      .eq('user_id', authorId)
-      .eq('course_id', courseId)
-      .maybeSingle();
+    // Check for existing review by this user for this course (skip for guests)
+    let existing = null;
+    if (userId) {
+      const { data } = await supabase
+        .from('course_reviews')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('course_id', courseId)
+        .maybeSingle();
+      existing = data;
+    }
 
     let saved;
     if (existing) {
@@ -291,15 +295,19 @@ app.post('/api/reviews', async (req, res) => {
     } else {
       const { data, error } = await supabase
         .from('course_reviews')
-        .insert({ user_id: authorId, course_id: courseId, difficulty, attendance_enforced: attendanceEnforced ?? null, comment: comment || null, visibility: visibility || 'full_name', semester, year })
+        .insert({ user_id: userId || null, course_id: courseId, difficulty, attendance_enforced: attendanceEnforced ?? null, comment: comment || null, visibility: visibility || 'full_name', semester, year })
         .select()
         .single();
       if (error) throw new Error(error.message);
       saved = data;
     }
 
-    const { data: userData } = await supabase.from('users').select('full_name').eq('id', authorId).maybeSingle();
-    res.status(201).json(mapReview({ ...saved, full_name: userData?.full_name || null }));
+    let fullName = null;
+    if (userId) {
+      const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+      if (userData) fullName = userData.full_name;
+    }
+    res.status(201).json(mapReview({ ...saved, full_name: fullName }));
   } catch (err) {
     console.error('Error creating review:', err);
     res.status(500).json({ message: err.message });
@@ -351,7 +359,7 @@ app.post('/api/reviews/:id/vote', async (req, res) => {
   try {
     const { id } = req.params;
     const { userId } = req.body;
-    if (!userId) return res.status(400).json({ message: 'userId required' });
+    if (!userId) return res.json({ liked: false });
 
     const { data: existing } = await supabase
       .from('course_review_votes')
@@ -457,16 +465,28 @@ app.post('/api/questions/:id/answers', async (req, res) => {
   try {
     const { id } = req.params; // question_id
     const { userId, content } = req.body;
-    if (!userId) return res.status(400).json({ message: 'userId required' });
+    
     if (!content || content.trim().length < 2) return res.status(400).json({ message: 'התשובה חייבת להכיל לפחות 2 תווים' });
+    
     const { data, error } = await supabase
       .from('forum_answers')
-      .insert({ question_id: id, user_id: userId, content })
+      .insert({ 
+        question_id: id, 
+        user_id: userId || null, 
+        content 
+      })
       .select()
       .single();
+      
     if (error) throw new Error(error.message);
-    const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
-    res.status(201).json(mapAnswer({ ...data, full_name: userData?.full_name || null }));
+    
+    let fullName = null;
+    if (userId) {
+      const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+      if (userData) fullName = userData.full_name;
+    }
+    
+    res.status(201).json(mapAnswer({ ...data, full_name: fullName }));
   } catch (err) {
     console.error('Error creating answer:', err);
     res.status(500).json({ message: err.message });
@@ -488,17 +508,30 @@ app.delete('/api/answers/:id', async (req, res) => {
 app.post('/api/questions', async (req, res) => {
   try {
     const { courseId, userId, title, content } = req.body;
-    if (!userId) return res.status(400).json({ message: 'userId required' });
+    
     if (!title || title.trim().length < 5) return res.status(400).json({ message: 'הכותרת חייבת להכיל לפחות 5 תווים' });
     if (!content || content.trim().length < 10) return res.status(400).json({ message: 'תוכן השאלה חייב להכיל לפחות 10 תווים' });
+    
     const { data, error } = await supabase
       .from('forum_questions')
-      .insert({ course_id: courseId || null, user_id: userId, title, content })
+      .insert({ 
+        course_id: courseId || null, 
+        user_id: userId || null, 
+        title, 
+        content 
+      })
       .select()
       .single();
+    
     if (error) throw new Error(error.message);
-    const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
-    res.status(201).json(mapQuestion({ ...data, full_name: userData?.full_name || null }, []));
+    
+    let fullName = null;
+    if (userId) {
+      const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+      if (userData) fullName = userData.full_name;
+    }
+    
+    res.status(201).json(mapQuestion({ ...data, full_name: fullName }, []));
   } catch (err) {
     console.error('Error creating question:', err);
     res.status(500).json({ message: err.message });
@@ -666,18 +699,21 @@ app.post('/api/lecturers/:id/reviews', async (req, res) => {
   try {
     const { id } = req.params;
     const { userId, rating, comment } = req.body;
-    if (!userId) return res.status(400).json({ message: 'userId required' });
     if (!comment || comment.trim().length < 10) return res.status(400).json({ message: 'הביקורת חייבת להכיל לפחות 10 תווים' });
 
     const { data, error } = await supabase
       .from('lecturer_reviews')
-      .insert({ lecturer_id: parseInt(id), user_id: userId, rating_general: rating, review_text: comment })
+      .insert({ lecturer_id: parseInt(id), user_id: userId || null, rating_general: rating, review_text: comment })
       .select()
       .single();
     if (error) throw new Error(error.message);
 
-    const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
-    res.status(201).json(mapLecturerReview({ ...data, full_name: userData?.full_name || null }));
+    let fullName = null;
+    if (userId) {
+      const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+      if (userData) fullName = userData.full_name;
+    }
+    res.status(201).json(mapLecturerReview({ ...data, full_name: fullName }));
   } catch (err) {
     console.error('Error creating lecturer review:', err);
     res.status(500).json({ message: err.message });
@@ -742,7 +778,7 @@ app.get('/api/follows/:userId', async (req, res) => {
 app.post('/api/follows', async (req, res) => {
   try {
     const { userId, courseId } = req.body;
-    if (!userId || !courseId) return res.status(400).json({ message: 'userId and courseId required' });
+    if (!userId || !courseId) return res.json({ followed: false });
     const { error } = await supabase
       .from('saved_courses')
       .insert({ user_id: userId, course_id: courseId });
@@ -760,7 +796,7 @@ app.post('/api/follows', async (req, res) => {
 app.delete('/api/follows', async (req, res) => {
   try {
     const { userId, courseId } = req.body;
-    if (!userId || !courseId) return res.status(400).json({ message: 'userId and courseId required' });
+    if (!userId || !courseId) return res.json({ followed: false });
     const { error } = await supabase
       .from('saved_courses')
       .delete()
@@ -965,7 +1001,7 @@ app.post('/api/general-forums', async (req, res) => {
 app.get('/api/notifications', async (req, res) => {
   try {
     const { userId } = req.query;
-    if (!userId) return res.status(400).json({ message: 'userId is required' });
+    if (!userId) return res.json([]);
 
     const { data, error } = await supabase
       .from('notifications')
@@ -991,7 +1027,7 @@ app.get('/api/notifications', async (req, res) => {
 app.patch('/api/notifications/read', async (req, res) => {
   try {
     const { userId } = req.body;
-    if (!userId) return res.status(400).json({ message: 'userId is required' });
+    if (!userId) return res.json({ success: true });
 
     const { error } = await supabase
       .from('notifications')

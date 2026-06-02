@@ -23,14 +23,17 @@ const AuthPage = ({ onLogin }) => {
     fetch(`${API}/api/combinations`)
       .then(res => res.json())
       .then(data => {
-        // SQL backend returns { value: [...] }
-        setStudyTracks(data.value || data);
+        const tracks = Array.isArray(data) ? data : (data.value || []);
+        setStudyTracks(Array.isArray(tracks) ? tracks : []);
       })
-      .catch(err => console.error('Error fetching combinations:', err));
+      .catch(err => {
+        console.error('Error fetching combinations:', err);
+        setStudyTracks([]);
+      });
   }, []);
 
-  const filteredTracks = studyTracks.filter(t => 
-    t.label.toLowerCase().includes(trackSearch.toLowerCase())
+  const filteredTracks = (Array.isArray(studyTracks) ? studyTracks : []).filter(t => 
+    t?.label?.toLowerCase().includes(trackSearch.toLowerCase())
   );
 
   useEffect(() => {

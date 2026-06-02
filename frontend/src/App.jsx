@@ -748,7 +748,7 @@ const CourseDetail = ({
           <div className="space-y-6 text-right">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-black text-slate-900">שאלות מהקהילה</h2>
-              {!user.isGuest && <button onClick={() => setIsQuestionModalOpen(true)} className="bg-white border-2 border-slate-200 px-6 py-2 rounded-2xl font-black text-sm hover:border-indigo-500 transition-all">שאל שאלה</button>}
+              <button onClick={() => setIsQuestionModalOpen(true)} className="bg-white border-2 border-slate-200 px-6 py-2 rounded-2xl font-black text-sm hover:border-indigo-500 transition-all">שאל שאלה</button>
             </div>
             {questions.length === 0 && (
               <div className="text-center py-12 bg-slate-50 rounded-[40px] border-2 border-dashed border-slate-200">
@@ -768,7 +768,7 @@ const CourseDetail = ({
                       <div className="text-sm text-white/60 mt-1 font-medium">{q.author} · {q.date}</div>
                     </div>
                   </div>
-                  {String(q.authorId) === String(user?.id) && (
+                  {String(q.authorId) === String(user?.id) && !user?.isGuest && (
                     <button onClick={() => handleDeleteQuestion(q.id)} className="text-white/30 hover:text-rose-400 transition-colors p-1 shrink-0 mr-2">
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -793,7 +793,7 @@ const CourseDetail = ({
                           </div>
                           <p className="text-slate-600 text-sm font-medium leading-relaxed">{a.content}</p>
                         </div>
-                        {String(a.authorId) === String(user?.id) && (
+                        {String(a.authorId) === String(user?.id) && !user?.isGuest && (
                           <button onClick={() => handleDeleteAnswer(q.id, a.id)}
                             className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-400 transition-all p-1 shrink-0">
                             <Trash2 className="h-3.5 w-3.5" />
@@ -804,34 +804,32 @@ const CourseDetail = ({
                   </div>
                 )}
                 {/* Answer input */}
-                {!user.isGuest && (
-                  <div className="px-8 pb-6 pt-3 border-t border-slate-100 flex gap-3 items-center">
-                    <input
-                      type="text"
-                      value={answerInputs[q.id] || ''}
-                      onChange={e => setAnswerInputs(prev => ({ ...prev, [q.id]: e.target.value }))}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && answerInputs[q.id]?.trim().length >= 2) {
-                          handlePostAnswer(q.id, answerInputs[q.id]);
-                          setAnswerInputs(prev => ({ ...prev, [q.id]: '' }));
-                        }
-                      }}
-                      placeholder="כתבו תשובה ולחצו Enter..."
-                      className="flex-1 bg-slate-50 border-2 border-transparent focus:border-indigo-200 rounded-2xl px-5 py-3 outline-none text-right font-medium text-sm transition-all"
-                    />
-                    <button
-                      onClick={() => {
-                        if (answerInputs[q.id]?.trim().length >= 2) {
-                          handlePostAnswer(q.id, answerInputs[q.id]);
-                          setAnswerInputs(prev => ({ ...prev, [q.id]: '' }));
-                        }
-                      }}
-                      className="bg-indigo-600 text-white px-5 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 active:scale-95 transition-all shrink-0"
-                    >
-                      <Send className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
+                <div className="px-8 pb-6 pt-3 border-t border-slate-100 flex gap-3 items-center">
+                  <input
+                    type="text"
+                    value={answerInputs[q.id] || ''}
+                    onChange={e => setAnswerInputs(prev => ({ ...prev, [q.id]: e.target.value }))}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && answerInputs[q.id]?.trim().length >= 2) {
+                        handlePostAnswer(q.id, answerInputs[q.id]);
+                        setAnswerInputs(prev => ({ ...prev, [q.id]: '' }));
+                      }
+                    }}
+                    placeholder="כתבו תשובה ולחצו Enter..."
+                    className="flex-1 bg-slate-50 border-2 border-transparent focus:border-indigo-200 rounded-2xl px-5 py-3 outline-none text-right font-medium text-sm transition-all"
+                  />
+                  <button
+                    onClick={() => {
+                      if (answerInputs[q.id]?.trim().length >= 2) {
+                        handlePostAnswer(q.id, answerInputs[q.id]);
+                        setAnswerInputs(prev => ({ ...prev, [q.id]: '' }));
+                      }
+                    }}
+                    className="bg-indigo-600 text-white px-5 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 active:scale-95 transition-all shrink-0 flex items-center justify-center"
+                  >
+                    <Send className="h-4 w-4 rotate-0" style={{ transform: 'rotate(0deg)' }} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -1139,8 +1137,17 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
   const getAuthorDisplayName = (n, t) => { if (!n) return 'אורח/ת'; if (t === 'anon') return 'אנונימי/ת'; if (t === 'initials') return n.trim().split(/\s+/).map(x => x[0] + '.').join(' '); return n; };
 
   const handlePostReview = async () => {
-    if (user?.isGuest || !newReviewComment) return;
-    const data = { courseId: selectedCourse.id, authorId: user.id, difficulty: newReviewDifficulty, comment: newReviewComment, semester: newReviewSemester, year: newReviewYear, attendanceEnforced: newReviewAttendance, visibility: newReviewIdentity };
+    if (!newReviewComment) return;
+    const data = { 
+      courseId: selectedCourse.id, 
+      userId: user.isGuest ? null : user.id, 
+      difficulty: newReviewDifficulty, 
+      comment: newReviewComment, 
+      semester: newReviewSemester, 
+      year: newReviewYear, 
+      attendanceEnforced: newReviewAttendance, 
+      visibility: newReviewIdentity 
+    };
     try {
       const res = editingReviewId ? await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${editingReviewId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }) : await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const saved = await res.json();
@@ -1191,7 +1198,17 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
     if (!newQuestionTitle.trim() || newQuestionTitle.trim().length < 5) return alert('הכותרת חייבת להכיל לפחות 5 תווים');
     if (!newQuestionText.trim() || newQuestionText.trim().length < 10) return alert('תוכן השאלה חייב להכיל לפחות 10 תווים');
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/questions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId: selectedCourse.id, userId: user.id, title: newQuestionTitle, content: newQuestionText }) });      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/questions`, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ 
+          courseId: selectedCourse.id, 
+          userId: user.isGuest ? null : user.id, 
+          title: newQuestionTitle, 
+          content: newQuestionText 
+        }) 
+      });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
       const saved = await res.json();
       setQuestions([saved, ...questions]);
       setNewQuestionTitle('');
@@ -1214,7 +1231,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/questions/${questionId}/answers`, {
       method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, content })
+        body: JSON.stringify({ userId: user.isGuest ? null : user.id, content })
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
       const saved = await res.json();
