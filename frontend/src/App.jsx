@@ -599,9 +599,9 @@ const CourseDetail = ({
                   </span>
                 )}
                 <span className={`px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${selectedCourse.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
-                  נוכחות: {selectedCourse.attendanceValue || (selectedCourse.attendanceMandatory ? 'חובה' : 'אין')}
+                  נוכחות: {selectedCourse.attendanceMandatory ? 'חובה' : 'אין'}
                 </span>
-                <span className="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center flex-wrap gap-x-1.5 gap-y-1">
+                <span className="bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center flex-wrap gap-x-1.5 gap-y-1 max-w-full">
                   <User className="h-3 w-3" />
                   {selectedCourse.instructors && selectedCourse.instructors.length > 0 ? (
                     selectedCourse.instructors.map((inst, idx) => (
@@ -617,6 +617,11 @@ const CourseDetail = ({
                   )}
                 </span>
               </div>
+              {selectedCourse.attendanceMandatory && selectedCourse.attendanceValue && selectedCourse.attendanceValue.length > 10 && (
+                <p className="text-xs text-blue-700 bg-blue-50 rounded-2xl px-4 py-2 mt-2 leading-relaxed w-full">
+                  {selectedCourse.attendanceValue}
+                </p>
+              )}
             </div>
           </div>
 

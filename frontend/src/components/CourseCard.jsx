@@ -52,7 +52,7 @@ const CourseCard = ({ course, onClick }) => {
             </div>
           )}
           <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${course.attendanceMandatory ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-500'}`}>
-            נוכחות: {course.attendanceValue || (course.attendanceMandatory ? 'חובה' : 'אין')}
+            נוכחות: {course.attendanceMandatory ? 'חובה' : 'אין'}
           </div>
         </div>
       </div>
