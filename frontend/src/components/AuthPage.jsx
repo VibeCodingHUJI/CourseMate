@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GraduationCap, ChevronDown, Check, Search } from 'lucide-react';
+import { GraduationCap, ChevronDown, Check, Search, Eye, EyeOff } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -15,6 +15,7 @@ const AuthPage = ({ onLogin }) => {
   const [studyTracks, setStudyTracks] = useState([]);
   const [trackSearch, setTrackSearch] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const dropdownRef = useRef(null);
 
   // Fetch real study tracks on mount
@@ -135,14 +136,23 @@ const AuthPage = ({ onLogin }) => {
 
             <div>
               <label className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block text-right">סיסמה</label>
-              <input 
-                type="password" 
-                required
-                value={authForm.password}
-                onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
-                className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-5 py-3.5 outline-none transition-all font-medium text-right"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                  className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 focus:bg-white rounded-2xl px-5 py-3.5 outline-none transition-all font-medium text-right pl-12"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
 
             {authMode === 'signup' && (

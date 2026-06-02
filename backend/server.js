@@ -1,9 +1,13 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const express = require('express');
-const { Pool, Client } = require('pg');
+const { Pool } = require('pg');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
+
+// טעינת משתני סביבה רק בסביבת פיתוח מקומית
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -13,11 +17,11 @@ const supabase = createClient(
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// PostgreSQL Connection Pool
-// We use the connectionString from .env
-// We also add explicit host/port/user if possible, but let's try standard first
+// PostgreSQL Connection Pool - עם הגנה למקרה שהמשתנה חסר או כולל מרכאות
+const dbUrl = process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/^['"]|['"]$/g, '') : '';
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL.trim().replace(/^"/, '').replace(/"$/, ''),
+  connectionString: dbUrl,
   ssl: {
     rejectUnauthorized: false
   }
@@ -32,7 +36,7 @@ pool.on('error', (err) => {
 });
 
 app.use(cors({
-    origin: '*', // מאשר לכל הדומיינים (כולל הפרונטאנד הציבורי שלך) לפנות לבאקאנד
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
