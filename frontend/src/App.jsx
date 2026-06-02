@@ -6,7 +6,7 @@ import {
   Download, Upload, User, ChevronLeft,
   Filter, Award, Clock, X, CheckCircle, Lock,
   Camera, Heart, ChevronDown, Link as LinkIcon, ExternalLink, Share2, HardDrive,
-  Edit2, Trash2, Bell, BellDot
+  Edit2, Trash2, Bell, BellDot, ArrowLeft
 } from 'lucide-react';
 
 // Components
@@ -827,7 +827,7 @@ const CourseDetail = ({
                     }}
                     className="bg-indigo-600 text-white px-5 py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 active:scale-95 transition-all shrink-0 flex items-center justify-center"
                   >
-                    <Send className="h-4 w-4 rotate-0" style={{ transform: 'rotate(0deg)' }} />
+                    <ArrowLeft className="h-4 w-4" />
                   </button>
                 </div>
               </div>
