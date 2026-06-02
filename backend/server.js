@@ -460,8 +460,8 @@ app.get('/api/questions', async (req, res) => {
 app.post('/api/questions', async (req, res) => {
   try {
     const { courseId, userId, title, content } = req.body;
-    if (!title || title.trim().length < 5) return res.status(400).json({ message: 'הכותרת חייבת להכיל לפחות 5 תווים' });
-    if (!content || content.trim().length < 10) return res.status(400).json({ message: 'תוכן השאלה חייב להכיל לפחות 10 תווים' });
+    if (!title || !title.trim()) return res.status(400).json({ message: 'יש להזין כותרת לשאלה' });
+    if (!content || !content.trim()) return res.status(400).json({ message: 'יש להזין תוכן לשאלה' });
 
     const { data, error } = await supabase
       .from('forum_questions')
