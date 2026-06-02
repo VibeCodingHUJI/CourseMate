@@ -1244,7 +1244,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
 
   const handleDeleteAnswer = async (questionId, answerId) => {
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/answers/${answerId}`, { method: 'DELETE' });      setQuestions(questions.map(q => q.id === questionId
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/questions/${questionId}/answers/${answerId}`, { method: 'DELETE' });      setQuestions(questions.map(q => q.id === questionId
         ? { ...q, answers: (q.answers || []).filter(a => a.id !== answerId) }
         : q
       ));
