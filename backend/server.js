@@ -513,8 +513,8 @@ app.post('/api/questions', async (req, res) => {
     if (!content || content.trim().length < 10) return res.status(400).json({ message: 'תוכן השאלה חייב להכיל לפחות 10 תווים' });
     
     const { data, error } = await supabase
-      .from('forum_questions')
-      .insert({ 
+      .from('course_questions')
+      .insert({
         course_id: courseId || null, 
         user_id: userId || null, 
         title, 
