@@ -406,7 +406,7 @@ const mapAnswer = (a) => ({
 app.get('/api/questions', async (req, res) => {
   try {
     const { courseId } = req.query;
-    let qQuery = supabase.from('forum_questions').select('*').order('created_at', { ascending: false });
+    let qQuery = supabase.from('course_questions').select('*').order('created_at', { ascending: false });
     if (courseId) qQuery = qQuery.eq('course_id', courseId);
     const { data, error } = await qQuery;
     if (error) throw new Error(error.message);
@@ -541,7 +541,7 @@ app.post('/api/questions', async (req, res) => {
 app.delete('/api/questions/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { error } = await supabase.from('forum_questions').delete().eq('question_id', id);
+    const { error } = await supabase.from('course_questions').delete().eq('question_id', id);
     if (error) throw new Error(error.message);
     res.json({ message: 'Question deleted successfully' });
   } catch (err) {
