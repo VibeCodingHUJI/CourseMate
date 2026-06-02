@@ -503,6 +503,140 @@ app.delete('/api/questions/:id', async (req, res) => {
   }
 });
 
+// --- Combination Forum Questions Routes (forum_questions + forum_answers) ---
+
+app.get('/api/combinationQuestions', async (req, res) => {
+  try {
+    const { combinationId } = req.query;
+    if (!combinationId) return res.status(400).json({ message: 'combinationId is required' });
+
+    const { data: questions, error: qErr } = await supabase
+      .from('forum_questions')
+      .select('*')
+      .eq('course_id', combinationId)
+      .order('question_id', { ascending: false });
+    if (qErr) throw qErr;
+    if (!questions || questions.length === 0) return res.json([]);
+
+    const questionIds = questions.map(q => q.question_id);
+    const { data: answers } = await supabase
+      .from('forum_answers')
+      .select('*')
+      .in('question_id', questionIds);
+
+    const userIds = [...new Set([
+      ...questions.map(q => q.user_id).filter(Boolean),
+      ...(answers || []).map(a => a.user_id).filter(Boolean),
+    ])];
+    let userMap = {};
+    if (userIds.length > 0) {
+      const { data: users } = await supabase.from('users').select('id, full_name').in('id', userIds);
+      (users || []).forEach(u => { userMap[u.id] = u.full_name; });
+    }
+
+    const answersMap = {};
+    (answers || []).forEach(a => {
+      if (!answersMap[a.question_id]) answersMap[a.question_id] = [];
+      answersMap[a.question_id].push({
+        id: a.answer_id,
+        text: a.content,
+        author: userMap[a.user_id] || 'אורח/ת',
+        authorId: a.user_id,
+        date: a.created_at ? new Date(a.created_at).toLocaleDateString('he-IL') : '',
+        likedBy: [],
+      });
+    });
+
+    res.json(questions.map(q => ({
+      id: q.question_id,
+      combinationId: q.course_id,
+      question: q.title,
+      author: userMap[q.user_id] || 'אורח/ת',
+      authorId: q.user_id,
+      date: q.created_at ? new Date(q.created_at).toLocaleDateString('he-IL') : '',
+      answers: answersMap[q.question_id] || [],
+    })));
+  } catch (err) {
+    console.error('Error fetching combination questions:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/combinationQuestions', async (req, res) => {
+  try {
+    const { combinationId, question, author, userId } = req.body;
+    if (!combinationId || !question) return res.status(400).json({ message: 'combinationId and question are required' });
+
+    const { data, error } = await supabase
+      .from('forum_questions')
+      .insert({ course_id: combinationId, user_id: userId || null, title: question, content: '' })
+      .select()
+      .single();
+    if (error) throw error;
+
+    res.status(201).json({
+      id: data.question_id,
+      combinationId: data.course_id,
+      question: data.title,
+      author: author || 'אורח/ת',
+      authorId: data.user_id,
+      date: data.created_at ? new Date(data.created_at).toLocaleDateString('he-IL') : new Date().toLocaleDateString('he-IL'),
+      answers: [],
+    });
+  } catch (err) {
+    console.error('Error creating combination question:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch('/api/combinationQuestions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { answers } = req.body;
+
+    await supabase.from('forum_answers').delete().eq('question_id', id);
+
+    if (answers && answers.length > 0) {
+      await supabase.from('forum_answers').insert(
+        answers.map(a => ({ question_id: id, user_id: a.authorId || null, content: a.text || a.content || '' }))
+      );
+    }
+
+    const { data: q, error: qErr } = await supabase.from('forum_questions').select('*').eq('question_id', id).single();
+    if (qErr) throw qErr;
+
+    const { data: updatedAnswers } = await supabase
+      .from('forum_answers').select('*').eq('question_id', id).order('created_at', { ascending: true });
+
+    const userIds = [...new Set([q.user_id, ...(updatedAnswers || []).map(a => a.user_id)].filter(Boolean))];
+    let userMap = {};
+    if (userIds.length > 0) {
+      const { data: users } = await supabase.from('users').select('id, full_name').in('id', userIds);
+      (users || []).forEach(u => { userMap[u.id] = u.full_name; });
+    }
+
+    res.json({
+      id: q.question_id,
+      combinationId: q.course_id,
+      question: q.title,
+      author: userMap[q.user_id] || 'אורח/ת',
+      authorId: q.user_id,
+      date: q.created_at ? new Date(q.created_at).toLocaleDateString('he-IL') : '',
+      answers: (updatedAnswers || []).map((a, idx) => ({
+        id: a.answer_id,
+        text: a.content,
+        author: answers?.[idx]?.author || userMap[a.user_id] || 'אורח/ת',
+        authorId: a.user_id,
+        date: a.created_at ? new Date(a.created_at).toLocaleDateString('he-IL') : (answers?.[idx]?.date || ''),
+        likedBy: answers?.[idx]?.likedBy || [],
+      })),
+    });
+  } catch (err) {
+    console.error('Error updating combination question:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // --- Materials Routes ---
 
 const mapMaterial = (m) => ({

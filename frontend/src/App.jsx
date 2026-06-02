@@ -1008,7 +1008,7 @@ const App = () => {
 
   const handlePostStudentForumQ = async () => {
     if (!newStudentForumQ.trim() || !activeStudentForumId) return;
-    const newQ = { combinationId: activeStudentForumId, question: newStudentForumQ, answers: [], date: new Date().toLocaleDateString('he-IL'), author: user.name };
+    const newQ = { combinationId: activeStudentForumId, question: newStudentForumQ, answers: [], date: new Date().toLocaleDateString('he-IL'), author: user.name, userId: user.isGuest ? null : user.id };
     try {
 const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinationQuestions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newQ) });      const savedQ = await res.json();
       setStudentForumQuestions([savedQ, ...studentForumQuestions]);
