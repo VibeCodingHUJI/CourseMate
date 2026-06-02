@@ -1333,7 +1333,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
               </div>
               <button onClick={handleLogout} className="bg-white text-slate-400 px-3 py-2 rounded-xl hover:text-rose-500 hover:bg-rose-50 transition-all shadow-sm flex items-center gap-2 group"><span className="text-[10px] font-black uppercase hidden lg:block">התנתקות</span><X className="h-4 w-4" /></button>
             </div>
-            <div className="relative" ref={notifyRef}>
+            {!user.isGuest && <div className="relative" ref={notifyRef}>
               <button onClick={() => setIsNotifyOpen(!isNotifyOpen)} className="bg-white p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm active:scale-95 relative cursor-pointer">{notifications.some(n => !n.read) ? <><BellDot className="h-5 w-5 text-indigo-600" /><span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-black h-4 w-4 rounded-full flex items-center justify-center border-2 border-white">{notifications.filter(n => !n.read).length}</span></> : <Bell className="h-5 w-5" />}</button>
               {isNotifyOpen && (
                 <div className="absolute top-14 right-0 w-80 bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
@@ -1342,7 +1342,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
                   {notifications.length > 0 && <div className="p-4 bg-slate-50/50 text-center"><button className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors">צפה בכל ההיסטוריה</button></div>}
                 </div>
               )}
-            </div>
+            </div>}
           </div>
           <div className="flex-1"></div>
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { setSelectedCourse(null); if (user?.isGuest) setGuestTab('forum'); }}><span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span><div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform"><GraduationCap className="h-6 w-6 text-white" /></div></div>

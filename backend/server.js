@@ -42,10 +42,6 @@ app.use(cors({
 }));
 app.use(express.json());
 
-<<<<<<< HEAD
-// --- כאן יבוא כל שאר הקוד המקורי שלך (ה-mapCourse, ה-Routes וכו') ---
-// השארתי אותו ריק כדי שתדביקי פה את הפונקציות המקוריות שלך בדיוק כמו שהיו
-=======
 // Helper to standardize course data
 const mapCourse = (row) => {
     if (!row) return null;
@@ -868,7 +864,6 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
->>>>>>> e4fba4b82dd83640e3d618157241d58e1adfe47e
 
 // ==== GENERAL FORUMS ====
 
