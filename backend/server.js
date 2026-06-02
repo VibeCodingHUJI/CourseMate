@@ -381,30 +381,76 @@ app.post('/api/reviews/:id/vote', async (req, res) => {
   }
 });
 
-// --- Questions Routes ---
+// --- Questions Routes (forum_questions + forum_answers) ---
 
-const mapQuestion = (q) => {
-  const parts = (q.question || '').split('\n\n');
-  return {
-    id: q.id,
-    courseId: q.course_id,
-    authorId: null,
-    author: 'אורח/ת',
-    title: parts[0] || '',
-    content: parts.slice(1).join('\n\n') || '',
-    date: q.date || '',
-    answers: Array.isArray(q.answers) ? q.answers : [],
-  };
-};
+const mapQuestion = (q, answers = []) => ({
+  id: q.question_id,
+  courseId: q.course_id,
+  authorId: q.user_id,
+  author: q.full_name || 'אורח/ת',
+  title: q.title,
+  content: q.content,
+  date: q.created_at ? new Date(q.created_at).toLocaleDateString('he-IL') : '',
+  answers,
+});
+
+const mapAnswer = (a) => ({
+  id: a.answer_id,
+  questionId: a.question_id,
+  authorId: a.user_id,
+  author: a.full_name || 'אורח/ת',
+  content: a.content,
+  date: a.created_at ? new Date(a.created_at).toLocaleDateString('he-IL') : '',
+});
 
 app.get('/api/questions', async (req, res) => {
   try {
     const { courseId } = req.query;
-    let qQuery = supabase.from('course_questions').select('*').order('id', { ascending: false });
+    let qQuery = supabase.from('forum_questions').select('*').order('question_id', { ascending: false });
     if (courseId) qQuery = qQuery.eq('course_id', courseId);
     const { data, error } = await qQuery;
     if (error) throw new Error(error.message);
-    res.json((data || []).map(mapQuestion));
+    const rows = data || [];
+
+    const qIds = rows.map(r => r.question_id);
+    const qUserIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+
+    const [userRes, answersRes] = await Promise.allSettled([
+      qUserIds.length > 0
+        ? supabase.from('users').select('id, full_name').in('id', qUserIds)
+        : Promise.resolve({ data: [] }),
+      qIds.length > 0
+        ? supabase.from('forum_answers').select('*').in('question_id', qIds).order('created_at', { ascending: true })
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const qUserMap = {};
+    if (userRes.status === 'fulfilled') {
+      (userRes.value.data || []).forEach(u => { qUserMap[u.id] = u.full_name; });
+    }
+
+    let answersMap = {};
+    if (answersRes.status === 'fulfilled') {
+      const rawAnswers = answersRes.value.data || [];
+      const aUserIds = [...new Set(rawAnswers.map(a => a.user_id).filter(Boolean))];
+      let aUserMap = {};
+      if (aUserIds.length > 0) {
+        try {
+          const { data: aUsers } = await supabase.from('users').select('id, full_name').in('id', aUserIds);
+          (aUsers || []).forEach(u => { aUserMap[u.id] = u.full_name; });
+        } catch {}
+      }
+      rawAnswers.forEach(a => {
+        const mapped = mapAnswer({ ...a, full_name: aUserMap[a.user_id] || null });
+        if (!answersMap[a.question_id]) answersMap[a.question_id] = [];
+        answersMap[a.question_id].push(mapped);
+      });
+    }
+
+    res.json(rows.map(r => mapQuestion(
+      { ...r, full_name: qUserMap[r.user_id] || null },
+      answersMap[r.question_id] || []
+    )));
   } catch (err) {
     console.error('Error fetching questions:', err);
     res.status(500).json({ message: err.message });
@@ -413,22 +459,24 @@ app.get('/api/questions', async (req, res) => {
 
 app.post('/api/questions', async (req, res) => {
   try {
-    const { courseId, title, content } = req.body;
+    const { courseId, userId, title, content } = req.body;
     if (!title || title.trim().length < 5) return res.status(400).json({ message: 'הכותרת חייבת להכיל לפחות 5 תווים' });
     if (!content || content.trim().length < 10) return res.status(400).json({ message: 'תוכן השאלה חייב להכיל לפחות 10 תווים' });
 
     const { data, error } = await supabase
-      .from('course_questions')
-      .insert({
-        course_id: courseId || null,
-        question: title.trim() + '\n\n' + content.trim(),
-        answers: [],
-        date: new Date().toLocaleDateString('he-IL'),
-      })
+      .from('forum_questions')
+      .insert({ course_id: courseId || null, user_id: userId || null, title, content })
       .select()
       .single();
     if (error) throw new Error(error.message);
-    res.status(201).json(mapQuestion(data));
+
+    let fullName = null;
+    if (userId) {
+      const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+      if (userData) fullName = userData.full_name;
+    }
+
+    res.status(201).json(mapQuestion({ ...data, full_name: fullName }, []));
   } catch (err) {
     console.error('Error creating question:', err);
     res.status(500).json({ message: err.message });
@@ -441,31 +489,20 @@ app.post('/api/questions/:id/answers', async (req, res) => {
     const { userId, content } = req.body;
     if (!content || content.trim().length < 2) return res.status(400).json({ message: 'התשובה חייבת להכיל לפחות 2 תווים' });
 
+    const { data, error } = await supabase
+      .from('forum_answers')
+      .insert({ question_id: id, user_id: userId || null, content })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+
     let fullName = null;
     if (userId) {
       const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
       if (userData) fullName = userData.full_name;
     }
 
-    const { data: qData, error: qErr } = await supabase
-      .from('course_questions').select('answers').eq('id', id).single();
-    if (qErr) throw new Error(qErr.message);
-
-    const newAnswer = {
-      id: require('crypto').randomUUID(),
-      authorId: userId || null,
-      author: fullName || 'אורח/ת',
-      content: content.trim(),
-      date: new Date().toLocaleDateString('he-IL'),
-    };
-
-    const { error: updateErr } = await supabase
-      .from('course_questions')
-      .update({ answers: [...(qData.answers || []), newAnswer] })
-      .eq('id', id);
-    if (updateErr) throw new Error(updateErr.message);
-
-    res.status(201).json(newAnswer);
+    res.status(201).json(mapAnswer({ ...data, full_name: fullName }));
   } catch (err) {
     console.error('Error creating answer:', err);
     res.status(500).json({ message: err.message });
@@ -474,15 +511,8 @@ app.post('/api/questions/:id/answers', async (req, res) => {
 
 app.delete('/api/questions/:questionId/answers/:answerId', async (req, res) => {
   try {
-    const { questionId, answerId } = req.params;
-    const { data: qData, error: qErr } = await supabase
-      .from('course_questions').select('answers').eq('id', questionId).single();
-    if (qErr) throw new Error(qErr.message);
-
-    const { error } = await supabase
-      .from('course_questions')
-      .update({ answers: (qData.answers || []).filter(a => a.id !== answerId) })
-      .eq('id', questionId);
+    const { answerId } = req.params;
+    const { error } = await supabase.from('forum_answers').delete().eq('answer_id', answerId);
     if (error) throw new Error(error.message);
     res.json({ message: 'Answer deleted' });
   } catch (err) {
@@ -494,7 +524,7 @@ app.delete('/api/questions/:questionId/answers/:answerId', async (req, res) => {
 app.delete('/api/questions/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { error } = await supabase.from('course_questions').delete().eq('id', id);
+    const { error } = await supabase.from('forum_questions').delete().eq('question_id', id);
     if (error) throw new Error(error.message);
     res.json({ message: 'Question deleted successfully' });
   } catch (err) {
