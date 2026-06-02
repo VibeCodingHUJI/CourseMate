@@ -42,8 +42,1076 @@ app.use(cors({
 }));
 app.use(express.json());
 
+<<<<<<< HEAD
 // --- כאן יבוא כל שאר הקוד המקורי שלך (ה-mapCourse, ה-Routes וכו') ---
 // השארתי אותו ריק כדי שתדביקי פה את הפונקציות המקוריות שלך בדיוק כמו שהיו
+=======
+// Helper to standardize course data
+const mapCourse = (row) => {
+    if (!row) return null;
+
+    // Standardize Year
+    let year = row.year;
+    if (year && (year.includes('1') || year.includes('א'))) year = 'א';
+    else if (year && (year.includes('2') || year.includes('ב'))) year = 'ב';
+    else if (year && (year.includes('3') || year.includes('ג'))) year = 'ג';
+    else year = 'א';
+
+    // Standardize Course Type
+    let type = 'בחירה';
+    const rawType = row.type || '';
+    if (rawType.includes('יסוד')) type = 'קורסי יסוד';
+    else if (rawType.includes('חובת בחירה')) type = 'חובת בחירה';
+    else if (rawType.includes('חובה')) type = 'חובה';
+
+    // Standardize Semester
+    let semester = row.semester || '';
+    if (semester.includes('א') && semester.includes('ב')) semester = 'א וב';
+    else if (semester.includes('א')) semester = 'א';
+    else if (semester.includes('ב')) semester = 'ב';
+
+    // Standardize Attendance
+    const rawAttendance = String(row.attendance || row.attendancevalue || row.attendancemandatory || '').trim();
+    const isNone = !rawAttendance || 
+                   rawAttendance === '0' || 
+                   rawAttendance === 'אין' || 
+                   rawAttendance.toLowerCase() === 'none';
+    
+    const attendanceMandatory = !isNone;
+
+    // Standardize Instructors
+    let instructors = [];
+    if (row.instructors) {
+        instructors = typeof row.instructors === 'string' ? JSON.parse(row.instructors) : row.instructors;
+    } else if (row.lecturers) {
+        instructors = row.lecturers.split(',').map(name => ({ id: 0, name: name.trim() }));
+    }
+    const instructor = (instructors && instructors.length > 0) ? instructors[0].name : 'לא ידוע';
+
+    return {
+        ...row,
+        code: row.code || row.course_code,
+        title: row.title || row.name,
+        year,
+        type,
+        semester,
+        attendanceMandatory,
+        attendanceValue: rawAttendance || 'אין',
+        instructor,
+        instructors: instructors || [],
+        language: row.language || 'עברית'
+    };
+};
+
+// --- Routes ---
+
+app.get('/api/combinations', async (req, res) => {
+  console.log('GET /api/combinations request received');
+  try {
+    const query = 'SELECT roadmap_code as value, name as label FROM combinations ORDER BY name ASC';
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching combinations:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/courses', async (req, res) => {
+  try {
+    const query = 'SELECT * FROM courses';
+    const result = await pool.query(query);
+    res.json(result.rows.map(mapCourse));
+  } catch (err) {
+    console.error('Error fetching courses:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/combinations/:code/courses', async (req, res) => {
+  try {
+    const { code } = req.params;
+    const query = `
+      SELECT 
+          c.id, 
+          c.course_code as code, 
+          c.name as title, 
+          c.credits, 
+          cc.category_type as type, 
+          cc.year,
+          c.description,
+          c.semester,
+          c.language,
+          c.campus,
+          (SELECT json_agg(json_build_object('id', l.id, 'name', l.name))
+           FROM lecturers l 
+           JOIN course_lecturers cl ON l.id = cl.lecturer_id 
+           WHERE cl.course_id = c.id) as instructors,
+          c.attendance as attendanceValue,
+          c.requirements as assessmentType
+      FROM courses c
+      JOIN combination_courses cc ON c.id = cc.course_id
+      JOIN combinations comb ON cc.combination_id = comb.id
+      WHERE comb.roadmap_code = $1
+    `;
+    const result = await pool.query(query, [code]);
+    res.json(result.rows.map(mapCourse));
+  } catch (err) {
+    console.error(`Error fetching courses for combination ${req.params.code}:`, err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/courses/:id', async (req, res) => {
+  try {
+    const query = `
+      SELECT c.*, 
+      (SELECT json_agg(json_build_object('id', l.id, 'name', l.name))
+       FROM lecturers l 
+       JOIN course_lecturers cl ON l.id = cl.lecturer_id 
+       WHERE cl.course_id = c.id) as instructors
+      FROM courses c WHERE c.id = $1
+    `;
+    const result = await pool.query(query, [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    res.json(mapCourse(result.rows[0]));
+  } catch (err) {
+    console.error(`Error fetching course ${req.params.id}:`, err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Reviews Routes ---
+
+const mapLecturerReview = (r) => ({
+  id: r.lecturer_review_id,
+  authorId: r.user_id,
+  author: r.full_name || 'סטודנט/ית אנונימי/ת',
+  rating: r.rating_general,
+  comment: r.review_text,
+  date: r.created_at ? new Date(r.created_at).toLocaleDateString('he-IL') : '',
+});
+
+const mapReview = (r) => {
+  let author = 'אנונימי/ת';
+  if (r.visibility === 'full_name' && r.full_name) author = r.full_name;
+  else if (r.visibility === 'initials' && r.full_name)
+    author = r.full_name.trim().split(/\s+/).map(w => w[0] + '.').join(' ');
+  return {
+    id: r.id,
+    courseId: r.course_id,
+    authorId: r.user_id,
+    author,
+    difficulty: r.difficulty,
+    attendanceEnforced: r.attendance_enforced,
+    comment: r.comment,
+    visibility: r.visibility,
+    semester: r.semester,
+    year: r.year,
+    date: r.created_at ? new Date(r.created_at).toLocaleDateString('he-IL') : '',
+    likedBy: r.liked_by || [],
+  };
+};
+
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const { courseId } = req.query;
+
+    let reviewQuery = supabase.from('course_reviews').select('*').order('created_at', { ascending: false });
+    if (courseId) reviewQuery = reviewQuery.eq('course_id', courseId);
+
+    const { data: reviewData, error: reviewError } = await reviewQuery;
+    if (reviewError) {
+      console.error('🔴 Supabase error fetching reviews:', reviewError);
+      return res.status(500).json({ message: reviewError.message });
+    }
+
+    let rows = reviewData || [];
+
+    // Fetch user full_names
+    try {
+      const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+      if (userIds.length > 0) {
+        const { data: userData } = await supabase.from('users').select('id, full_name').in('id', userIds);
+        const userMap = {};
+        (userData || []).forEach(u => { userMap[u.id] = u.full_name; });
+        rows = rows.map(r => ({ ...r, full_name: userMap[r.user_id] || null }));
+      }
+    } catch (userErr) {
+      console.error('⚠️ Could not fetch user names:', userErr.message);
+    }
+
+    // Fetch votes
+    try {
+      const ids = rows.map(r => r.id);
+      if (ids.length > 0) {
+        const { data: voteData } = await supabase
+          .from('course_review_votes')
+          .select('review_id, user_id')
+          .in('review_id', ids)
+          .eq('vote_type', 1);
+        const voteMap = {};
+        (voteData || []).forEach(v => {
+          if (!voteMap[v.review_id]) voteMap[v.review_id] = [];
+          voteMap[v.review_id].push(String(v.user_id));
+        });
+        rows = rows.map(r => ({ ...r, liked_by: voteMap[r.id] || [] }));
+      }
+    } catch (_) {
+      rows = rows.map(r => ({ ...r, liked_by: [] }));
+    }
+
+    res.json(rows.map(mapReview));
+  } catch (err) {
+    console.error('🔴 Unexpected error fetching reviews:', err.stack || err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/reviews', async (req, res) => {
+  try {
+    const { courseId, authorId, difficulty, attendanceEnforced, comment, semester, year, visibility } = req.body;
+
+    // Check for existing review by this user for this course
+    const { data: existing } = await supabase
+      .from('course_reviews')
+      .select('id')
+      .eq('user_id', authorId)
+      .eq('course_id', courseId)
+      .maybeSingle();
+
+    let saved;
+    if (existing) {
+      const { data, error } = await supabase
+        .from('course_reviews')
+        .update({ comment: comment || null, visibility: visibility || 'full_name', semester, year })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      saved = data;
+    } else {
+      const { data, error } = await supabase
+        .from('course_reviews')
+        .insert({ user_id: authorId, course_id: courseId, difficulty, attendance_enforced: attendanceEnforced ?? null, comment: comment || null, visibility: visibility || 'full_name', semester, year })
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      saved = data;
+    }
+
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', authorId).maybeSingle();
+    res.status(201).json(mapReview({ ...saved, full_name: userData?.full_name || null }));
+  } catch (err) {
+    console.error('Error creating review:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch('/api/reviews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { comment, difficulty, attendanceEnforced } = req.body;
+    const updates = {};
+    if (comment !== undefined) updates.comment = comment;
+    if (difficulty !== undefined) updates.difficulty = difficulty;
+    if (attendanceEnforced !== undefined) updates.attendance_enforced = attendanceEnforced;
+
+    if (Object.keys(updates).length === 0) return res.status(400).json({ message: 'No updates provided' });
+
+    const { data, error } = await supabase
+      .from('course_reviews')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    if (!data) return res.status(404).json({ message: 'Review not found' });
+
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', data.user_id).maybeSingle();
+    res.json(mapReview({ ...data, full_name: userData?.full_name || null }));
+  } catch (err) {
+    console.error('Error updating review:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/reviews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error, count } = await supabase.from('course_reviews').delete({ count: 'exact' }).eq('id', id);
+    if (error) throw new Error(error.message);
+    if (count === 0) return res.status(404).json({ message: 'Review not found' });
+    res.json({ message: 'Review deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting review:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/reviews/:id/vote', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ message: 'userId required' });
+
+    const { data: existing } = await supabase
+      .from('course_review_votes')
+      .select('review_id')
+      .eq('review_id', id)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existing) {
+      await supabase.from('course_review_votes').delete().eq('review_id', id).eq('user_id', userId);
+      res.json({ liked: false });
+    } else {
+      await supabase.from('course_review_votes').insert({ review_id: id, user_id: userId, vote_type: 1 });
+      res.json({ liked: true });
+    }
+  } catch (err) {
+    console.error('Error toggling vote:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Questions Routes ---
+
+const mapQuestion = (q, answers = []) => ({
+  id: q.question_id,
+  courseId: q.course_id,
+  authorId: q.user_id,
+  author: q.full_name || 'סטודנט/ית אנונימי/ת',
+  title: q.title,
+  content: q.content,
+  date: q.created_at ? new Date(q.created_at).toLocaleDateString('he-IL') : '',
+  answers,
+});
+
+const mapAnswer = (a) => ({
+  id: a.answer_id,
+  questionId: a.question_id,
+  authorId: a.user_id,
+  author: a.full_name || 'סטודנט/ית אנונימי/ת',
+  content: a.content,
+  date: a.created_at ? new Date(a.created_at).toLocaleDateString('he-IL') : '',
+});
+
+app.get('/api/questions', async (req, res) => {
+  try {
+    const { courseId } = req.query;
+    let qQuery = supabase.from('forum_questions').select('*').order('created_at', { ascending: false });
+    if (courseId) qQuery = qQuery.eq('course_id', courseId);
+    const { data, error } = await qQuery;
+    if (error) throw new Error(error.message);
+    let rows = data || [];
+
+    // Collect all user IDs (questions)
+    const qUserIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+    const qIds = rows.map(r => r.question_id);
+
+    // Fetch user names and answers in parallel
+    const [userRes, answersRes] = await Promise.allSettled([
+      qUserIds.length > 0
+        ? supabase.from('users').select('id, full_name').in('id', qUserIds)
+        : Promise.resolve({ data: [] }),
+      qIds.length > 0
+        ? supabase.from('forum_answers').select('*').in('question_id', qIds).order('created_at', { ascending: true })
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    // Build question author map
+    const qUserMap = {};
+    if (userRes.status === 'fulfilled') {
+      (userRes.value.data || []).forEach(u => { qUserMap[u.id] = u.full_name; });
+    }
+
+    // Build answers + fetch answer author names
+    let answersMap = {}; // question_id → mapped answers[]
+    if (answersRes.status === 'fulfilled') {
+      const rawAnswers = answersRes.value.data || [];
+      const aUserIds = [...new Set(rawAnswers.map(a => a.user_id).filter(Boolean))];
+      let aUserMap = {};
+      if (aUserIds.length > 0) {
+        try {
+          const { data: aUsers } = await supabase.from('users').select('id, full_name').in('id', aUserIds);
+          (aUsers || []).forEach(u => { aUserMap[u.id] = u.full_name; });
+        } catch {}
+      }
+      rawAnswers.forEach(a => {
+        const mapped = mapAnswer({ ...a, full_name: aUserMap[a.user_id] || null });
+        if (!answersMap[a.question_id]) answersMap[a.question_id] = [];
+        answersMap[a.question_id].push(mapped);
+      });
+    }
+
+    res.json(rows.map(r => mapQuestion(
+      { ...r, full_name: qUserMap[r.user_id] || null },
+      answersMap[r.question_id] || []
+    )));
+  } catch (err) {
+    console.error('Error fetching questions:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/questions/:id/answers', async (req, res) => {
+  try {
+    const { id } = req.params; // question_id
+    const { userId, content } = req.body;
+    if (!userId) return res.status(400).json({ message: 'userId required' });
+    if (!content || content.trim().length < 2) return res.status(400).json({ message: 'התשובה חייבת להכיל לפחות 2 תווים' });
+    const { data, error } = await supabase
+      .from('forum_answers')
+      .insert({ question_id: id, user_id: userId, content })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+    res.status(201).json(mapAnswer({ ...data, full_name: userData?.full_name || null }));
+  } catch (err) {
+    console.error('Error creating answer:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/answers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from('forum_answers').delete().eq('answer_id', id);
+    if (error) throw new Error(error.message);
+    res.json({ message: 'Answer deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting answer:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/questions', async (req, res) => {
+  try {
+    const { courseId, userId, title, content } = req.body;
+    if (!userId) return res.status(400).json({ message: 'userId required' });
+    if (!title || title.trim().length < 5) return res.status(400).json({ message: 'הכותרת חייבת להכיל לפחות 5 תווים' });
+    if (!content || content.trim().length < 10) return res.status(400).json({ message: 'תוכן השאלה חייב להכיל לפחות 10 תווים' });
+    const { data, error } = await supabase
+      .from('forum_questions')
+      .insert({ course_id: courseId || null, user_id: userId, title, content })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+    res.status(201).json(mapQuestion({ ...data, full_name: userData?.full_name || null }, []));
+  } catch (err) {
+    console.error('Error creating question:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/questions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from('forum_questions').delete().eq('question_id', id);
+    if (error) throw new Error(error.message);
+    res.json({ message: 'Question deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting question:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Materials Routes ---
+
+const mapMaterial = (m) => ({
+  id: m.material_id,
+  courseId: m.course_id,
+  userId: m.user_id,
+  title: m.title,
+  materialType: m.material_type,
+  isLink: m.material_type === 'link',
+  url: m.url,
+  fileExtension: m.file_extension,
+  type: m.file_extension ? m.file_extension.toUpperCase() : (m.material_type === 'link' ? 'LINK' : 'FILE'),
+  fileSizeBytes: m.file_size_bytes,
+  date: m.created_at ? new Date(m.created_at).toLocaleDateString('he-IL') : '',
+  category: m.category || (m.material_type === 'link' ? 'links' : 'misc'),
+  likedBy: []
+});
+
+app.get('/api/materials', async (req, res) => {
+  try {
+    const { courseId } = req.query;
+    let query = 'SELECT * FROM course_materials';
+    let params = [];
+    if (courseId) { query += ' WHERE course_id = $1'; params.push(courseId); }
+    query += ' ORDER BY created_at DESC';
+    const result = await pool.query(query, params);
+    res.json(result.rows.map(mapMaterial));
+  } catch (err) {
+    console.error('Error fetching materials:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/materials', async (req, res) => {
+  try {
+    const { courseId, userId, title, materialType, url, fileExtension, fileSizeBytes, category } = req.body;
+    console.log('POST /api/materials - received category:', category);
+    const query = `
+      INSERT INTO course_materials (course_id, user_id, title, material_type, url, file_extension, file_size_bytes, category)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `;
+    const result = await pool.query(query, [courseId, userId, title, materialType, url, fileExtension || null, fileSizeBytes || null, category || 'misc']);
+    res.status(201).json(mapMaterial(result.rows[0]));
+  } catch (err) {
+    console.error('Error creating material:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch('/api/materials/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, url } = req.body;
+    let updates = [];
+    let params = [];
+    let index = 1;
+    if (title !== undefined) { updates.push(`title = $${index++}`); params.push(title); }
+    if (url !== undefined) { updates.push(`url = $${index++}`); params.push(url); }
+    if (updates.length === 0) return res.status(400).json({ message: 'No updates provided' });
+    params.push(id);
+    const result = await pool.query(`UPDATE course_materials SET ${updates.join(', ')} WHERE material_id = $${index} RETURNING *`, params);
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Material not found' });
+    res.json(mapMaterial(result.rows[0]));
+  } catch (err) {
+    console.error('Error updating material:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/materials/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const check = await pool.query('SELECT material_type, url FROM course_materials WHERE material_id = $1', [id]);
+    if (check.rows.length === 0) return res.status(404).json({ message: 'Material not found' });
+    const { material_type, url } = check.rows[0];
+    if (material_type === 'file') {
+      const path = url.split('/course-files/')[1];
+      if (path) await supabase.storage.from('course-files').remove([decodeURIComponent(path)]);
+    }
+    await pool.query('DELETE FROM course_materials WHERE material_id = $1', [id]);
+    res.json({ message: 'Material deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting material:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/lecturers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM lecturers WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Lecturer not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(`Error fetching lecturer ${req.params.id}:`, err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/lecturers/:id/courses', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = `
+      SELECT c.id, c.course_code as code, c.name as title, c.credits
+      FROM courses c
+      JOIN course_lecturers cl ON c.id = cl.course_id
+      WHERE cl.lecturer_id = $1
+    `;
+    const result = await pool.query(query, [id]);
+    res.json(result.rows.map(mapCourse));
+  } catch (err) {
+    console.error(`Error fetching courses for lecturer ${id}:`, err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/lecturers/:id/reviews', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from('lecturer_reviews')
+      .select('*')
+      .eq('lecturer_id', id)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    let rows = data || [];
+    try {
+      const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+      if (userIds.length > 0) {
+        const { data: userData } = await supabase.from('users').select('id, full_name').in('id', userIds);
+        const userMap = {};
+        (userData || []).forEach(u => { userMap[u.id] = u.full_name; });
+        rows = rows.map(r => ({ ...r, full_name: userMap[r.user_id] || null }));
+      }
+    } catch {}
+    res.json(rows.map(mapLecturerReview));
+  } catch (err) {
+    console.error(`Error fetching reviews for lecturer ${req.params.id}:`, err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/lecturers/:id/reviews', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, rating, comment } = req.body;
+    if (!userId) return res.status(400).json({ message: 'userId required' });
+    if (!comment || comment.trim().length < 10) return res.status(400).json({ message: 'הביקורת חייבת להכיל לפחות 10 תווים' });
+
+    const { data, error } = await supabase
+      .from('lecturer_reviews')
+      .insert({ lecturer_id: parseInt(id), user_id: userId, rating_general: rating, review_text: comment })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
+    res.status(201).json(mapLecturerReview({ ...data, full_name: userData?.full_name || null }));
+  } catch (err) {
+    console.error('Error creating lecturer review:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch('/api/lecturers/:lecturerId/reviews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, comment } = req.body;
+    const updates = {};
+    if (rating !== undefined) updates.rating_general = rating;
+    if (comment !== undefined) updates.review_text = comment;
+    if (Object.keys(updates).length === 0) return res.status(400).json({ message: 'No updates provided' });
+
+    const { data, error } = await supabase
+      .from('lecturer_reviews')
+      .update(updates)
+      .eq('lecturer_review_id', id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    if (!data) return res.status(404).json({ message: 'Review not found' });
+
+    const { data: userData } = await supabase.from('users').select('full_name').eq('id', data.user_id).maybeSingle();
+    res.json(mapLecturerReview({ ...data, full_name: userData?.full_name || null }));
+  } catch (err) {
+    console.error(`Error updating lecturer review ${req.params.id}:`, err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/lecturers/:lecturerId/reviews/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase.from('lecturer_reviews').delete().eq('lecturer_review_id', id);
+    if (error) throw new Error(error.message);
+    res.json({ message: 'Review deleted successfully' });
+  } catch (err) {
+    console.error(`Error deleting review ${req.params.id}:`, err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Saved Courses (Follows) Routes ---
+
+app.get('/api/follows/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { data, error } = await supabase
+      .from('saved_courses')
+      .select('course_id')
+      .eq('user_id', userId);
+    if (error) throw new Error(error.message);
+    res.json((data || []).map(r => r.course_id));
+  } catch (err) {
+    console.error('Error fetching follows:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/follows', async (req, res) => {
+  try {
+    const { userId, courseId } = req.body;
+    if (!userId || !courseId) return res.status(400).json({ message: 'userId and courseId required' });
+    const { error } = await supabase
+      .from('saved_courses')
+      .insert({ user_id: userId, course_id: courseId });
+    // Ignore duplicate-key errors (user already follows this course)
+    if (error && !error.message.toLowerCase().includes('duplicate') && !error.code === '23505') {
+      throw new Error(error.message);
+    }
+    res.json({ followed: true });
+  } catch (err) {
+    console.error('Error following course:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete('/api/follows', async (req, res) => {
+  try {
+    const { userId, courseId } = req.body;
+    if (!userId || !courseId) return res.status(400).json({ message: 'userId and courseId required' });
+    const { error } = await supabase
+      .from('saved_courses')
+      .delete()
+      .eq('user_id', userId)
+      .eq('course_id', courseId);
+    if (error) throw new Error(error.message);
+    res.json({ followed: false });
+  } catch (err) {
+    console.error('Error unfollowing course:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- Auth Routes ---
+
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { name, email, password, track } = req.body;
+
+    const combResult = await pool.query('SELECT id FROM combinations WHERE roadmap_code = $1', [track]);
+    if (combResult.rows.length === 0) {
+      return res.status(400).json({ message: 'מסלול הלימוד לא נמצא' });
+    }
+    const combinationId = combResult.rows[0].id;
+
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+
+    let userId;
+
+    if (authError) {
+      if (!authError.message.toLowerCase().includes('already registered')) {
+        return res.status(400).json({ message: authError.message });
+      }
+      // Email exists in auth.users — check if public.users profile is complete
+      const profileCheck = await pool.query(
+        'SELECT id FROM users WHERE email = $1 AND full_name IS NOT NULL', [email]
+      );
+      if (profileCheck.rows.length > 0) {
+        return res.status(409).json({ message: 'משתמש עם אימייל זה כבר קיים במערכת' });
+      }
+      // Zombie user — get their auth ID and re-use it
+      const authUserRow = await pool.query('SELECT id FROM auth.users WHERE email = $1', [email]);
+      if (authUserRow.rows.length === 0) {
+        return res.status(400).json({ message: authError.message });
+      }
+      userId = authUserRow.rows[0].id;
+      // Update their password to the one they just chose
+      await supabase.auth.admin.updateUserById(userId, { password });
+    } else {
+      if (!authData.user) {
+        return res.status(400).json({ message: 'לא ניתן ליצור משתמש, נסה שנית' });
+      }
+      userId = authData.user.id;
+    }
+
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ full_name: name, combination_id: combinationId })
+      .eq('id', userId);
+
+    if (updateError) return res.status(500).json({ message: updateError.message });
+
+    res.status(201).json({ id: userId, name, email, track, isGuest: false });
+  } catch (err) {
+    console.error('Error signing up:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (authError) {
+      return res.status(401).json({ message: 'אימייל או סיסמה שגויים' });
+    }
+
+    const userId = authData.user.id;
+
+    const result = await pool.query(
+      `SELECT u.id, u.full_name, u.email, c.roadmap_code as track
+       FROM users u
+       JOIN combinations c ON u.combination_id = c.id
+       WHERE u.id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'משתמש לא נמצא' });
+    }
+
+    const user = result.rows[0];
+    res.json({ id: user.id, name: user.full_name, email: user.email, track: user.track, isGuest: false });
+  } catch (err) {
+    console.error('Error logging in:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+>>>>>>> e4fba4b82dd83640e3d618157241d58e1adfe47e
+
+// ==== GENERAL FORUMS ====
+
+const generateForumSlug = (title) =>
+  title.replace(/\s+/g, '-').substring(0, 50) + '-' + Date.now();
+
+const parseForumMeta = (description) => {
+  try { return JSON.parse(description) || {}; } catch { return {}; }
+};
+
+app.get('/api/general-forums', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('general_forums')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    res.json((data || []).map(f => {
+      const meta = parseForumMeta(f.description);
+      return {
+        id: f.forum_id,
+        title: f.title,
+        slug: f.slug,
+        majorA: meta.majorA || '',
+        majorB: meta.majorB || '',
+        academicYear: meta.academicYear || '',
+        date: new Date(f.created_at).toLocaleDateString('he-IL'),
+        replies: 0
+      };
+    }));
+  } catch (err) {
+    console.error('Error fetching general forums:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/general-forums', async (req, res) => {
+  try {
+    const { title, majorA, majorB, academicYear } = req.body;
+    if (!title) return res.status(400).json({ message: 'title is required' });
+
+    const slug = generateForumSlug(title);
+    const description = JSON.stringify({ majorA, majorB, academicYear });
+
+    const { data, error } = await supabase
+      .from('general_forums')
+      .insert({ title, slug, description })
+      .select()
+      .single();
+    if (error) throw error;
+
+    res.json({
+      id: data.forum_id,
+      title: data.title,
+      slug: data.slug,
+      majorA,
+      majorB,
+      academicYear,
+      date: new Date(data.created_at).toLocaleDateString('he-IL'),
+      replies: 0
+    });
+  } catch (err) {
+    console.error('Error creating general forum:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/general-forum-questions', async (req, res) => {
+  try {
+    const { forumId } = req.query;
+    if (!forumId) return res.status(400).json({ message: 'forumId is required' });
+
+    const { data: questions, error: qErr } = await supabase
+      .from('general_forum_questions')
+      .select('*')
+      .eq('forum_id', forumId)
+      .order('created_at', { ascending: false });
+    if (qErr) throw qErr;
+
+    if (!questions || questions.length === 0) return res.json([]);
+
+    const questionIds = questions.map(q => q.question_id);
+    const { data: answers, error: aErr } = await supabase
+      .from('general_forum_answers')
+      .select('*')
+      .in('question_id', questionIds)
+      .order('created_at', { ascending: true });
+    if (aErr) throw aErr;
+
+    const answersMap = {};
+    (answers || []).forEach(a => {
+      if (!answersMap[a.question_id]) answersMap[a.question_id] = [];
+      answersMap[a.question_id].push({
+        id: a.answer_id,
+        text: a.content,
+        author: a.guest_nickname || 'אורח/ת',
+        authorId: a.user_id,
+        date: new Date(a.created_at).toLocaleDateString('he-IL'),
+        likedBy: []
+      });
+    });
+
+    res.json(questions.map(q => ({
+      id: q.question_id,
+      combinationId: q.forum_id,
+      question: q.title,
+      author: q.guest_nickname || 'אורח/ת',
+      authorId: q.user_id,
+      date: new Date(q.created_at).toLocaleDateString('he-IL'),
+      answers: answersMap[q.question_id] || []
+    })));
+  } catch (err) {
+    console.error('Error fetching forum questions:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/general-forum-questions', async (req, res) => {
+  try {
+    const { forumId, question, author, userId } = req.body;
+    if (!forumId || !question) return res.status(400).json({ message: 'forumId and question are required' });
+
+    const paddedContent = question.length >= 10 ? question : question + ' '.repeat(10 - question.length);
+
+    const { data, error } = await supabase
+      .from('general_forum_questions')
+      .insert({
+        forum_id: forumId,
+        user_id: userId || null,
+        guest_nickname: author || 'אורח/ת',
+        title: question,
+        content: paddedContent
+      })
+      .select()
+      .single();
+    if (error) throw error;
+
+    res.json({
+      id: data.question_id,
+      combinationId: data.forum_id,
+      question: data.title,
+      author: data.guest_nickname,
+      authorId: data.user_id,
+      date: new Date(data.created_at).toLocaleDateString('he-IL'),
+      answers: []
+    });
+  } catch (err) {
+    console.error('Error creating forum question:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.patch('/api/general-forum-questions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { question } = req.body;
+    if (!question) return res.status(400).json({ message: 'question text is required' });
+
+    const { data, error } = await supabase
+      .from('general_forum_questions')
+      .update({ title: question })
+      .eq('question_id', id)
+      .select()
+      .single();
+    if (error) throw error;
+
+    const { data: answers } = await supabase
+      .from('general_forum_answers')
+      .select('*')
+      .eq('question_id', id)
+      .order('created_at', { ascending: true });
+
+    res.json({
+      id: data.question_id,
+      combinationId: data.forum_id,
+      question: data.title,
+      author: data.guest_nickname,
+      authorId: data.user_id,
+      date: new Date(data.created_at).toLocaleDateString('he-IL'),
+      answers: (answers || []).map(a => ({
+        id: a.answer_id,
+        text: a.content,
+        author: a.guest_nickname || 'אורח/ת',
+        authorId: a.user_id,
+        date: new Date(a.created_at).toLocaleDateString('he-IL'),
+        likedBy: []
+      }))
+    });
+  } catch (err) {
+    console.error('Error updating forum question:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/general-forum-answers', async (req, res) => {
+  try {
+    const { questionId, text, author, userId } = req.body;
+    if (!questionId || !text) return res.status(400).json({ message: 'questionId and text are required' });
+
+    const { error: insertErr } = await supabase
+      .from('general_forum_answers')
+      .insert({
+        question_id: questionId,
+        user_id: userId || null,
+        guest_nickname: author || 'אורח/ת',
+        content: text
+      });
+    if (insertErr) throw insertErr;
+
+    const { data: question } = await supabase
+      .from('general_forum_questions')
+      .select('*')
+      .eq('question_id', questionId)
+      .single();
+
+    const { data: answers } = await supabase
+      .from('general_forum_answers')
+      .select('*')
+      .eq('question_id', questionId)
+      .order('created_at', { ascending: true });
+
+    res.json({
+      id: question.question_id,
+      combinationId: question.forum_id,
+      question: question.title,
+      author: question.guest_nickname,
+      authorId: question.user_id,
+      date: new Date(question.created_at).toLocaleDateString('he-IL'),
+      answers: (answers || []).map(a => ({
+        id: a.answer_id,
+        text: a.content,
+        author: a.guest_nickname || 'אורח/ת',
+        authorId: a.user_id,
+        date: new Date(a.created_at).toLocaleDateString('he-IL'),
+        likedBy: []
+      }))
+    });
+  } catch (err) {
+    console.error('Error adding forum answer:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
