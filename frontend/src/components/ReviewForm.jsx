@@ -1,5 +1,5 @@
 import React from 'react';
-import { Send, X, User, UserCircle, Ghost } from 'lucide-react';
+import { Send, X, User, Ghost } from 'lucide-react';
 
 const ReviewForm = ({ 
   comment, semester, year, identityType, attendanceEnforced, difficulty,
@@ -31,7 +31,6 @@ const ReviewForm = ({
   ];
 
   const IDENTITY_OPTIONS = [
-    { id: 'full_name', label: 'שם מלא', icon: UserCircle },
     { id: 'initials', label: 'ראשי תיבות', icon: User },
     { id: 'anonymous', label: 'אנונימי/ת', icon: Ghost },
   ];
@@ -89,7 +88,7 @@ const ReviewForm = ({
 
           <div>
             <label className="text-sm font-black uppercase tracking-widest text-slate-400 mb-3 block">איך להציג את שמך?</label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {IDENTITY_OPTIONS.map(option => (
                 <button
                   key={option.id}

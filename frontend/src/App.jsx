@@ -1108,7 +1108,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
   const [newReviewComment, setNewReviewComment] = useState('');
   const [newReviewSemester, setNewReviewSemester] = useState("סמסטר א'");
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ו (2025-26)');
-  const [newReviewIdentity, setNewReviewIdentity] = useState('full_name');
+  const [newReviewIdentity, setNewReviewIdentity] = useState('initials');
   const [newReviewAttendance, setNewReviewAttendance] = useState(null);
   const [newReviewDifficulty, setNewReviewDifficulty] = useState(5);
 
