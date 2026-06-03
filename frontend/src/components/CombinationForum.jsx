@@ -102,7 +102,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, label }) => {
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
+const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initialForumId, onBack }) => {
   const [combinations, setCombinations] = useState([]);
   const [selectedCombination, setSelectedCombination] = useState(null);
   const [combinationQuestions, setCombinationQuestions] = useState([]);
@@ -140,7 +140,13 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
   useEffect(() => {
     fetch(`${API}/api/general-forums`)
       .then(res => res.json())
-      .then(data => setCombinations(data))
+      .then(data => {
+        setCombinations(data);
+        if (initialForumId) {
+          const target = data.find(f => f.id === initialForumId);
+          if (target) setSelectedCombination(target);
+        }
+      })
       .catch(err => console.error('Error fetching forums:', err));
   }, []);
 
@@ -272,6 +278,17 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS }) => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-12" dir="rtl">
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="group flex items-center gap-3 text-slate-500 font-black hover:text-indigo-600 transition-all"
+        >
+          <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-200 group-hover:border-indigo-100">
+            <ChevronLeft className="h-4 w-4 rotate-180" />
+          </div>
+          <span>חזרה לדף הבית</span>
+        </button>
+      )}
       {!selectedCombination ? (
         <>
           <header className="text-right">
