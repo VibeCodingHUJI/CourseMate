@@ -1073,7 +1073,7 @@ app.post('/api/general-forums', async (req, res) => {
     if (majorA && majorB) {
       try {
         const combResult = await pool.query(
-          `SELECT id FROM combinations WHERE name ILIKE $1 AND name ILIKE $2`,
+          `SELECT id FROM combinations WHERE name ILIKE $1 OR name ILIKE $2`,
           [`%${majorA}%`, `%${majorB}%`]
         );
         if (combResult.rows.length > 0) {
