@@ -102,7 +102,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, label }) => {
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initialForumId, onBack }) => {
+const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initialForumId, onBack, userCombination }) => {
   const [combinations, setCombinations] = useState([]);
   const [selectedCombination, setSelectedCombination] = useState(null);
   const [combinationQuestions, setCombinationQuestions] = useState([]);
@@ -263,11 +263,21 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
     ));
   };
 
-  const filteredCombinations = combinations.filter(c => 
-    (!filterA || c.majorA === filterA || c.majorB === filterA || (c.title && c.title.includes(filterA))) && 
-    (!filterB || c.majorA === filterB || c.majorB === filterB || (c.title && c.title.includes(filterB))) &&
-    (!filterYear || c.academicYear === filterYear)
-  );
+  const userWords = userCombination
+    ? userCombination.split(/[\s,،ו]+/).filter(w => w.length >= 3)
+    : [];
+
+  const filteredCombinations = combinations.filter(c => {
+    if (userWords.length > 0 && !filterA && !filterB) {
+      const title = (c.title || '').toLowerCase();
+      if (!userWords.some(w => title.includes(w.toLowerCase()))) return false;
+    }
+    return (
+      (!filterA || c.majorA === filterA || c.majorB === filterA || (c.title && c.title.includes(filterA))) &&
+      (!filterB || c.majorA === filterB || c.majorB === filterB || (c.title && c.title.includes(filterB))) &&
+      (!filterYear || c.academicYear === filterYear)
+    );
+  });
 
   const existingCombination = combinations.find(c => 
     filterA && filterB && 
