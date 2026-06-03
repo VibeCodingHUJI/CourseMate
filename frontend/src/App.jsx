@@ -969,6 +969,31 @@ const App = () => {
       .catch(() => {});
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!user?.id || user?.isGuest) return;
+
+    const channel = supabase
+      .channel(`notifications:${user.id}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        const n = payload.new;
+        setNotifications(prev => [{
+          id: n.id,
+          text: n.text,
+          read: n.read,
+          forumId: n.forum_id,
+          date: new Date(n.created_at).toLocaleDateString('he-IL', { hour: '2-digit', minute: '2-digit' })
+        }, ...prev]);
+      })
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, [user?.id]);
+
   const location = useLocation();
   const navigate = useNavigate();
 

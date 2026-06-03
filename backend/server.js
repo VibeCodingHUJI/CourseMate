@@ -1072,9 +1072,14 @@ app.post('/api/general-forums', async (req, res) => {
     // Notify registered users whose combination matches both departments
     if (majorA && majorB) {
       try {
+        const words = `${majorA} ${majorB}`
+          .split(/\s+/)
+          .filter(w => w.length >= 3)
+          .map(w => `%${w}%`);
+        const conditions = words.map((_, i) => `name ILIKE $${i + 1}`).join(' OR ');
         const combResult = await pool.query(
-          `SELECT id FROM combinations WHERE name ILIKE $1 OR name ILIKE $2`,
-          [`%${majorA}%`, `%${majorB}%`]
+          `SELECT DISTINCT id FROM combinations WHERE ${conditions}`,
+          words
         );
         if (combResult.rows.length > 0) {
           const combinationIds = combResult.rows.map(r => r.id);
