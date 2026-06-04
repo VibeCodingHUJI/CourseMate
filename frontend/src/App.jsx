@@ -689,19 +689,6 @@ const CourseDetail = ({
                     </div>
                     <div className="text-right">
                       <div className="font-black text-slate-900">{r.author}</div>
-                      <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex flex-wrap gap-x-1.5 gap-y-1">
-                        <span className="whitespace-nowrap">מרצה:</span>
-                        {selectedCourse.instructors && selectedCourse.instructors.length > 0 ? (
-                          selectedCourse.instructors.map((inst, idx) => (
-                            <span key={inst.id} className="whitespace-nowrap">
-                              <Link to={`/lecturer/${inst.id}`} className="hover:underline">{inst.name}</Link>
-                              {idx < selectedCourse.instructors.length - 1 ? ',' : ''}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="whitespace-nowrap">{selectedCourse.instructor || 'לא ידוע'}</span>
-                        )}
-                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
