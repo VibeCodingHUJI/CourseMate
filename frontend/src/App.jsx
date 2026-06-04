@@ -550,15 +550,15 @@ const CourseDetail = ({
             <div className="flex items-center gap-3 mb-6">
                <h1 className="text-5xl font-black text-slate-900 tracking-tight">{selectedCourse.title}</h1>
                {!user.isGuest && (
-                 <div className="flex items-center gap-3 group cursor-pointer" onClick={handleFollowToggle}>
-                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${isFollowing ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-slate-200 hover:border-indigo-300'}`}>
+                 <div className="flex items-center gap-3 group cursor-pointer shrink-0" onClick={handleFollowToggle}>
+                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${isFollowing ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-slate-200 hover:border-indigo-300'}`}>
                       {isFollowing ? (
                         <CheckCircle className="h-5 w-5 text-white" />
                       ) : (
                         <div className="w-2 h-2 rounded-full bg-slate-100 group-hover:bg-indigo-100"></div>
                       )}
                     </div>
-                    <span className={`text-xs font-black transition-colors ${isFollowing ? 'text-emerald-600' : 'text-slate-400 group-hover:text-indigo-500'}`}>
+                    <span className={`text-xs font-black transition-colors whitespace-nowrap ${isFollowing ? 'text-emerald-600' : 'text-slate-400 group-hover:text-indigo-500'}`}>
                       {isFollowing ? 'עוקב' : 'מעקב אחרי הקורס'}
                     </span>
                  </div>

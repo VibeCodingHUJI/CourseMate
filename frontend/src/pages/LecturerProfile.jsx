@@ -22,7 +22,6 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
 
   const handlePostReview = async () => {
     if (user?.isGuest) return alert('אורחים אינם יכולים להוסיף ביקורות');
-    if (newComment.trim().length < 10) return alert('הביקורת חייבת להכיל לפחות 10 תווים');
 
     try {
       let res;
@@ -337,7 +336,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
             {/* Review text */}
             <div className="mb-8">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                תוכן הביקורת <span className="text-slate-300">(לפחות 10 תווים)</span>
+                תוכן הביקורת
               </label>
               <textarea
                 value={newComment}
@@ -345,7 +344,6 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
                 className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-500/20 rounded-[24px] p-5 h-36 outline-none text-right font-medium text-sm resize-none"
                 placeholder="ספרו לנו על המרצה..."
               />
-              <div className="text-[10px] text-slate-400 mt-1 text-left">{newComment.trim().length}/10 תווים מינימום</div>
             </div>
 
             <button type="button" onClick={handlePostReview}
