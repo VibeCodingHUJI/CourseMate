@@ -1389,7 +1389,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
             </div>}
           </div>
           <div className="flex-1"></div>
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { setSelectedCourse(null); if (user?.isGuest) setGuestTab('forum'); }}><span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span><div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform"><GraduationCap className="h-6 w-6 text-white" /></div></div>
+          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => { setSelectedCourse(null); if (user?.isGuest) setGuestTab('forum'); }}><span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span><img src="/logo.png" alt="CourseMate Logo" className="h-10 w-10 object-contain group-hover:scale-110 transition-transform" /></div>
         </div>
         {isChangingTrack && (
           <div className="absolute top-20 left-6 bg-white rounded-3xl shadow-2xl border border-slate-200 p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]" dir="rtl">

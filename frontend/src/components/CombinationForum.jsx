@@ -278,7 +278,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
 
   return (
     <div className="max-w-7xl mx-auto space-y-12" dir="rtl">
-      {onBack && (
+      {onBack && !user?.isGuest && (
         <button
           onClick={onBack}
           className="group flex items-center gap-3 text-slate-500 font-black hover:text-indigo-600 transition-all"

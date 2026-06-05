@@ -90,8 +90,8 @@ const AuthPage = ({ onLogin }) => {
       <div className="w-full max-w-md bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl shadow-indigo-500/10 border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
         <div className="p-6 sm:p-10">
           <div className="flex flex-col items-center mb-8 sm:mb-10">
-            <div className="bg-indigo-600 p-3 sm:p-4 rounded-2xl sm:rounded-3xl mb-4 shadow-xl shadow-indigo-600/20">
-              <GraduationCap className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
+            <div className="mb-4">
+              <img src="/logo.png" alt="CourseMate Logo" className="h-16 w-16 sm:h-20 sm:w-20 object-contain" />
             </div>
             <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">CourseMate</h1>
             </div>
