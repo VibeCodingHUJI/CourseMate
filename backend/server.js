@@ -1064,7 +1064,7 @@ app.post('/api/general-forums', async (req, res) => {
 
     const { data, error } = await supabase
       .from('general_forums')
-      .insert({ title, slug, description })
+      .insert({ title, slug, description, major_a: majorA || null, major_b: majorB || null })
       .select()
       .single();
     if (error) throw error;
