@@ -385,8 +385,8 @@ const MaterialItem = ({ item, user, onUpdate, onDelete, getMaterialIcon }) => {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        {!user.isGuest && (
-          <button 
+        {!user.isGuest && user.id === item.userId && (
+          <button
             onClick={() => setIsEditing(true)}
             className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all"
             title="עריכה"
