@@ -1360,9 +1360,13 @@ app.get('/api/general-forums/relevant', async (req, res) => {
     if (error) throw error;
 
     const relevant = (data || []).filter(f => {
-      const mA = (f.major_a || '').trim().toLowerCase();
-      const mB = (f.major_b || '').trim().toLowerCase();
-      return (mA && combName.includes(mA)) || (mB && combName.includes(mB));
+      const meta = parseForumMeta(f.description);
+      const mA = (f.major_a || meta.majorA || '').trim().toLowerCase();
+      const mB = (f.major_b || meta.majorB || '').trim().toLowerCase();
+      if (!mA && !mB) return false;
+      const matchA = mA && combName.includes(mA);
+      const matchB = mB && combName.includes(mB);
+      return matchA || matchB;
     });
 
     res.json(relevant.map(f => {
