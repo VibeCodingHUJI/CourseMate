@@ -1341,6 +1341,49 @@ app.post('/api/general-forum-answers', async (req, res) => {
   }
 });
 
+app.get('/api/general-forums/relevant', async (req, res) => {
+  try {
+    const { track } = req.query;
+    if (!track) return res.json([]);
+
+    const combResult = await pool.query(
+      'SELECT name FROM combinations WHERE roadmap_code = $1',
+      [track]
+    );
+    if (combResult.rows.length === 0) return res.json([]);
+    const combName = combResult.rows[0].name.toLowerCase();
+
+    const { data, error } = await supabase
+      .from('general_forums')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    const relevant = (data || []).filter(f => {
+      const mA = (f.major_a || '').trim().toLowerCase();
+      const mB = (f.major_b || '').trim().toLowerCase();
+      return (mA && combName.includes(mA)) || (mB && combName.includes(mB));
+    });
+
+    res.json(relevant.map(f => {
+      const meta = parseForumMeta(f.description);
+      return {
+        id: f.forum_id,
+        title: f.title,
+        slug: f.slug,
+        majorA: f.major_a || meta.majorA || '',
+        majorB: f.major_b || meta.majorB || '',
+        academicYear: meta.academicYear || '',
+        date: new Date(f.created_at).toLocaleDateString('he-IL'),
+        replies: 0
+      };
+    }));
+  } catch (err) {
+    console.error('Error fetching relevant forums:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

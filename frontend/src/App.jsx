@@ -1000,39 +1000,30 @@ const App = () => {
     if (!user || user.isGuest || !user.track) { setStudentForums([]); return; }
     const fetchStudentForums = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinations`);        const forums = await res.json();
-        const getLabel = (val) => {
-          const raw = String(val || "").trim();
-          const match = (studyTracks || []).find(t => t.value === raw || t.label === raw);
-          return match ? match.label : raw;
-        };
-        const mA = getLabel(user?.track);
-        const mB = getLabel(user?.majorB);
-        const yr = String(user?.academicYear || "").trim();
-        const isMatch = (f, s) => { if (!f || !s) return false; return String(f).toLowerCase().includes(String(s).toLowerCase()) || String(s).toLowerCase().includes(String(f).toLowerCase()); };
-        const primary = forums.filter(f => ((isMatch(f.title, mA) && isMatch(f.title, mB)) || (isMatch(f.majorA, mA) && isMatch(f.majorB, mB)) || (isMatch(f.majorA, mB) && isMatch(f.majorB, mA))) && (!yr || yr === 'הכל' || isMatch(f.academicYear, yr)));
-        const secA = forums.filter(f => (isMatch(f.title, mA) || isMatch(f.majorA, mA) || isMatch(f.majorB, mA)) && !(mB && (isMatch(f.title, mB) || isMatch(f.majorA, mB) || isMatch(f.majorB, mB))) && (!yr || yr === 'הכל' || isMatch(f.academicYear, yr)));
-        const secB = forums.filter(f => (isMatch(f.title, mB) || isMatch(f.majorA, mB) || isMatch(f.majorB, mB)) && !(mA && (isMatch(f.title, mA) || isMatch(f.majorA, mA) || isMatch(f.majorB, mA))) && (!yr || yr === 'הכל' || isMatch(f.academicYear, yr)));
-        setStudentForums(forums);
-        if ([...primary, ...secA, ...secB].length > 0) setActiveStudentForumId(primary[0] ? primary[0].id : [...primary, ...secA, ...secB][0].id);
+        const _API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${_API}/api/general-forums/relevant?track=${encodeURIComponent(user.track)}`);
+        const forums = await res.json();
+        const list = Array.isArray(forums) ? forums : [];
+        setStudentForums(list);
+        if (list.length > 0) setActiveStudentForumId(list[0].id);
       } catch (err) { console.error('Error fetching student forums:', err); }
     };
     fetchStudentForums();
-  }, [user?.track, user?.majorB, user?.academicYear, studyTracks]);
+  }, [user?.track]);
 
   useEffect(() => {
     if (!activeStudentForumId) { setStudentForumQuestions([]); return; }
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinationQuestions?combinationId=${activeStudentForumId}`)
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/general-forum-questions?forumId=${activeStudentForumId}`)
       .then(res => res.json())
-      .then(qs => setStudentForumQuestions(qs.reverse()))
+      .then(qs => setStudentForumQuestions(Array.isArray(qs) ? qs : []))
       .catch(err => console.error('Error fetching questions:', err));
   }, [activeStudentForumId]);
 
   const handlePostStudentForumQ = async () => {
     if (!newStudentForumQ.trim() || !activeStudentForumId) return;
-    const newQ = { combinationId: activeStudentForumId, question: newStudentForumQ, answers: [], date: new Date().toLocaleDateString('he-IL'), author: user.name, userId: user.isGuest ? null : user.id };
     try {
-const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinationQuestions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newQ) });      const savedQ = await res.json();
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/general-forum-questions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ forumId: activeStudentForumId, question: newStudentForumQ, author: user.name, userId: user.isGuest ? null : user.id }) });
+      const savedQ = await res.json();
       setStudentForumQuestions([savedQ, ...studentForumQuestions]);
       setNewStudentForumQ('');
       alert('השאלה פורסמה בהצלחה!');
@@ -1041,11 +1032,8 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
 
   const handlePostStudentForumA = async (qId, text) => {
     if (!text.trim()) return;
-    const q = studentForumQuestions.find(q => q.id === qId);
-    if (!q) return;
-    const updatedAnswers = [...q.answers, { text, date: new Date().toLocaleDateString('he-IL'), author: user.name, authorId: user.id, likedBy: [] }];
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinationQuestions/${qId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updatedAnswers }) });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/general-forum-answers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questionId: qId, text, author: user.name, userId: user.isGuest ? null : user.id }) });
       const updatedQ = await res.json();
       setStudentForumQuestions(studentForumQuestions.map(q => q.id === qId ? updatedQ : q));
     } catch (err) { alert('שגיאה בפרסום התשובה'); }
