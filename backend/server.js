@@ -1361,8 +1361,9 @@ app.get('/api/general-forums/relevant', async (req, res) => {
 
     const relevant = (data || []).filter(f => {
       const meta = parseForumMeta(f.description);
-      const mA = (f.major_a || meta.majorA || '').trim().toLowerCase();
-      const mB = (f.major_b || meta.majorB || '').trim().toLowerCase();
+      const titleParts = (f.title || '').split(/\s*\+\s*/);
+      const mA = (f.major_a || meta.majorA || titleParts[0] || '').trim().toLowerCase();
+      const mB = (f.major_b || meta.majorB || titleParts[1] || '').trim().toLowerCase();
       if (!mA && !mB) return false;
       const matchA = mA && combName.includes(mA);
       const matchB = mB && combName.includes(mB);
