@@ -87,13 +87,13 @@ const AuthPage = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6" dir="rtl">
-      <div className="w-full max-w-md bg-white rounded-[40px] shadow-2xl shadow-indigo-500/10 border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
-        <div className="p-10">
-          <div className="flex flex-col items-center mb-10">
-            <div className="bg-indigo-600 p-4 rounded-3xl mb-4 shadow-xl shadow-indigo-600/20">
-              <GraduationCap className="h-10 w-10 text-white" />
+      <div className="w-full max-w-md bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl shadow-indigo-500/10 border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+        <div className="p-6 sm:p-10">
+          <div className="flex flex-col items-center mb-8 sm:mb-10">
+            <div className="bg-indigo-600 p-3 sm:p-4 rounded-2xl sm:rounded-3xl mb-4 shadow-xl shadow-indigo-600/20">
+              <GraduationCap className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
             </div>
-            <h1 className="text-4xl font-black text-slate-900 tracking-tight">CourseMate</h1>
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">CourseMate</h1>
             </div>
           <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
             <button 
