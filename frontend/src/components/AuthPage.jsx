@@ -90,10 +90,10 @@ const AuthPage = ({ onLogin }) => {
       <div className="w-full max-w-md bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl shadow-indigo-500/10 border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
         <div className="p-6 sm:p-10">
           <div className="flex flex-col items-center mb-8 sm:mb-10">
-            <div className="mb-4">
-              <img src="/logo.png" alt="CourseMate Logo" className="h-16 w-16 sm:h-20 sm:w-20 object-contain" />
+            <div className="mb-2">
+              <img src="/logo.png" alt="CourseMate Logo" className="h-24 w-24 sm:h-28 sm:w-28 object-contain" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">CourseMate</h1>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">CourseMate</h1>
             </div>
           <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
             <button 

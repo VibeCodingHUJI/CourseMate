@@ -1,6 +1,5 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const express = require('express');
-const path = require('path');
 const { Pool } = require('pg');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
@@ -1340,13 +1339,6 @@ app.post('/api/general-forum-answers', async (req, res) => {
     console.error('Error adding forum answer:', err);
     res.status(500).json({ message: err.message });
   }
-});
-
-// Serve built frontend in production
-const frontendDist = path.join(__dirname, '../frontend/dist');
-app.use(express.static(frontendDist));
-app.get(/^(?!\/api\/).*/, (req, res) => {
-  res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
 app.listen(PORT, () => {
