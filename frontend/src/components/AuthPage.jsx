@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { GraduationCap, ChevronDown, Check, Search, Eye, EyeOff } from 'lucide-react';
+import { ChevronDown, Check, Search, Eye, EyeOff } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
