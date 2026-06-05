@@ -37,8 +37,6 @@ const ReviewForm = ({
 
   const placeholderText = "ספרו בקצרה על החוויה שלכם מהקורס.";
 
-  const wordCount = comment.trim() ? comment.trim().split(/\s+/).length : 0;
-  const isOverLimit = wordCount > 200;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative" style={{ direction: 'rtl' }}>
@@ -164,9 +162,6 @@ const ReviewForm = ({
         <div className="flex flex-col">
           <div className="flex justify-between items-center mb-1">
             <label className="text-sm font-black text-slate-700">תוכן הביקורת</label>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${isOverLimit ? 'text-rose-500' : 'text-slate-400'}`}>
-              {wordCount} / 200 מילים
-            </span>
           </div>
           <p className="text-[10px] font-bold text-slate-400 mb-3 text-right">
             האם החומר מורכב להבנה? כמה השקעה הקורס דורש? האם המבחן/העבודה היה הוגן? טיפים לסטודנטים אחרים...
@@ -174,19 +169,16 @@ const ReviewForm = ({
           <textarea 
             value={comment}
             onChange={(e) => onCommentChange(e.target.value)}
-            className={`w-full bg-slate-50 border-2 rounded-3xl p-6 outline-none focus:bg-white transition-all resize-none text-right font-medium text-slate-600 h-48 overflow-y-auto ${isOverLimit ? 'border-rose-200 focus:border-rose-500' : 'border-slate-100 focus:border-indigo-500'}`}
+            className="w-full bg-slate-50 border-2 border-slate-100 rounded-3xl p-6 outline-none focus:bg-white focus:border-indigo-500 transition-all resize-none text-right font-medium text-slate-600 h-48 overflow-y-auto"
             placeholder={placeholderText}
           ></textarea>
-          {isOverLimit && (
-            <p className="text-[10px] text-rose-500 font-bold mt-2 text-right italic">שימו לב: חרגתם ממכסת המילים (מקסימום 200)</p>
-          )}
         </div>
         
         <div className="mt-4">
           <button 
             onClick={onSubmit}
-            disabled={isOverLimit || !comment.trim()}
-            className={`w-full py-6 rounded-[32px] font-black text-xl transition-all shadow-xl flex items-center justify-center gap-4 ${isOverLimit || !comment.trim() ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 shadow-indigo-600/20'}`}
+            disabled={!comment.trim()}
+            className={`w-full py-6 rounded-[32px] font-black text-xl transition-all shadow-xl flex items-center justify-center gap-4 ${!comment.trim() ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95 shadow-indigo-600/20'}`}
           >
             <Send className="h-6 w-6" />
             פרסום ביקורת

@@ -19,9 +19,9 @@ const CourseCard = ({ course, onClick }) => {
     <div 
       onClick={() => onClick(course)}
       dir="rtl"
-      className={`bg-white rounded-[32px] shadow-sm border p-8 hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer flex flex-col h-full text-right ${styles.border}`}
+      className={`bg-white rounded-[20px] sm:rounded-[32px] shadow-sm border p-4 sm:p-8 hover:shadow-xl hover:-translate-y-1 transition-all group cursor-pointer flex flex-col h-full text-right ${styles.border}`}
     >
-      <div className="flex justify-start items-start mb-6">
+      <div className="flex justify-start items-start mb-3 sm:mb-6">
         {/* Badge Container */}
         <div className="flex flex-wrap items-center gap-2">
           <div className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${styles.badge}`}>
@@ -57,7 +57,7 @@ const CourseCard = ({ course, onClick }) => {
         </div>
       </div>
     
-    <h3 className="text-2xl font-extrabold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">
+    <h3 className="text-lg sm:text-2xl font-extrabold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">
       {course.title}
     </h3>
     <p className="text-slate-500 text-sm font-medium mb-4 line-clamp-2 leading-relaxed">
@@ -77,9 +77,9 @@ const CourseCard = ({ course, onClick }) => {
       </div>
     )}
     
-    <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-start">
+    <div className="mt-auto pt-3 sm:pt-6 border-t border-slate-100 flex items-center justify-start">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 shrink-0">
+        <div className="h-8 w-8 sm:h-10 sm:w-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 shrink-0">
           <User className="h-5 w-5" />
         </div>
         <div className="flex flex-col">

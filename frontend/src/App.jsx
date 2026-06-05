@@ -269,7 +269,7 @@ const Dashboard = ({
                   </h2>
                   <div className="h-px flex-1 bg-slate-200"></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                   {yearCourses.map(course => (
                     <CourseCard key={course.id} course={course} onClick={(c) => navigate(`/course/${c.id}`)} />
                   ))}
@@ -288,7 +288,7 @@ const Dashboard = ({
                   <h2 className="text-xl sm:text-3xl font-black text-slate-800">קורסי בחירה</h2>
                   <div className="h-px flex-1 bg-slate-200"></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                   {electiveCourses.map(course => (
                     <CourseCard key={course.id} course={course} onClick={(c) => navigate(`/course/${c.id}`)} />
                   ))}
@@ -892,8 +892,9 @@ const App = () => {
     const saved = localStorage.getItem('user');
     if (!saved) return null;
     const parsed = JSON.parse(saved);
+    if (parsed?.isGuest) { localStorage.removeItem('user'); return null; }
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsed?.id);
-    if (!parsed?.isGuest && !isUuid) { localStorage.removeItem('user'); return null; }
+    if (!isUuid) { localStorage.removeItem('user'); return null; }
     return parsed;
   });
   
@@ -1128,7 +1129,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
   const [newReviewAttendance, setNewReviewAttendance] = useState(null);
   const [newReviewDifficulty, setNewReviewDifficulty] = useState(5);
 
-  const handleLogin = (u) => { setUser(u); localStorage.setItem('user', JSON.stringify(u)); };
+  const handleLogin = (u) => { setUser(u); if (!u.isGuest) localStorage.setItem('user', JSON.stringify(u)); };
   const handleLogout = () => { setUser(null); localStorage.removeItem('user'); setSelectedCourse(null); navigate('/'); };
   const handleChangeTrack = (t) => {
     if (user.isGuest) { setGuestSelectedTrack(t); setGuestTab('courses'); }
