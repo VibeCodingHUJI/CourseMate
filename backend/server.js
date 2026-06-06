@@ -1090,7 +1090,7 @@ app.post('/api/general-forums', async (req, res) => {
 
     const { data, error } = await supabase
       .from('general_forums')
-      .insert({ title, slug, description })
+      .insert({ title, slug, description, major_a: majorA || null, major_b: majorB || null })
       .select()
       .single();
     if (error) throw error;
@@ -1363,6 +1363,54 @@ app.post('/api/general-forum-answers', async (req, res) => {
     });
   } catch (err) {
     console.error('Error adding forum answer:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.get('/api/general-forums/relevant', async (req, res) => {
+  try {
+    const { track } = req.query;
+    if (!track) return res.json([]);
+
+    const combResult = await pool.query(
+      'SELECT name FROM combinations WHERE roadmap_code = $1',
+      [track]
+    );
+    if (combResult.rows.length === 0) return res.json([]);
+    const combName = combResult.rows[0].name.toLowerCase();
+
+    const { data, error } = await supabase
+      .from('general_forums')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    const relevant = (data || []).filter(f => {
+      const meta = parseForumMeta(f.description);
+      const titleParts = (f.title || '').split(/\s*\+\s*/);
+      const mA = (f.major_a || meta.majorA || titleParts[0] || '').trim().toLowerCase();
+      const mB = (f.major_b || meta.majorB || titleParts[1] || '').trim().toLowerCase();
+      if (!mA && !mB) return false;
+      const matchA = mA && combName.includes(mA);
+      const matchB = mB && combName.includes(mB);
+      return matchA || matchB;
+    });
+
+    res.json(relevant.map(f => {
+      const meta = parseForumMeta(f.description);
+      return {
+        id: f.forum_id,
+        title: f.title,
+        slug: f.slug,
+        majorA: f.major_a || meta.majorA || '',
+        majorB: f.major_b || meta.majorB || '',
+        academicYear: meta.academicYear || '',
+        date: new Date(f.created_at).toLocaleDateString('he-IL'),
+        replies: 0
+      };
+    }));
+  } catch (err) {
+    console.error('Error fetching relevant forums:', err);
     res.status(500).json({ message: err.message });
   }
 });

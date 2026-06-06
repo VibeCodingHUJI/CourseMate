@@ -2,20 +2,12 @@ import React from 'react';
 import { MessageSquare, X, ChevronLeft } from 'lucide-react';
 import StudentForumWidget from './StudentForumWidget';
 
-const isExactMatch = (forumTitle, majorA, majorB) => {
-  if (!majorA || !majorB) return false;
-  const title = forumTitle.toLowerCase();
-  const mA = majorA.toLowerCase();
-  const mB = majorB.toLowerCase();
-  return title.includes(mA) && title.includes(mB);
-};
-
-const ForumsModal = ({ 
-  isOpen, 
-  onClose, 
-  user, 
-  forumsList = [], 
-  activeForumId, 
+const ForumsModal = ({
+  isOpen,
+  onClose,
+  user,
+  forumsList = [],
+  activeForumId,
   onSetActiveForum,
   forumQuestions = [],
   newQuestion,
@@ -29,47 +21,8 @@ const ForumsModal = ({
   if (!isOpen || !user) return null;
   const safeList = Array.isArray(forumsList) ? forumsList : [];
 
-  // Helper to resolve clean labels from IDs or English values
-  const getLabel = (val, fallbackKey1, fallbackKey2) => {
-    const raw = val || user[fallbackKey1] || user[fallbackKey2] || "";
-    const cleanRaw = String(raw).trim();
-    if (!cleanRaw) return "";
-    
-    const match = studyTracks.find(t => 
-      t.value === cleanRaw || 
-      t.label === cleanRaw || 
-      (t.value && String(t.value).toLowerCase() === cleanRaw.toLowerCase())
-    );
-    
-    return match ? match.label : cleanRaw;
-  };
-
-  // 1. Extract Majors Safely (Handle Single or Double Major)
-  const majorA = getLabel(user.department1 || user.major1 || user.track || "").trim();
-  const majorB = getLabel(user.department2 || user.major2 || user.majorB || "").trim();
-  const yr = String(user.academicYear || "").trim();
-
-  // 2. Strict Three-Tier Filtering Logic
-  
-  // Section 1: Exact Match
-  const exactMatchForum = (majorA && majorB) ? safeList.find(f => 
-    isExactMatch(f.title, majorA, majorB) && (!f.academicYear || f.academicYear === yr)
-  ) : null;
-  
-  const primaryId = exactMatchForum ? exactMatchForum.id : null;
-
-  // Section 2: First Major Forums (Exclude Primary)
-  const majorAForums = majorA ? safeList.filter(f => 
-    f.title?.includes(majorA) && f.id !== primaryId
-  ) : [];
-  
-  // Section 3: Second Major Forums (Exclude Primary)
-  const majorBForums = majorB ? safeList.filter(f => 
-    f.title?.includes(majorB) && f.id !== primaryId
-  ) : [];
-
-  const activeForum = safeList.find(f => String(f.id) === String(activeForumId)) || 
-                     (exactMatchForum || (safeList.length > 0 ? safeList[0] : null));
+  const activeForum = safeList.find(f => String(f.id) === String(activeForumId)) ||
+                     (safeList.length > 0 ? safeList[0] : null);
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-6" dir="rtl">
@@ -97,68 +50,23 @@ const ForumsModal = ({
         {/* Modal Body */}
         <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
            {/* Right: Forums List Sidebar */}
-           <div className="w-full lg:w-80 border-l border-slate-200 bg-white p-8 overflow-y-auto shrink-0 space-y-12">
-              
-              {/* Section 1: The Exact Match Forum */}
-              {majorA && majorB && (
-                <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mr-2 bg-indigo-50 px-3 py-1 rounded-lg w-fit">הפורום של השילוב</h3>
-                  {exactMatchForum ? (
-                    <div 
-                      onClick={() => onSetActiveForum(exactMatchForum.id)}
-                      className={`p-5 rounded-[28px] border-2 transition-all cursor-pointer group ${String(exactMatchForum.id) === String(activeForumId) ? 'border-indigo-600 bg-indigo-50/50 shadow-sm' : 'border-slate-50 bg-white hover:border-indigo-200'}`}
-                    >
-                      <h5 className={`font-black text-sm mb-1 transition-colors ${String(exactMatchForum.id) === String(activeForumId) ? 'text-indigo-900' : 'text-slate-800'}`}>{exactMatchForum.title}</h5>
-                      <p className="text-[10px] text-slate-400 font-bold">{exactMatchForum.academicYear}</p>
-                    </div>
-                  ) : (
-                    <div className="p-5 rounded-[28px] border-2 border-dashed border-slate-100 bg-slate-50/50 text-center">
-                      <p className="text-[10px] text-slate-400 font-black italic">לא נפתח עדיין פורום לשילוב</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Section 2: First Major Forums */}
-              {majorA && (
-                <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 bg-slate-50 px-3 py-1 rounded-lg w-fit">
-                    {majorA} + חוג נוסף
-                  </h3>
-                  {majorAForums.length > 0 ? majorAForums.map(f => (
-                    <div 
+           <div className="w-full lg:w-80 border-l border-slate-200 bg-white p-8 overflow-y-auto shrink-0">
+              <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-4 bg-indigo-50 px-3 py-1 rounded-lg w-fit">פורומים רלוונטיים לשילוב שלך</h3>
+              {safeList.length > 0 ? (
+                <div className="space-y-3">
+                  {safeList.map(f => (
+                    <div
                       key={f.id}
                       onClick={() => onSetActiveForum(f.id)}
-                      className={`p-5 rounded-[28px] border-2 transition-all cursor-pointer group ${String(f.id) === String(activeForumId) ? 'border-indigo-600 bg-indigo-50/50 shadow-sm' : 'border-slate-50 bg-white hover:border-indigo-200'}`}
+                      className={`p-5 rounded-[28px] border-2 transition-all cursor-pointer ${String(f.id) === String(activeForumId) ? 'border-indigo-600 bg-indigo-50/50 shadow-sm' : 'border-slate-100 bg-white hover:border-indigo-200'}`}
                     >
-                      <h5 className={`font-black text-sm mb-1 transition-colors ${String(f.id) === String(activeForumId) ? 'text-indigo-900' : 'text-slate-800'}`}>{f.title}</h5>
+                      <h5 className={`font-black text-sm mb-1 ${String(f.id) === String(activeForumId) ? 'text-indigo-900' : 'text-slate-800'}`}>{f.title}</h5>
                       <p className="text-[10px] text-slate-400 font-bold">{f.academicYear}</p>
                     </div>
-                  )) : (
-                    <p className="text-[10px] text-slate-300 font-bold mr-2 italic px-2">אין פורומים נוספים כרגע</p>
-                  )}
+                  ))}
                 </div>
-              )}
-
-              {/* Section 3: Second Major Forums */}
-              {majorB && (
-                <div className="space-y-4">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 bg-slate-50 px-3 py-1 rounded-lg w-fit">
-                    {majorB} + חוג נוסף
-                  </h3>
-                  {majorBForums.length > 0 ? majorBForums.map(f => (
-                    <div 
-                      key={f.id}
-                      onClick={() => onSetActiveForum(f.id)}
-                      className={`p-5 rounded-[28px] border-2 transition-all cursor-pointer group ${String(f.id) === String(activeForumId) ? 'border-indigo-600 bg-indigo-50/50 shadow-sm' : 'border-slate-50 bg-white hover:border-indigo-200'}`}
-                    >
-                      <h5 className={`font-black text-sm mb-1 transition-colors ${String(f.id) === String(activeForumId) ? 'text-indigo-900' : 'text-slate-800'}`}>{f.title}</h5>
-                      <p className="text-[10px] text-slate-400 font-bold">{f.academicYear}</p>
-                    </div>
-                  )) : (
-                    <p className="text-[10px] text-slate-300 font-bold mr-2 italic px-2">אין פורומים נוספים כרגע</p>
-                  )}
-                </div>
+              ) : (
+                <p className="text-[10px] text-slate-300 font-bold italic">אין פורומים נוספים כרגע</p>
               )}
            </div>
 
@@ -169,9 +77,7 @@ const ForumsModal = ({
                   <div className="mb-10 flex items-end justify-between border-b border-slate-100 pb-6">
                     <div className="text-right">
                       <h3 className="text-3xl font-black text-slate-900 mb-2">
-                        {isExactMatch(activeForum.title, majorA, majorB)
-                          ? `${majorA} + ${majorB}` 
-                          : activeForum.title}
+                        {activeForum.title}
                       </h3>
                       <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">{activeForum.academicYear}</p>
                     </div>

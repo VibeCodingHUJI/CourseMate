@@ -85,13 +85,13 @@ const Dashboard = ({
             </div>
           ) : (
             <>
-              <h1 className="text-5xl font-black text-slate-900 mb-4 leading-tight tracking-tight">שלום {(user?.name || '').split(' ')[0]}!</h1>
-              <p className="text-xl text-slate-500 font-medium">הנה הקורסים במסלול {(studyTracks || []).find(t => t.value === user?.track)?.label || user?.track} שלך</p>
+              <h1 className="text-3xl sm:text-5xl font-black text-slate-900 mb-4 leading-tight tracking-tight">שלום {(user?.name || '').split(' ')[0]}!</h1>
+              <p className="text-base sm:text-xl text-slate-500 font-medium">הנה הקורסים במסלול {(studyTracks || []).find(t => t.value === user?.track)?.label || user?.track} שלך</p>
             </>
           )}
         </div>
 
-      <div className="flex flex-col items-end gap-6 flex-shrink-0">
+      <div className="flex flex-col items-start md:items-end gap-4 sm:gap-6 w-full md:w-auto">
         {user && !user.isGuest && (
           <button 
             onClick={() => onOpenForumPage?.()}
@@ -104,6 +104,7 @@ const Dashboard = ({
           </button>
         )}
 
+        <div className="overflow-x-auto w-full md:w-auto pb-1">
         <div className="flex flex-row flex-nowrap gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit min-w-max">
           {['All', 'חובה', 'בחירה', 'קורסי יסוד', 'חובת בחירה'].map(f => (
             <button
@@ -114,6 +115,7 @@ const Dashboard = ({
               {f === 'All' ? 'הכל' : f}
             </button>
           ))}
+        </div>
         </div>
       </div>
     </header>
@@ -244,12 +246,12 @@ const Dashboard = ({
               <div key={year} className="space-y-8">
                 <div className="flex items-center gap-4 flex-row-reverse">
                   <div className="h-px flex-1 bg-slate-200"></div>
-                  <h2 className="text-3xl font-black text-slate-800">
+                  <h2 className="text-xl sm:text-3xl font-black text-slate-800">
                     {courseFilter === 'All' ? 'קורסי חובה' : courseFilter} - שנה {year}
                   </h2>
                   <div className="h-px flex-1 bg-slate-200"></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                   {yearCourses.map(course => (
                     <CourseCard key={course.id} course={course} onClick={(c) => navigate(`/course/${c.id}`)} />
                   ))}
@@ -265,10 +267,10 @@ const Dashboard = ({
               <div className="space-y-8">
                 <div className="flex items-center gap-4 flex-row-reverse">
                   <div className="h-px flex-1 bg-slate-200"></div>
-                  <h2 className="text-3xl font-black text-slate-800">קורסי בחירה</h2>
+                  <h2 className="text-xl sm:text-3xl font-black text-slate-800">קורסי בחירה</h2>
                   <div className="h-px flex-1 bg-slate-200"></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                   {electiveCourses.map(course => (
                     <CourseCard key={course.id} course={course} onClick={(c) => navigate(`/course/${c.id}`)} />
                   ))}
@@ -367,8 +369,8 @@ const MaterialItem = ({ item, user, onUpdate, onDelete, getMaterialIcon }) => {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        {!user.isGuest && (
-          <button 
+        {!user.isGuest && user.id === item.userId && (
+          <button
             onClick={() => setIsEditing(true)}
             className="h-12 w-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-all"
             title="עריכה"
@@ -525,28 +527,28 @@ const CourseDetail = ({
         <span>{fromLecturer ? `חזרה למרצה: ${lecturerName || ''}` : 'חזרה לכל הקורסים'}</span>
       </button>
 
-      <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 p-10 mb-8 relative overflow-hidden text-right">
+      <header className="bg-white rounded-[24px] sm:rounded-[40px] shadow-sm border border-slate-200 p-6 sm:p-10 mb-4 sm:mb-8 relative overflow-hidden text-right">
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start gap-8">
           <div className="flex-1 flex flex-col items-start text-right w-full">
             <div className="flex items-center gap-3 mb-6">
-               <h1 className="text-5xl font-black text-slate-900 tracking-tight">{selectedCourse.title}</h1>
+               <h1 className="text-2xl sm:text-5xl font-black text-slate-900 tracking-tight">{selectedCourse.title}</h1>
                {!user.isGuest && (
-                 <div className="flex items-center gap-3 group cursor-pointer" onClick={handleFollowToggle}>
-                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${isFollowing ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-slate-200 hover:border-indigo-300'}`}>
+                 <div className="flex items-center gap-3 group cursor-pointer shrink-0" onClick={handleFollowToggle}>
+                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${isFollowing ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-slate-200 hover:border-indigo-300'}`}>
                       {isFollowing ? (
                         <CheckCircle className="h-5 w-5 text-white" />
                       ) : (
                         <div className="w-2 h-2 rounded-full bg-slate-100 group-hover:bg-indigo-100"></div>
                       )}
                     </div>
-                    <span className={`text-xs font-black transition-colors ${isFollowing ? 'text-emerald-600' : 'text-slate-400 group-hover:text-indigo-500'}`}>
+                    <span className={`text-xs font-black transition-colors whitespace-nowrap ${isFollowing ? 'text-emerald-600' : 'text-slate-400 group-hover:text-indigo-500'}`}>
                       {isFollowing ? 'עוקב' : 'מעקב אחרי הקורס'}
                     </span>
                  </div>
                )}
             </div>
-            <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-2xl mb-8 w-full">{selectedCourse.description}</p>
+            <p className="text-sm sm:text-xl text-slate-500 font-medium leading-relaxed max-w-2xl mb-4 sm:mb-8 w-full">{selectedCourse.description}</p>
             
             <div className="flex flex-col items-start gap-2">
               <div className="flex items-center gap-2 flex-wrap">
@@ -607,7 +609,7 @@ const CourseDetail = ({
             </div>
           </div>
 
-          <div className="bg-slate-50 p-6 rounded-[32px] flex md:flex-col items-center gap-4 min-w-[180px]">
+          <div className="bg-slate-50 p-4 sm:p-6 rounded-[24px] sm:rounded-[32px] flex md:flex-col items-center gap-3 sm:gap-4 min-w-[120px] sm:min-w-[180px]">
             <div className="text-center">
               <div className="text-4xl font-black text-rose-500 mb-1">{avgDifficulty}</div>
               <div className="text-[10px] text-slate-400 font-black uppercase text-center">קושי ממוצע</div>
@@ -625,8 +627,8 @@ const CourseDetail = ({
         </div>
       </header>
 
-      <div className="mb-10 flex justify-start">
-        <div className="p-1.5 bg-slate-100 rounded-[28px] w-fit flex gap-2" dir="rtl">
+      <div className="mb-6 sm:mb-10 overflow-x-auto pb-1">
+        <div className="p-1.5 bg-slate-100 rounded-[28px] w-fit flex gap-1 sm:gap-2" dir="rtl">
           {[
             { id: 'reviews', label: 'ביקורות', icon: Star },
             { id: 'qna', label: 'שאלות ותשובות', icon: MessageSquare },
@@ -635,7 +637,7 @@ const CourseDetail = ({
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-8 py-4 rounded-[22px] transition-all font-black text-sm flex items-center gap-3 ${
+              className={`px-4 sm:px-8 py-3 sm:py-4 rounded-[22px] transition-all font-black text-xs sm:text-sm flex items-center gap-2 sm:gap-3 whitespace-nowrap ${
                 activeTab === tab.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -663,7 +665,7 @@ const CourseDetail = ({
             </div>
 
             {textReviews.map(r => (
-              <div key={r.id} className="bg-white rounded-[32px] shadow-sm border border-slate-200 p-8 text-right relative overflow-hidden">
+              <div key={r.id} className="bg-white rounded-[24px] sm:rounded-[32px] shadow-sm border border-slate-200 p-5 sm:p-8 text-right relative overflow-hidden">
                 <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 font-black shrink-0">
@@ -671,19 +673,6 @@ const CourseDetail = ({
                     </div>
                     <div className="text-right">
                       <div className="font-black text-slate-900">{r.author}</div>
-                      <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex flex-wrap gap-x-1.5 gap-y-1">
-                        <span className="whitespace-nowrap">מרצה:</span>
-                        {selectedCourse.instructors && selectedCourse.instructors.length > 0 ? (
-                          selectedCourse.instructors.map((inst, idx) => (
-                            <span key={inst.id} className="whitespace-nowrap">
-                              <Link to={`/lecturer/${inst.id}`} className="hover:underline">{inst.name}</Link>
-                              {idx < selectedCourse.instructors.length - 1 ? ',' : ''}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="whitespace-nowrap">{selectedCourse.instructor || 'לא ידוע'}</span>
-                        )}
-                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -885,8 +874,9 @@ const App = () => {
     const saved = localStorage.getItem('user');
     if (!saved) return null;
     const parsed = JSON.parse(saved);
+    if (parsed?.isGuest) { localStorage.removeItem('user'); return null; }
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parsed?.id);
-    if (!parsed?.isGuest && !isUuid) { localStorage.removeItem('user'); return null; }
+    if (!isUuid) { localStorage.removeItem('user'); return null; }
     return parsed;
   });
   
@@ -992,39 +982,30 @@ const App = () => {
     if (!user || user.isGuest || !user.track) { setStudentForums([]); return; }
     const fetchStudentForums = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinations`);        const forums = await res.json();
-        const getLabel = (val) => {
-          const raw = String(val || "").trim();
-          const match = (studyTracks || []).find(t => t.value === raw || t.label === raw);
-          return match ? match.label : raw;
-        };
-        const mA = getLabel(user?.track);
-        const mB = getLabel(user?.majorB);
-        const yr = String(user?.academicYear || "").trim();
-        const isMatch = (f, s) => { if (!f || !s) return false; return String(f).toLowerCase().includes(String(s).toLowerCase()) || String(s).toLowerCase().includes(String(f).toLowerCase()); };
-        const primary = forums.filter(f => ((isMatch(f.title, mA) && isMatch(f.title, mB)) || (isMatch(f.majorA, mA) && isMatch(f.majorB, mB)) || (isMatch(f.majorA, mB) && isMatch(f.majorB, mA))) && (!yr || yr === 'הכל' || isMatch(f.academicYear, yr)));
-        const secA = forums.filter(f => (isMatch(f.title, mA) || isMatch(f.majorA, mA) || isMatch(f.majorB, mA)) && !(mB && (isMatch(f.title, mB) || isMatch(f.majorA, mB) || isMatch(f.majorB, mB))) && (!yr || yr === 'הכל' || isMatch(f.academicYear, yr)));
-        const secB = forums.filter(f => (isMatch(f.title, mB) || isMatch(f.majorA, mB) || isMatch(f.majorB, mB)) && !(mA && (isMatch(f.title, mA) || isMatch(f.majorA, mA) || isMatch(f.majorB, mA))) && (!yr || yr === 'הכל' || isMatch(f.academicYear, yr)));
-        setStudentForums(forums);
-        if ([...primary, ...secA, ...secB].length > 0) setActiveStudentForumId(primary[0] ? primary[0].id : [...primary, ...secA, ...secB][0].id);
+        const _API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${_API}/api/general-forums/relevant?track=${encodeURIComponent(user.track)}`);
+        const forums = await res.json();
+        const list = Array.isArray(forums) ? forums : [];
+        setStudentForums(list);
+        if (list.length > 0) setActiveStudentForumId(list[0].id);
       } catch (err) { console.error('Error fetching student forums:', err); }
     };
     fetchStudentForums();
-  }, [user?.track, user?.majorB, user?.academicYear, studyTracks]);
+  }, [user?.track]);
 
   useEffect(() => {
     if (!activeStudentForumId) { setStudentForumQuestions([]); return; }
-    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinationQuestions?combinationId=${activeStudentForumId}`)
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/general-forum-questions?forumId=${activeStudentForumId}`)
       .then(res => res.json())
-      .then(qs => setStudentForumQuestions(qs.reverse()))
+      .then(qs => setStudentForumQuestions(Array.isArray(qs) ? qs : []))
       .catch(err => console.error('Error fetching questions:', err));
   }, [activeStudentForumId]);
 
   const handlePostStudentForumQ = async () => {
     if (!newStudentForumQ.trim() || !activeStudentForumId) return;
-    const newQ = { combinationId: activeStudentForumId, question: newStudentForumQ, answers: [], date: new Date().toLocaleDateString('he-IL'), author: user.name, userId: user.isGuest ? null : user.id };
     try {
-const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinationQuestions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newQ) });      const savedQ = await res.json();
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/general-forum-questions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ forumId: activeStudentForumId, question: newStudentForumQ, author: user.name, userId: user.isGuest ? null : user.id }) });
+      const savedQ = await res.json();
       setStudentForumQuestions([savedQ, ...studentForumQuestions]);
       setNewStudentForumQ('');
       alert('השאלה פורסמה בהצלחה!');
@@ -1033,11 +1014,8 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
 
   const handlePostStudentForumA = async (qId, text) => {
     if (!text.trim()) return;
-    const q = studentForumQuestions.find(q => q.id === qId);
-    if (!q) return;
-    const updatedAnswers = [...q.answers, { text, date: new Date().toLocaleDateString('he-IL'), author: user.name, authorId: user.id, likedBy: [] }];
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/combinationQuestions/${qId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: updatedAnswers }) });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/general-forum-answers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ questionId: qId, text, author: user.name, userId: user.isGuest ? null : user.id }) });
       const updatedQ = await res.json();
       setStudentForumQuestions(studentForumQuestions.map(q => q.id === qId ? updatedQ : q));
     } catch (err) { alert('שגיאה בפרסום התשובה'); }
@@ -1121,7 +1099,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
   const [newReviewAttendance, setNewReviewAttendance] = useState(null);
   const [newReviewDifficulty, setNewReviewDifficulty] = useState(5);
 
-  const handleLogin = (u) => { setUser(u); localStorage.setItem('user', JSON.stringify(u)); };
+  const handleLogin = (u) => { setUser(u); if (!u.isGuest) localStorage.setItem('user', JSON.stringify(u)); };
   const handleLogout = () => { setUser(null); localStorage.removeItem('user'); setSelectedCourse(null); navigate('/'); };
   const handleChangeTrack = (t) => {
     if (user.isGuest) { setGuestSelectedTrack(t); setGuestTab('courses'); }
@@ -1361,13 +1339,13 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
     <div className="min-h-screen bg-[#f8fafc] flex flex-col" dir="rtl">
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-50 transition-all">
         <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="hidden md:flex gap-4 items-center flex-shrink-0">
-            <div className="flex items-center gap-4 bg-slate-50 px-5 py-2 rounded-2xl border border-slate-100">
-              <div className="text-right">
+          <div className="flex gap-2 sm:gap-4 items-center flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-4 bg-slate-50 px-2 sm:px-5 py-2 rounded-2xl border border-slate-100">
+              <div className="hidden md:block text-right">
                 <div className="text-sm font-black text-slate-900 leading-none">{user.name} {user.isGuest && <span className="text-[10px] text-indigo-400 mr-1 font-black underline">(אורח/ת)</span>}</div>
                 {!user.isGuest && <button onClick={() => setIsChangingTrack(!isChangingTrack)} className="text-[10px] text-indigo-600 font-black uppercase mt-1 tracking-tighter hover:underline">{(studyTracks || []).find(t => t.value === user.track)?.label || user.track}</button>}
               </div>
-              <button onClick={handleLogout} className="bg-white text-slate-400 px-3 py-2 rounded-xl hover:text-rose-500 hover:bg-rose-50 transition-all shadow-sm flex items-center gap-2 group"><span className="text-[10px] font-black uppercase hidden lg:block">התנתקות</span><X className="h-4 w-4" /></button>
+              <button onClick={handleLogout} className="bg-white text-slate-400 px-2 sm:px-3 py-2 rounded-xl hover:text-rose-500 hover:bg-rose-50 transition-all shadow-sm flex items-center gap-2 group"><span className="text-[10px] font-black uppercase hidden lg:block">התנתקות</span><X className="h-4 w-4" /></button>
             </div>
             {!user.isGuest && <div className="relative" ref={notifyRef}>
               <button onClick={() => setIsNotifyOpen(!isNotifyOpen)} className="bg-white p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm active:scale-95 relative cursor-pointer">{notifications.some(n => !n.read) ? <><BellDot className="h-5 w-5 text-indigo-600" /><span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-black h-4 w-4 rounded-full flex items-center justify-center border-2 border-white">{notifications.filter(n => !n.read).length}</span></> : <Bell className="h-5 w-5" />}</button>
@@ -1381,7 +1359,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
             </div>}
           </div>
           <div className="flex-1"></div>
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { setSelectedCourse(null); if (user?.isGuest) setGuestTab('forum'); }}><span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span><div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform"><GraduationCap className="h-6 w-6 text-white" /></div></div>
+          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => { setSelectedCourse(null); if (user?.isGuest) setGuestTab('forum'); }}><span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span><img src="/logo.png" alt="CourseMate Logo" className="h-10 w-10 object-contain group-hover:scale-110 transition-transform" /></div>
         </div>
         {isChangingTrack && (
           <div className="absolute top-20 left-6 bg-white rounded-3xl shadow-2xl border border-slate-200 p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]" dir="rtl">
@@ -1391,7 +1369,7 @@ const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:500
           </div>
         )}
       </nav>
-      <main className="flex-grow container mx-auto px-6 py-12">
+      <main className="flex-grow container mx-auto px-4 sm:px-6 py-6 sm:py-12">
         <Routes>
           <Route path="/lecturer/:id" element={<LecturerProfile user={user} onDepartmentClick={(dept) => { const tT = (studyTracks || []).find(t => t?.label === dept || t?.value === dept)?.value || dept; handleChangeTrack(tT); navigate('/'); }} />} />
           <Route path="/course/:id" element={<CourseDetail selectedCourse={selectedCourse} navigate={navigate} activeTab={activeTab} setActiveTab={setActiveTab} reviews={reviews} user={user} setIsReviewModalOpen={setIsReviewModalOpen} setIsRatingModalOpen={setIsRatingModalOpen} handleLogout={handleLogout} handleLikeReview={handleLikeReview} handleDeleteReview={handleDeleteReview} handleEditReview={handleEditReview} editingReviewId={editingReviewId} inlineEditComment={inlineEditComment} setInlineEditComment={setInlineEditComment} handleSaveInlineEdit={handleSaveInlineEdit} handleCancelInlineEdit={handleCancelInlineEdit} questions={questions} setIsQuestionModalOpen={setIsQuestionModalOpen} handleDeleteQuestion={handleDeleteQuestion} handlePostAnswer={handlePostAnswer} handleDeleteAnswer={handleDeleteAnswer} onOpenMaterialUpload={handleOpenMaterialUpload} setIsLinkModalOpen={setIsLinkModalOpen} materials={materials} onUpdateMaterial={handleUpdateMaterial} onDeleteMaterial={handleDeleteMaterial} isFollowing={selectedCourse ? followedCourseIds.includes(selectedCourse.id) : false} onToggleFollow={handleToggleFollow} />} />
