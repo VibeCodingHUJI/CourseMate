@@ -307,6 +307,32 @@ app.post('/api/reviews', async (req, res) => {
       const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
       if (userData) fullName = userData.full_name;
     }
+
+    // Notify followers only on new reviews (not edits)
+    if (!existing) {
+      try {
+        const courseResult = await pool.query('SELECT name FROM courses WHERE id = $1', [courseId]);
+        const courseName = courseResult.rows[0]?.name || 'קורס';
+
+        const { data: followers } = await supabase
+          .from('saved_courses')
+          .select('user_id')
+          .eq('course_id', courseId)
+          .neq('user_id', userId || '');
+
+        if (followers && followers.length > 0) {
+          await supabase.from('notifications').insert(
+            followers.map(f => ({
+              user_id: f.user_id,
+              text: `ביקורת חדשה נוספה לקורס "${courseName}" שאתה עוקב אחריו`
+            }))
+          );
+        }
+      } catch (notifErr) {
+        console.error('Error sending review notifications:', notifErr);
+      }
+    }
+
     res.status(201).json(mapReview({ ...saved, full_name: fullName }));
   } catch (err) {
     console.error('Error creating review:', err);
