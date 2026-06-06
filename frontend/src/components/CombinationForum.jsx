@@ -154,7 +154,12 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
     if (selectedCombination) {
       fetch(`${API}/api/general-forum-questions?forumId=${selectedCombination.id}`)
         .then(res => res.json())
-        .then(data => setCombinationQuestions(data))
+        .then(data => {
+          setCombinationQuestions(data);
+          const allExpanded = {};
+          data.forEach(q => { allExpanded[q.id] = true; });
+          setExpandedQuestions(allExpanded);
+        })
         .catch(err => console.error('Error fetching forum questions:', err));
     }
   }, [selectedCombination]);
