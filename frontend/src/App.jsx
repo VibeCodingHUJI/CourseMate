@@ -968,6 +968,23 @@ const App = () => {
     return () => supabase.removeChannel(channel);
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!user?.id || user?.isGuest) return;
+    const hasUnread = notifications.some(n => !n.read);
+    if (isNotifyOpen && hasUnread) {
+      // Persist to DB when panel opens
+      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications/read`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      }).catch(() => {});
+    }
+    if (!isNotifyOpen && hasUnread) {
+      // Clear badge when panel closes
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    }
+  }, [isNotifyOpen]);
+
   const location = useLocation();
   const navigate = useNavigate();
 
