@@ -20,6 +20,7 @@ import LecturerProfile from './pages/LecturerProfile';
 // Data
 import projectData from './data.json';
 import { supabase } from './supabaseClient';
+import { logActivity, ActivityActions } from './activityLogger';
 
 const STUDY_TRACKS = projectData.tracks;
 
@@ -1069,7 +1070,7 @@ const App = () => {
         let c = allCourses.find(c => String(c.id) === String(id));
         if (!c) {
           try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/courses/${id}`); if (res.ok) c = await res.json(); } catch (err) { console.error('Error:', err); }        }
-        if (c) setSelectedCourse(c); else if (allCourses.length > 0) setSelectedCourse(null);
+        if (c) { setSelectedCourse(c); if (user?.id && !user?.isGuest) logActivity(user.id, ActivityActions.VIEW_COURSE, { courseId: c.id, courseTitle: c.title }); } else if (allCourses.length > 0) setSelectedCourse(null);
       } else if (location.pathname === '/') setSelectedCourse(null);
     };
     sync();
@@ -1116,8 +1117,17 @@ const App = () => {
   const [newReviewAttendance, setNewReviewAttendance] = useState(null);
   const [newReviewDifficulty, setNewReviewDifficulty] = useState(5);
 
-  const handleLogin = (u) => { setUser(u); if (!u.isGuest) localStorage.setItem('user', JSON.stringify(u)); };
-  const handleLogout = () => { setUser(null); localStorage.removeItem('user'); setSelectedCourse(null); navigate('/'); };
+  const handleLogin = (u) => {
+    setUser(u);
+    if (!u.isGuest) {
+      localStorage.setItem('user', JSON.stringify(u));
+      logActivity(u.id, ActivityActions.LOGIN, { name: u.name, track: u.track });
+    }
+  };
+  const handleLogout = () => {
+    if (user?.id && !user?.isGuest) logActivity(user.id, ActivityActions.LOGOUT);
+    setUser(null); localStorage.removeItem('user'); setSelectedCourse(null); navigate('/');
+  };
   const handleChangeTrack = (t) => {
     if (user.isGuest) { setGuestSelectedTrack(t); setGuestTab('courses'); }
     else { const u = { ...user, track: t }; setUser(u); localStorage.setItem('user', JSON.stringify(u)); }
@@ -1175,6 +1185,7 @@ const App = () => {
           setAllCourses(allCourses.map(c => c.id === selectedCourse.id ? { ...c, reviewCount: (c.reviewCount || 0) + 1 } : c));
         }
       }
+      logActivity(user.id, ActivityActions.POST_REVIEW, { courseId: selectedCourse.id, courseTitle: selectedCourse.title });
       setNewReviewComment(''); setEditingReviewId(null); setIsReviewModalOpen(false); alert('הביקורת נשמרה בהצלחה!');
     } catch (err) { alert('שגיאה בשמירת הביקורת: ' + err.message); }
   };
@@ -1183,6 +1194,7 @@ const App = () => {
     if (!window.confirm('האם למחוק?')) return;
     try {
       await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${id}`, { method: 'DELETE' });
+      logActivity(user.id, ActivityActions.DELETE_REVIEW, { reviewId: id, courseId: selectedCourse?.id });
       setReviews(reviews.filter(r => r.id !== id));
       setAllReviews(allReviews.filter(r => r.id !== id));
       setAllCourses(allCourses.map(c => c.id === selectedCourse?.id ? { ...c, reviewCount: Math.max(0, (c.reviewCount || 0) - 1) } : c));
@@ -1219,6 +1231,7 @@ const App = () => {
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
       const saved = await res.json();
+      logActivity(user.id, ActivityActions.POST_QUESTION, { courseId: selectedCourse.id, courseTitle: selectedCourse.title });
       setQuestions([saved, ...questions]);
       setNewQuestionTitle('');
       setNewQuestionText('');
@@ -1244,6 +1257,7 @@ const App = () => {
       });
       if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
       const saved = await res.json();
+      logActivity(user.id, ActivityActions.POST_ANSWER, { questionId, courseId: selectedCourse?.id });
       setQuestions(questions.map(q => q.id === questionId
         ? { ...q, answers: [...(q.answers || []), saved] }
         : q
@@ -1295,13 +1309,14 @@ const App = () => {
       const data = { courseId: selectedCourse.id, userId: user.id, title: newMaterialTitle, materialType: 'file', url: publicUrl, fileExtension: fileExt, fileSizeBytes: newMaterialFile.size, category };
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const saved = await res.json();
+      logActivity(user.id, ActivityActions.UPLOAD_MATERIAL, { courseId: selectedCourse.id, category, title: newMaterialTitle });
       setMaterials([saved, ...materials]); setNewMaterialTitle(''); setNewMaterialFile(null); setIsMaterialModalOpen(false); alert('הועלה בהצלחה');
     } catch (err) { alert('שגיאה בהעלאה: ' + err.message); }
   };
 
   const handlePostLink = async () => {
     if (!newLinkTitle.trim() || !newLinkUrl.trim()) return alert('נא למלא כותרת וכתובת');
-    try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId: selectedCourse.id, userId: user.id, title: newLinkTitle, materialType: 'link', url: newLinkUrl }) }); const saved = await res.json(); setMaterials([saved, ...materials]); setNewLinkTitle(''); setNewLinkUrl(''); setIsLinkModalOpen(false); alert('נוסף בהצלחה'); } catch (err) { alert('שגיאה'); }
+    try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId: selectedCourse.id, userId: user.id, title: newLinkTitle, materialType: 'link', url: newLinkUrl }) }); const saved = await res.json(); logActivity(user.id, ActivityActions.UPLOAD_MATERIAL, { courseId: selectedCourse.id, category: 'links', title: newLinkTitle }); setMaterials([saved, ...materials]); setNewLinkTitle(''); setNewLinkUrl(''); setIsLinkModalOpen(false); alert('נוסף בהצלחה'); } catch (err) { alert('שגיאה'); }
   };
 
   const handleDeleteMaterial = async (id) => { if (window.confirm('למחוק?')) try { await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials/${id}`, { method: 'DELETE' }); setMaterials(materials.filter(m => m.id !== id)); alert('נמחק'); } catch (err) { alert('שגיאה'); } };
@@ -1309,6 +1324,7 @@ const App = () => {
   const handleUpdateMaterial = async (id, data) => { try { const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/materials/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); const saved = await res.json(); setMaterials(materials.map(m => m.id === id ? saved : m)); alert('נשמר'); } catch (err) { alert('שגיאה'); } };
 
   const handleToggleFollow = async (id, title, status) => {
+    logActivity(user.id, status ? ActivityActions.FOLLOW_COURSE : ActivityActions.UNFOLLOW_COURSE, { courseId: id, courseTitle: title });
     // Optimistic update
     if (status) {
       setFollowedCourseIds(prev => [...prev, id]);
@@ -1390,7 +1406,7 @@ const App = () => {
         <Routes>
           <Route path="/lecturer/:id" element={<LecturerProfile user={user} onDepartmentClick={(dept) => { const tT = (studyTracks || []).find(t => t?.label === dept || t?.value === dept)?.value || dept; handleChangeTrack(tT); navigate('/'); }} />} />
           <Route path="/course/:id" element={<CourseDetail selectedCourse={selectedCourse} navigate={navigate} activeTab={activeTab} setActiveTab={setActiveTab} reviews={reviews} user={user} setIsReviewModalOpen={setIsReviewModalOpen} setIsRatingModalOpen={setIsRatingModalOpen} handleLogout={handleLogout} handleLikeReview={handleLikeReview} handleDeleteReview={handleDeleteReview} handleEditReview={handleEditReview} editingReviewId={editingReviewId} inlineEditComment={inlineEditComment} setInlineEditComment={setInlineEditComment} handleSaveInlineEdit={handleSaveInlineEdit} handleCancelInlineEdit={handleCancelInlineEdit} questions={questions} setIsQuestionModalOpen={setIsQuestionModalOpen} handleDeleteQuestion={handleDeleteQuestion} handlePostAnswer={handlePostAnswer} handleDeleteAnswer={handleDeleteAnswer} onOpenMaterialUpload={handleOpenMaterialUpload} setIsLinkModalOpen={setIsLinkModalOpen} materials={materials} onUpdateMaterial={handleUpdateMaterial} onDeleteMaterial={handleDeleteMaterial} isFollowing={selectedCourse ? followedCourseIds.includes(selectedCourse.id) : false} onToggleFollow={handleToggleFollow} />} />
-          <Route path="/" element={<>{user.isGuest && <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500"><button onClick={() => setGuestTab('forum')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>פורום שילובים</button><button onClick={() => setGuestTab('courses')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>צפייה בקורסים</button></div>}{(user.isGuest && guestTab === 'forum') || showForumView ? <CombinationForum user={user} onLogout={handleLogout} onTrackSelect={handleChangeTrack} STUDY_TRACKS={studyTracks} initialForumId={forumViewId} userCombination={!user?.isGuest ? ((studyTracks || []).find(t => t.value === user?.track)?.label || '') : ''} onBack={() => { setShowForumView(false); setForumViewId(null); }} /> : <Dashboard user={user} guestSelectedTrack={guestSelectedTrack} setIsGuestDrawerOpen={setIsGuestDrawerOpen} allCourses={allCourses} filteredCourses={filteredCourses} courseFilter={courseFilter} setCourseFilter={setCourseFilter} searchQuery={searchQuery} setSearchQuery={setSearchQuery} showSuggestions={showSuggestions} setShowSuggestions={setShowSuggestions} suggestions={suggestions} navigate={navigate} studyTracks={studyTracks} filterSemester={filterSemester} setFilterSemester={setFilterSemester} filterCampus={filterCampus} setFilterCampus={setFilterCampus} filterLanguage={filterLanguage} setFilterLanguage={setFilterLanguage} filterYear={filterYear} setFilterYear={setFilterYear} studentForums={studentForums} studentForumQuestions={studentForumQuestions} newStudentForumQ={newStudentForumQ} setNewStudentForumQ={setNewStudentForumQ} onPostStudentForumQ={handlePostStudentForumQ} onPostStudentForumA={handlePostStudentForumA} expandedStudentQs={expandedStudentQs} onToggleStudentQ={toggleStudentQ} activeStudentForumId={activeStudentForumId} setActiveStudentForumId={setActiveStudentForumId} onOpenForumPage={() => { setShowForumView(true); setForumViewId(null); }} />}</>} />
+          <Route path="/" element={<>{user.isGuest && <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500"><button onClick={() => setGuestTab('forum')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>פורום שילובים</button><button onClick={() => setGuestTab('courses')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>צפייה בקורסים</button></div>}{(user.isGuest && guestTab === 'forum') || showForumView ? <CombinationForum user={user} onLogout={handleLogout} onTrackSelect={handleChangeTrack} STUDY_TRACKS={studyTracks} initialForumId={forumViewId} userCombination={!user?.isGuest ? ((studyTracks || []).find(t => t.value === user?.track)?.label || '') : ''} onBack={() => { setShowForumView(false); setForumViewId(null); }} /> : <Dashboard user={user} guestSelectedTrack={guestSelectedTrack} setIsGuestDrawerOpen={setIsGuestDrawerOpen} allCourses={allCourses} filteredCourses={filteredCourses} courseFilter={courseFilter} setCourseFilter={setCourseFilter} searchQuery={searchQuery} setSearchQuery={setSearchQuery} showSuggestions={showSuggestions} setShowSuggestions={setShowSuggestions} suggestions={suggestions} navigate={navigate} studyTracks={studyTracks} filterSemester={filterSemester} setFilterSemester={setFilterSemester} filterCampus={filterCampus} setFilterCampus={setFilterCampus} filterLanguage={filterLanguage} setFilterLanguage={setFilterLanguage} filterYear={filterYear} setFilterYear={setFilterYear} studentForums={studentForums} studentForumQuestions={studentForumQuestions} newStudentForumQ={newStudentForumQ} setNewStudentForumQ={setNewStudentForumQ} onPostStudentForumQ={handlePostStudentForumQ} onPostStudentForumA={handlePostStudentForumA} expandedStudentQs={expandedStudentQs} onToggleStudentQ={toggleStudentQ} activeStudentForumId={activeStudentForumId} setActiveStudentForumId={setActiveStudentForumId} onOpenForumPage={() => { logActivity(user.id, ActivityActions.OPEN_FORUM, { track: user.track }); setShowForumView(true); setForumViewId(null); }} />}</>} />
         </Routes>
       </main>
       {isRatingModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => setIsRatingModalOpen(false)}><div className="bg-white w-full max-w-md rounded-[40px] p-6 shadow-2xl overflow-y-auto max-h-[90vh] animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex items-center gap-3 mb-3"><button onClick={() => setIsRatingModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-6 w-6" /></button><h3 className="text-xl font-black text-slate-900">דירוג קורס מהיר</h3></div><div className="space-y-3"><div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative"><div className="flex justify-between items-center mb-2"><label className="text-sm font-black text-slate-700 block">רמת קושי הקורס (1-10)</label>{hasUserRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}</div><div className="flex items-center gap-4"><input type="range" min="1" max="10" step="1" value={newReviewDifficulty} onChange={(e) => setNewReviewDifficulty(parseInt(e.target.value))} disabled={hasUserRated} className={`flex-1 h-2 bg-slate-200 rounded-lg appearance-none accent-rose-500 ${hasUserRated ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`} /><div className={`h-10 w-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center font-black text-base border-2 border-rose-100 shadow-sm shrink-0 ${hasUserRated ? 'opacity-50' : ''}`}>{newReviewDifficulty}</div></div><div className="flex justify-between mt-2 px-1"><span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-slate-300' : 'text-slate-400'}`}>קל מאוד</span><span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-rose-300' : 'text-rose-600'}`}>{newReviewDifficulty <= 2 ? "קל מאוד" : newReviewDifficulty === 3 ? "קל" : newReviewDifficulty <= 7 ? "בינוני" : newReviewDifficulty <= 9 ? "קשה" : "קשה מאוד"}</span></div></div><div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100"><label className="text-sm font-black text-slate-700 mb-2 block">סמסטר</label><div className="grid grid-cols-2 gap-2">{[{ id: "סמסטר א'", label: "סמסטר א'" }, { id: "סמסטר ב'", label: "סמסטר ב'" }, { id: "סמסטר קיץ", label: "סמסטר קיץ" }, { id: "שנתי", label: "שנתי" }].map(o => (<button key={o.id} onClick={() => setNewReviewSemester(o.id)} className={`py-2 rounded-xl font-black text-xs border-2 transition-all ${newReviewSemester === o.id ? 'bg-indigo-600 text-white border-transparent shadow-md' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200 hover:shadow-sm'}`}>{o.label}</button>))}</div></div><div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative"><div className="flex justify-between items-center mb-2"><label className="text-sm font-black text-slate-700 block">האם נבדקה נוכחות?</label>{hasUserRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}</div><div className="grid grid-cols-3 gap-3">{[{ id: true, label: 'כן', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' }, { id: false, label: 'לא', color: 'bg-rose-50 text-rose-600 border-rose-100' }, { id: null, label: 'לא יודע/ת', color: 'bg-slate-100 text-slate-500 border-slate-200' }].map(o => (<button key={String(o.id)} onClick={() => setNewReviewAttendance(o.id)} disabled={hasUserRated} className={`py-2 rounded-xl font-black text-xs border-2 transition-all ${newReviewAttendance === o.id ? `${o.id === true ? 'bg-emerald-600' : o.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md` : `${o.color} hover:shadow-sm`} ${hasUserRated ? 'cursor-not-allowed opacity-50' : ''}`}>{o.label}</button>))}</div></div><button onClick={handlePostRating} className="w-full bg-indigo-600 text-white py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg active:scale-95 transition-all">שלח דירוג</button></div></div></div>}
