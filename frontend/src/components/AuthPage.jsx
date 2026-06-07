@@ -297,7 +297,7 @@ const AuthPage = ({ onLogin }) => {
             </div>
 
             <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 text-center rounded-b-[32px]">
-              <p className="text-xs text-slate-400 font-medium">© CourseMate 2026</p>
+              <p className="text-xs text-slate-400 font-medium">coursmatehuji@gmail.com</p>
             </div>
           </div>
         </div>
