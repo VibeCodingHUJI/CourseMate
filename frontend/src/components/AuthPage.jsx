@@ -237,7 +237,22 @@ const AuthPage = ({ onLogin }) => {
                 </button>
               </form>
 
-              <div className="mt-4 text-center">
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => onLogin({
+                    id: `guest-${Math.random().toString(36).substr(2, 9)}`,
+                    name: "אורח/ת",
+                    track: "General",
+                    isGuest: true,
+                  })}
+                  className="w-full bg-slate-100 text-slate-600 py-3.5 rounded-2xl font-black text-base hover:bg-slate-200 active:scale-95 transition-all"
+                >
+                  כניסה כאורח/ת
+                </button>
+              </div>
+
+              <div className="mt-3 text-center">
                 <p className="text-sm text-slate-500 font-medium">
                   {authMode === "signup" ? "יש לך כבר חשבון?" : "אין לך חשבון?"}{" "}
                   <button

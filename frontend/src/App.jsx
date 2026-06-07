@@ -67,6 +67,7 @@ const Dashboard = ({
   setActiveStudentForumId,
   onOpenForumPage
 }) => {
+  const [promptDismissed, setPromptDismissed] = useState(false);
   return (
   <div className="max-w-7xl mx-auto">
     <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-8">
@@ -213,7 +214,7 @@ const Dashboard = ({
     </div>
     
     <div className="space-y-16">
-      {(user.isGuest && !guestSelectedTrack) ? (
+      {(user.isGuest && !guestSelectedTrack && !promptDismissed) ? (
         <div className="relative">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 opacity-20 grayscale blur-[2px] pointer-events-none select-none">
             {allCourses.slice(0, 6).map(course => (
@@ -221,8 +222,14 @@ const Dashboard = ({
             ))}
           </div>
           {/* Square Pop-up for Guest Start */}
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-white w-full max-w-sm aspect-square rounded-[40px] p-12 shadow-2xl border border-slate-100 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" onClick={() => setPromptDismissed(true)}>
+            <div className="bg-white w-full max-w-sm aspect-square rounded-[40px] p-12 shadow-2xl border border-slate-100 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-200 relative" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={() => setPromptDismissed(true)}
+                className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
               <div className="bg-indigo-50 w-20 h-20 rounded-3xl flex items-center justify-center mb-8 text-indigo-600">
                 <Search className="h-10 w-10" />
               </div>
