@@ -35,6 +35,11 @@ const AuthPage = ({ onLogin }) => {
             <br />
             מהתואר שלכם — הכל במקום אחד.
           </p>
+
+          <p className="text-xs text-slate-400 leading-relaxed mt-6">
+            הפרויקט נבנה ע"י סטודנטיות במסגרת קורס באוניברסיטה העברית ומטרתו לייצר מענה משלים לצרכים של הסטודנטים בעת הרישום לקורסים. ליצירת קשר:{" "}
+            <a href="mailto:coursmatehuji@gmail.com" className="text-indigo-400 hover:underline">coursmatehuji@gmail.com</a>
+          </p>
         </div>
 
         {/* Left side — card */}
@@ -92,10 +97,6 @@ const AuthPage = ({ onLogin }) => {
         </div>
 
       </div>
-
-      <p className="text-center text-xs text-slate-400 mt-6 max-w-xl mx-auto leading-relaxed px-4">
-        הפרויקט נבנה ע"י סטודנטיות במסגרת קורס באוניברסיטה העברית ומטרתו לייצר מענה משלים לצרכים של הסטודנטים בעת הרישום לקורסים. ליצירת קשר: <a href="mailto:coursmatehuji@gmail.com" className="text-indigo-500 hover:underline">coursmatehuji@gmail.com</a>
-      </p>
     </div>
   );
 };
