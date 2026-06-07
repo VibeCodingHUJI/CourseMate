@@ -1261,6 +1261,62 @@ app.post('/api/general-forum-questions', async (req, res) => {
       .single();
     if (error) throw error;
 
+    // Notify users whose combination matches this forum
+    try {
+      const { data: forum, error: forumErr } = await supabase
+        .from('general_forums')
+        .select('title, description')
+        .eq('forum_id', forumId)
+        .single();
+
+      console.log('[Q-NOTIF] forum:', forum, 'err:', forumErr);
+
+      if (forum) {
+        const meta = parseForumMeta(forum.description);
+        const { majorA, majorB } = meta;
+        console.log('[Q-NOTIF] majorA:', majorA, 'majorB:', majorB);
+
+        if (majorA || majorB) {
+          const words = `${majorA || ''} ${majorB || ''}`
+            .split(/\s+/)
+            .filter(w => w.length >= 3)
+            .map(w => `%${w}%`);
+          console.log('[Q-NOTIF] words:', words);
+
+          const conditions = words.map((_, i) => `name ILIKE $${i + 1}`).join(' OR ');
+          const combResult = await pool.query(
+            `SELECT DISTINCT id FROM combinations WHERE ${conditions}`,
+            words
+          );
+          console.log('[Q-NOTIF] matched combinations:', combResult.rows.length);
+
+          if (combResult.rows.length > 0) {
+            const combinationIds = combResult.rows.map(r => r.id);
+            const { data: matchedUsers } = await supabase
+              .from('users')
+              .select('id')
+              .in('combination_id', combinationIds)
+              .neq('id', userId || '');
+
+            console.log('[Q-NOTIF] matched users:', matchedUsers?.length);
+
+            if (matchedUsers && matchedUsers.length > 0) {
+              const { error: insertErr } = await supabase.from('notifications').insert(
+                matchedUsers.map(u => ({
+                  user_id: u.id,
+                  text: `שאלה חדשה נשאלה בפורום "${forum.title}": ${question.substring(0, 60)}${question.length > 60 ? '...' : ''}`,
+                  forum_id: forumId
+                }))
+              );
+              console.log('[Q-NOTIF] insert error:', insertErr);
+            }
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.error('[Q-NOTIF] Error sending question notifications:', notifErr);
+    }
+
     res.json({
       id: data.question_id,
       combinationId: data.forum_id,
