@@ -88,13 +88,14 @@ const AuthPage = ({ onLogin }) => {
               </div>
             </div>
 
-            <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 text-center rounded-b-[32px]">
-              <p className="text-xs text-slate-400 font-medium">© CourseMate 2026</p>
-            </div>
           </div>
         </div>
 
       </div>
+
+      <p className="text-center text-xs text-slate-400 mt-6 max-w-xl mx-auto leading-relaxed px-4">
+        הפרויקט נבנה ע"י סטודנטיות במסגרת קורס באוניברסיטה העברית ומטרתו לייצר מענה משלים לצרכים של הסטודנטים בעת הרישום לקורסים. ליצירת קשר: <a href="mailto:coursmatehuji@gmail.com" className="text-indigo-500 hover:underline">coursmatehuji@gmail.com</a>
+      </p>
     </div>
   );
 };
