@@ -7,11 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "start": "node serve.js"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "express": "^4.21.0",
     "@supabase/supabase-js": "^2.106.2",
     "@tailwindcss/postcss": "^4.2.2",
     "lucide-react": "^1.8.0",
