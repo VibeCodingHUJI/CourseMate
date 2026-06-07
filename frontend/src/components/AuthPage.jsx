@@ -37,7 +37,9 @@ const AuthPage = ({ onLogin }) => {
           </p>
 
           <p className="text-xs text-slate-400 leading-relaxed mt-6">
-            הפרויקט נבנה ע"י סטודנטיות במסגרת קורס באוניברסיטה העברית ומטרתו לייצר מענה משלים לצרכים של הסטודנטים בעת הרישום לקורסים. ליצירת קשר:{" "}
+            הפרויקט נבנה ע"י סטודנטיות במסגרת קורס באוניברסיטה העברית ומטרתו לייצר מענה משלים לצרכים של הסטודנטים בעת הרישום לקורסים ובניית המערכת.
+            <br />
+            ליצירת קשר:{" "}
             <a href="mailto:coursmatehuji@gmail.com" className="text-indigo-400 hover:underline">coursmatehuji@gmail.com</a>
           </p>
         </div>
