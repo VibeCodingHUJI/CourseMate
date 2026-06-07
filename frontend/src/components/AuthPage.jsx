@@ -257,7 +257,7 @@ const AuthPage = ({ onLogin }) => {
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
-                className="w-full bg-white border-2 border-slate-200 text-slate-700 py-3.5 rounded-2xl font-black text-base hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all flex items-center justify-center gap-3"
+                className="w-full mt-3 bg-white border-2 border-slate-200 text-slate-700 py-3.5 rounded-2xl font-black text-base hover:bg-slate-50 hover:border-slate-300 active:scale-95 transition-all flex items-center justify-center gap-3"
               >
                 <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
