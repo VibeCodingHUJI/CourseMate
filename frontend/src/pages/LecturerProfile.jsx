@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ChevronRight, Star, BookOpen, GraduationCap, AlertCircle, MessageSquare, Plus, X, Edit2, Trash2 } from 'lucide-react';
+import { ChevronRight, Star, BookOpen, GraduationCap, AlertCircle, MessageSquare, Plus, X, Edit2, Trash2, User, UserCheck } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || '${API}';
 
@@ -17,6 +17,12 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState('');
+  const [newVisibility, setNewVisibility] = useState('full_name');
+
+  const IDENTITY_OPTIONS = [
+    { id: 'full_name', label: 'שם מלא', icon: UserCheck },
+    { id: 'initials', label: 'ראשי תיבות', icon: User },
+  ];
 
   const hasUserReview = reviews.some(r => String(r.authorId) === String(user?.id));
 
@@ -29,13 +35,13 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
         res = await fetch(`${API}/api/lecturers/${id}/reviews/${editingReviewId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rating: newRating, comment: newComment })
+          body: JSON.stringify({ rating: newRating, comment: newComment, visibility: newVisibility })
         });
       } else {
         res = await fetch(`${API}/api/lecturers/${id}/reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.id, rating: newRating, comment: newComment })
+          body: JSON.stringify({ userId: user.id, rating: newRating, comment: newComment, visibility: newVisibility })
         });
       }
 
@@ -75,6 +81,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
     setEditingReviewId(review.id);
     setNewRating(review.rating);
     setNewComment(review.comment);
+    setNewVisibility(review.visibility || 'full_name');
     setIsModalOpen(true);
   };
 
@@ -82,6 +89,7 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
     setIsModalOpen(false);
     setNewComment('');
     setNewRating(5);
+    setNewVisibility('full_name');
     setEditingReviewId(null);
   };
 
@@ -328,6 +336,24 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
                 {[5, 4, 3, 2, 1].map(num => (
                   <button key={num} type="button" onClick={() => setNewRating(num)} className="active:scale-110 cursor-pointer transition-transform">
                     <Star className={`h-7 w-7 ${num <= newRating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Identity selector */}
+            <div className="mb-6">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 block">איך להציג את שמך?</label>
+              <div className="flex gap-2">
+                {IDENTITY_OPTIONS.map(option => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setNewVisibility(option.id)}
+                    className={`flex items-center gap-1.5 py-2 px-3 rounded-xl border-2 transition-all text-xs font-black ${newVisibility === option.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                  >
+                    <option.icon className="h-3.5 w-3.5" />
+                    {option.label}
                   </button>
                 ))}
               </div>

@@ -181,14 +181,22 @@ app.get('/api/courses/:id', async (req, res) => {
 
 // --- Reviews Routes ---
 
-const mapLecturerReview = (r) => ({
-  id: r.lecturer_review_id,
-  authorId: r.user_id,
-  author: r.full_name || 'סטודנט/ית אנונימי/ת',
-  rating: r.rating_general,
-  comment: r.review_text,
-  date: r.created_at ? new Date(r.created_at).toLocaleDateString('he-IL') : '',
-});
+const mapLecturerReview = (r) => {
+  let author = 'סטודנט/ית אנונימי/ת';
+  if (r.visibility === 'initials' && r.full_name)
+    author = r.full_name.trim().split(/\s+/).map(w => w[0] + '.').join(' ');
+  else if (r.full_name)
+    author = r.full_name;
+  return {
+    id: r.lecturer_review_id,
+    authorId: r.user_id,
+    author,
+    visibility: r.visibility || 'full_name',
+    rating: r.rating_general,
+    comment: r.review_text,
+    date: r.created_at ? new Date(r.created_at).toLocaleDateString('he-IL') : '',
+  };
+};
 
 const mapReview = (r) => {
   let author = 'אנונימי/ת';
@@ -841,12 +849,12 @@ app.get('/api/lecturers/:id/reviews', async (req, res) => {
 app.post('/api/lecturers/:id/reviews', async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId, rating, comment } = req.body;
+    const { userId, rating, comment, visibility = 'full_name' } = req.body;
     if (!comment || comment.trim().length < 10) return res.status(400).json({ message: 'הביקורת חייבת להכיל לפחות 10 תווים' });
 
     const { data, error } = await supabase
       .from('lecturer_reviews')
-      .insert({ lecturer_id: parseInt(id), user_id: userId || null, rating_general: rating, review_text: comment })
+      .insert({ lecturer_id: parseInt(id), user_id: userId || null, rating_general: rating, review_text: comment, visibility })
       .select()
       .single();
     if (error) throw new Error(error.message);
@@ -866,10 +874,11 @@ app.post('/api/lecturers/:id/reviews', async (req, res) => {
 app.patch('/api/lecturers/:lecturerId/reviews/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { rating, comment } = req.body;
+    const { rating, comment, visibility } = req.body;
     const updates = {};
     if (rating !== undefined) updates.rating_general = rating;
     if (comment !== undefined) updates.review_text = comment;
+    if (visibility !== undefined) updates.visibility = visibility;
     if (Object.keys(updates).length === 0) return res.status(400).json({ message: 'No updates provided' });
 
     const { data, error } = await supabase
