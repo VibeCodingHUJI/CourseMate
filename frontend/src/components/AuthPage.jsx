@@ -94,7 +94,7 @@ const AuthPage = ({ onLogin }) => {
     "w-full bg-slate-50 border-2 border-transparent focus:border-indigo-300 focus:bg-white rounded-2xl px-5 py-3 outline-none transition-all font-medium text-right";
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-50 flex items-center justify-center px-6 lg:px-16" dir="rtl">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6 lg:px-16 py-8" dir="rtl">
       <div className="w-full max-w-7xl flex flex-row gap-8 lg:gap-16 items-center">
 
         {/* Right side — hero copy */}
@@ -122,15 +122,15 @@ const AuthPage = ({ onLogin }) => {
         {/* Left side — form card */}
         <div className="w-full lg:w-auto lg:min-w-[480px] lg:max-w-[520px]">
           <div className="bg-white rounded-[32px] shadow-2xl shadow-indigo-500/10 border border-slate-100 overflow-visible animate-in fade-in zoom-in-95 duration-500">
-            <div className="p-8 sm:p-10">
-              <div className="flex flex-col items-center mb-6">
-                <img src="/logo.png" alt="CourseMate Logo" className="h-16 w-16 object-contain mb-2" />
+            <div className="p-6 sm:p-8">
+              <div className="flex flex-col items-center mb-4">
+                <img src="/logo.png" alt="CourseMate Logo" className="h-14 w-14 object-contain mb-2" />
                 <h2 className="text-xl font-black text-slate-900 tracking-tight">
                   {authMode === "signup" ? "הרשמה ל-CourseMate" : "ברוכים השבים"}
                 </h2>
               </div>
 
-              <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-5">
+              <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-4">
                 <button
                   onClick={() => setAuthMode("signup")}
                   className={`flex-1 py-2.5 rounded-xl font-black transition-all ${authMode === "signup" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
