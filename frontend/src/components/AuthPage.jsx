@@ -9,7 +9,6 @@ const AuthPage = ({ onLogin }) => {
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",
     track: "",
   });
 
@@ -81,58 +80,61 @@ const AuthPage = ({ onLogin }) => {
   const selectedTrackLabel = studyTracks.find((t) => t.value === authForm.track)?.label || "";
 
   const inputBase =
-    "w-full bg-slate-50 border-2 border-transparent focus:border-indigo-300 focus:bg-white rounded-2xl px-5 py-4 outline-none transition-all font-medium text-right";
+    "w-full bg-slate-50 border-2 border-transparent focus:border-indigo-300 focus:bg-white rounded-2xl px-5 py-3 outline-none transition-all font-medium text-right";
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 lg:p-10" dir="rtl">
-      <div className="w-full max-w-7xl flex flex-col lg:flex-row gap-12 lg:gap-24 items-center">
+    <div className="h-screen overflow-hidden bg-slate-50 flex items-center justify-center px-6 lg:px-16" dir="rtl">
+      <div className="w-full max-w-7xl flex flex-row gap-8 lg:gap-16 items-center">
 
         {/* Right side — hero copy */}
-        <div className="flex-1 text-right order-2 lg:order-1 hidden lg:flex flex-col justify-center">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-600 px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest mb-10">
+        <div className="flex-1 text-right hidden lg:flex flex-col justify-center -mt-10">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-600 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6">
             <Zap className="h-3.5 w-3.5" />
             <span>הפלטפורמה הטובה ביותר לבחירת קורסים</span>
           </div>
 
-          <h1 className="text-5xl xl:text-7xl font-black text-slate-900 leading-tight mb-8">
+          <h1 className="text-5xl xl:text-6xl font-black text-slate-900 leading-tight mb-5">
             בחרו את הקורסים
             <br />
             שלכם בצורה <span className="text-indigo-600">חכמה.</span>
           </h1>
 
-          <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-xl">
-            מערכת ביקורות הקורסים והמרצים העדגכנית ביותר באוניברסיטה העברית. קוראים דעות אמיתיות, שואלים שאלות, עוזרים לאחרים,
-            ומפיקים את המקסימום מהתואר שלכם - הכל במקום אחד.
+          <p className="text-lg text-slate-500 font-medium leading-relaxed">
+            מערכת ביקורות הקורסים והמרצים העדכנית ביותר באוניברסיטה העברית.
+            <br />
+            קוראים דעות אמיתיות, שואלים שאלות, עוזרים לאחרים, ומפיקים את המקסימום
+            <br />
+            מהתואר שלכם — הכל במקום אחד.
           </p>
         </div>
 
         {/* Left side — form card */}
-        <div className="w-full lg:w-auto lg:min-w-[520px] order-1 lg:order-2">
-          <div className="bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl shadow-indigo-500/10 border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
-            <div className="p-8 sm:p-12">
-              <div className="flex flex-col items-center mb-10">
-                <img src="/logo.png" alt="CourseMate Logo" className="h-24 w-24 object-contain mb-3" />
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+        <div className="w-full lg:w-auto lg:min-w-[480px] lg:max-w-[520px]">
+          <div className="bg-white rounded-[32px] shadow-2xl shadow-indigo-500/10 border border-slate-100 overflow-visible animate-in fade-in zoom-in-95 duration-500">
+            <div className="p-8 sm:p-10">
+              <div className="flex flex-col items-center mb-6">
+                <img src="/logo.png" alt="CourseMate Logo" className="h-16 w-16 object-contain mb-2" />
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">
                   {authMode === "signup" ? "הרשמה ל-CourseMate" : "ברוכים השבים"}
                 </h2>
               </div>
 
-              <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-8">
+              <div className="flex bg-slate-100 p-1.5 rounded-2xl mb-5">
                 <button
                   onClick={() => setAuthMode("signup")}
-                  className={`flex-1 py-3 rounded-xl font-black transition-all ${authMode === "signup" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`flex-1 py-2.5 rounded-xl font-black transition-all ${authMode === "signup" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                 >
                   הרשמה
                 </button>
                 <button
                   onClick={() => setAuthMode("login")}
-                  className={`flex-1 py-3 rounded-xl font-black transition-all ${authMode === "login" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
+                  className={`flex-1 py-2.5 rounded-xl font-black transition-all ${authMode === "login" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-800"}`}
                 >
                   התחברות
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 {authMode === "signup" && (
                   <input
                     type="text"
@@ -150,7 +152,7 @@ const AuthPage = ({ onLogin }) => {
                   value={authForm.email}
                   onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
                   className={inputBase}
-                  placeholder="כתובת אימייל של האוניברסיטה (mail.huji.ac.il@)"
+                  placeholder="כתובת אימייל (חובה mail.huji.ac.il@)"
                 />
 
                 <div className="relative">
@@ -172,19 +174,9 @@ const AuthPage = ({ onLogin }) => {
                 </div>
 
                 {authMode === "signup" && (
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={authForm.confirmPassword}
-                    onChange={(e) => setAuthForm({ ...authForm, confirmPassword: e.target.value })}
-                    className={inputBase}
-                    placeholder="אישור סיסמה"
-                  />
-                )}
-
-                {authMode === "signup" && (
                   <div className="relative" ref={dropdownRef}>
                     <div
-                      className="w-full bg-slate-50 border-2 border-transparent focus-within:border-indigo-300 rounded-2xl px-5 py-4 transition-all cursor-pointer flex items-center justify-between gap-2"
+                      className="w-full bg-slate-50 border-2 border-transparent focus-within:border-indigo-300 rounded-2xl px-5 py-3 transition-all cursor-pointer flex items-center justify-between gap-2"
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     >
                       <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
@@ -208,7 +200,7 @@ const AuthPage = ({ onLogin }) => {
 
                     {isDropdownOpen && (
                       <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="max-h-60 overflow-y-auto">
+                        <div className="max-h-52 overflow-y-auto">
                           {filteredTracks.length > 0 ? (
                             filteredTracks.map((t) => (
                               <div
@@ -218,7 +210,7 @@ const AuthPage = ({ onLogin }) => {
                                   setTrackSearch("");
                                   setIsDropdownOpen(false);
                                 }}
-                                className="px-6 py-4 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-colors group"
+                                className="px-6 py-3 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-colors group"
                               >
                                 {authForm.track === t.value && <Check className="h-4 w-4 text-indigo-600 shrink-0" />}
                                 <span
@@ -239,13 +231,13 @@ const AuthPage = ({ onLogin }) => {
 
                 <button
                   type="submit"
-                  className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all mt-2"
+                  className="w-full bg-indigo-600 text-white py-3.5 rounded-2xl font-black text-base hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all"
                 >
                   {authMode === "login" ? "כניסה למערכת" : "הירשם עכשיו"}
                 </button>
               </form>
 
-              <div className="mt-5 text-center">
+              <div className="mt-4 text-center">
                 <p className="text-sm text-slate-500 font-medium">
                   {authMode === "signup" ? "יש לך כבר חשבון?" : "אין לך חשבון?"}{" "}
                   <button
@@ -258,7 +250,7 @@ const AuthPage = ({ onLogin }) => {
               </div>
             </div>
 
-            <div className="bg-slate-50 px-6 py-4 border-t border-slate-100 text-center">
+            <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 text-center rounded-b-[32px]">
               <p className="text-xs text-slate-400 font-medium">© CourseMate 2026</p>
             </div>
           </div>
