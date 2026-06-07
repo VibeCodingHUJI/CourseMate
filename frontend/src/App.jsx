@@ -924,6 +924,14 @@ const App = () => {
   // Lifted Follow State
   const [followedCourseIds, setFollowedCourseIds] = useState([]);
 
+  // Google OAuth state
+  const [googlePendingUser, setGooglePendingUser] = useState(null); // { userId, email, name }
+  const [googleSession, setGoogleSession] = useState(null);
+  const [googleProfileTrack, setGoogleProfileTrack] = useState('');
+  const [googleProfileTrackSearch, setGoogleProfileTrackSearch] = useState('');
+  const [googleProfileDropdownOpen, setGoogleProfileDropdownOpen] = useState(false);
+  const googleProfileDropdownRef = useRef(null);
+
   // Load followed courses from DB when user logs in
   useEffect(() => {
     if (!user?.id || user.isGuest) { setFollowedCourseIds([]); return; }
@@ -939,6 +947,16 @@ const App = () => {
 
   useEffect(() => {
     const handleClickOutside = (e) => { if (notifyRef.current && !notifyRef.current.contains(e.target)) setIsNotifyOpen(false); };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (googleProfileDropdownRef.current && !googleProfileDropdownRef.current.contains(e.target)) {
+        setGoogleProfileDropdownOpen(false);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -975,6 +993,49 @@ const App = () => {
 
     return () => supabase.removeChannel(channel);
   }, [user?.id]);
+
+  // Google OAuth callback handler
+  useEffect(() => {
+    const processGoogleSession = async (session) => {
+      if (!session?.access_token) return;
+      if (localStorage.getItem('user')) return;
+
+      const _API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      try {
+        const resp = await fetch(`${_API}/api/auth/google-complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ access_token: session.access_token }),
+        });
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          await supabase.auth.signOut();
+          alert(data.message || 'שגיאה בהתחברות עם Google');
+          return;
+        }
+
+        if (data.needsProfile) {
+          setGooglePendingUser({ userId: data.userId, email: data.email, name: data.name });
+          setGoogleSession(session);
+        } else {
+          setUser(data);
+          localStorage.setItem('user', JSON.stringify(data));
+          logActivity(data.id, ActivityActions.LOGIN, { name: data.name, track: data.track });
+        }
+      } catch {
+        await supabase.auth.signOut();
+        alert('שגיאה בהתחברות עם Google');
+      }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => processGoogleSession(session));
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') processGoogleSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!user?.id || user?.isGuest) return;
@@ -1129,6 +1190,34 @@ const App = () => {
     if (!u.isGuest) {
       localStorage.setItem('user', JSON.stringify(u));
       logActivity(u.id, ActivityActions.LOGIN, { name: u.name, track: u.track });
+    }
+  };
+
+  const handleGoogleFinalize = async () => {
+    if (!googleProfileTrack) return alert('נא לבחור מסלול לימוד');
+    if (!googlePendingUser?.name?.trim()) return alert('נא להזין שם');
+    const _API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    try {
+      const resp = await fetch(`${_API}/api/auth/google-finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: googlePendingUser.userId,
+          access_token: googleSession.access_token,
+          name: googlePendingUser.name,
+          track: googleProfileTrack,
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) return alert(data.message || 'שגיאה בהשלמת הרישום');
+      setGooglePendingUser(null);
+      setGoogleSession(null);
+      setGoogleProfileTrack('');
+      setUser(data);
+      localStorage.setItem('user', JSON.stringify(data));
+      logActivity(data.id, ActivityActions.LOGIN, { name: data.name, track: data.track });
+    } catch {
+      alert('שגיאה בהשלמת הרישום');
     }
   };
   const handleLogout = () => {
@@ -1373,7 +1462,111 @@ const App = () => {
     (r.author === user?.name)
   );
 
-  if (!user) return <AuthPage onLogin={handleLogin} />;
+  if (!user) {
+    if (googlePendingUser) return (
+      <div className="h-screen bg-slate-50 flex items-center justify-center p-6" dir="rtl">
+        <div className="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 bg-indigo-50 rounded-3xl flex items-center justify-center mb-4">
+              <svg className="h-8 w-8" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 mb-1">השלמת הרישום</h3>
+            <p className="text-sm text-slate-500 font-medium text-center">
+              נכנסת עם Google<br />
+              <span className="text-indigo-600 font-black">{googlePendingUser.email}</span>
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 block">שם מלא</label>
+              <input
+                type="text"
+                value={googlePendingUser.name}
+                onChange={(e) => setGooglePendingUser({ ...googlePendingUser, name: e.target.value })}
+                className="w-full bg-slate-50 border-2 border-transparent focus:border-indigo-300 focus:bg-white rounded-2xl px-5 py-3 outline-none transition-all font-medium text-right"
+                placeholder="שם מלא"
+              />
+            </div>
+            <div className="relative" ref={googleProfileDropdownRef}>
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1.5 block">מסלול לימוד</label>
+              <div
+                className="w-full bg-slate-50 border-2 border-transparent focus-within:border-indigo-300 rounded-2xl px-5 py-3 transition-all cursor-pointer flex items-center justify-between gap-2"
+                onClick={() => setGoogleProfileDropdownOpen(!googleProfileDropdownOpen)}
+              >
+                <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform shrink-0 ${googleProfileDropdownOpen ? 'rotate-180' : ''}`} />
+                <div className="flex-1 text-right overflow-hidden">
+                  {googleProfileDropdownOpen ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="חפש מסלול..."
+                      value={googleProfileTrackSearch}
+                      onChange={(e) => setGoogleProfileTrackSearch(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="bg-transparent outline-none w-full text-right font-medium"
+                    />
+                  ) : (
+                    <span className={`font-medium truncate block ${googleProfileTrack ? 'text-slate-900' : 'text-slate-400'}`}>
+                      {(studyTracks || []).find(t => t.value === googleProfileTrack)?.label || 'בחר/י מסלול לימוד'}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {googleProfileDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="max-h-52 overflow-y-auto">
+                    {((studyTracks || []).filter(t => t?.label?.toLowerCase().includes(googleProfileTrackSearch.toLowerCase()))).length > 0
+                      ? (studyTracks || []).filter(t => t?.label?.toLowerCase().includes(googleProfileTrackSearch.toLowerCase())).map(t => (
+                          <div
+                            key={t.value}
+                            onClick={() => {
+                              setGoogleProfileTrack(t.value);
+                              setGoogleProfileTrackSearch('');
+                              setGoogleProfileDropdownOpen(false);
+                            }}
+                            className="px-6 py-3 hover:bg-slate-50 flex items-center justify-between cursor-pointer transition-colors group"
+                          >
+                            {googleProfileTrack === t.value && <Check className="h-4 w-4 text-indigo-600 shrink-0" />}
+                            <span className={`font-bold text-right flex-1 text-sm ${googleProfileTrack === t.value ? 'text-indigo-600' : 'text-slate-700 group-hover:text-indigo-600'}`}>
+                              {t.label}
+                            </span>
+                          </div>
+                        ))
+                      : <div className="px-6 py-4 text-slate-400 text-sm text-center font-bold">לא נמצאו מסלולים</div>
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handleGoogleFinalize}
+              className="w-full bg-indigo-600 text-white py-3.5 rounded-2xl font-black hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 active:scale-95 transition-all"
+            >
+              הצטרפות למערכת
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                setGooglePendingUser(null);
+                setGoogleSession(null);
+                setGoogleProfileTrack('');
+              }}
+              className="w-full text-slate-400 font-bold text-sm py-2 hover:text-rose-500 transition-colors"
+            >
+              ביטול
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+    return <AuthPage onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col" dir="rtl">

@@ -1044,6 +1044,76 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.post('/api/auth/google-complete', async (req, res) => {
+  try {
+    const { access_token } = req.body;
+    if (!access_token) return res.status(400).json({ message: 'access_token נדרש' });
+
+    const { data: { user }, error } = await supabase.auth.getUser(access_token);
+    if (error || !user) return res.status(401).json({ message: 'Token לא תקין' });
+
+    if (!user.email || !user.email.endsWith('@mail.huji.ac.il')) {
+      await supabase.auth.admin.deleteUser(user.id);
+      return res.status(403).json({ message: 'נדרשת כתובת אימייל של האוניברסיטה העברית (@mail.huji.ac.il)' });
+    }
+
+    const result = await pool.query(
+      `SELECT u.id, u.full_name, u.email, c.roadmap_code as track
+       FROM users u
+       LEFT JOIN combinations c ON u.combination_id = c.id
+       WHERE u.id = $1`,
+      [user.id]
+    );
+
+    if (result.rows.length > 0 && result.rows[0].full_name && result.rows[0].track) {
+      const u = result.rows[0];
+      return res.json({ id: u.id, name: u.full_name, email: u.email, track: u.track, isGuest: false });
+    }
+
+    const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0];
+    return res.json({ needsProfile: true, userId: user.id, email: user.email, name });
+  } catch (err) {
+    console.error('Error in google-complete:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post('/api/auth/google-finalize', async (req, res) => {
+  try {
+    const { userId, access_token, name, track } = req.body;
+    if (!userId || !access_token || !name || !track) {
+      return res.status(400).json({ message: 'חסרים פרטים נדרשים' });
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(access_token);
+    if (error || !user || user.id !== userId) {
+      return res.status(401).json({ message: 'Token לא תקין' });
+    }
+
+    const combResult = await pool.query(
+      'SELECT id FROM combinations WHERE roadmap_code = $1', [track]
+    );
+    if (combResult.rows.length === 0) {
+      return res.status(400).json({ message: 'מסלול הלימוד לא נמצא' });
+    }
+    const combinationId = combResult.rows[0].id;
+
+    const { error: upsertError } = await supabase
+      .from('users')
+      .upsert(
+        { id: userId, email: user.email, full_name: name, combination_id: combinationId },
+        { onConflict: 'id' }
+      );
+
+    if (upsertError) return res.status(500).json({ message: upsertError.message });
+
+    res.json({ id: userId, name, email: user.email, track, isGuest: false });
+  } catch (err) {
+    console.error('Error in google-finalize:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ==== GENERAL FORUMS ====
 
 const generateForumSlug = (title) =>
