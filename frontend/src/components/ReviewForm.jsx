@@ -1,5 +1,5 @@
 import React from 'react';
-import { Send, X, User, Ghost } from 'lucide-react';
+import { Send, X, User, UserCheck } from 'lucide-react';
 
 const ReviewForm = ({ 
   comment, semester, year, identityType, attendanceEnforced, difficulty,
@@ -31,8 +31,8 @@ const ReviewForm = ({
   ];
 
   const IDENTITY_OPTIONS = [
+    { id: 'full_name', label: 'שם מלא', icon: UserCheck },
     { id: 'initials', label: 'ראשי תיבות', icon: User },
-    { id: 'anonymous', label: 'אנונימי/ת', icon: Ghost },
   ];
 
   const placeholderText = "ספרו בקצרה על החוויה שלכם מהקורס.";

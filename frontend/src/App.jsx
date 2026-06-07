@@ -1113,7 +1113,7 @@ const App = () => {
   const [newReviewComment, setNewReviewComment] = useState('');
   const [newReviewSemester, setNewReviewSemester] = useState("סמסטר א'");
   const [newReviewYear, setNewReviewYear] = useState('תשפ"ו (2025-26)');
-  const [newReviewIdentity, setNewReviewIdentity] = useState('initials');
+  const [newReviewIdentity, setNewReviewIdentity] = useState('full_name');
   const [newReviewAttendance, setNewReviewAttendance] = useState(null);
   const [newReviewDifficulty, setNewReviewDifficulty] = useState(5);
 
