@@ -16,7 +16,9 @@ export async function logActivity(userId, action, details = {}) {
   });
 
   if (error) {
-    console.error('[activityLogger] Failed to log activity:', error.message);
+    console.error('[activityLogger] Failed to log activity:', error.message, error);
+  } else {
+    console.log('[activityLogger] Logged:', action, details);
   }
 }
 
