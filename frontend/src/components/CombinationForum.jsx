@@ -102,7 +102,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder, label }) => {
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initialForumId, onBack, userCombination }) => {
+const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initialForumId, onBack, userCombination, relevantForums }) => {
   const [combinations, setCombinations] = useState([]);
   const [selectedCombination, setSelectedCombination] = useState(null);
   const [combinationQuestions, setCombinationQuestions] = useState([]);
@@ -138,10 +138,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
   };
 
   useEffect(() => {
-    const endpoint = (!user?.isGuest && user?.track)
-      ? `${API}/api/general-forums/relevant?track=${encodeURIComponent(user.track)}`
-      : `${API}/api/general-forums`;
-    fetch(endpoint)
+    fetch(`${API}/api/general-forums`)
       .then(res => res.json())
       .then(data => {
         setCombinations(data);
@@ -151,7 +148,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
         }
       })
       .catch(err => console.error('Error fetching forums:', err));
-  }, [user?.track, user?.isGuest]);
+  }, []);
 
   useEffect(() => {
     if (selectedCombination) {
@@ -271,7 +268,12 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
     ));
   };
 
+  const relevantIds = (!user?.isGuest && Array.isArray(relevantForums))
+    ? new Set(relevantForums.map(f => String(f.id)))
+    : null;
+
   const filteredCombinations = combinations.filter(c => {
+    if (relevantIds && !relevantIds.has(String(c.id))) return false;
     return (
       (!filterA || c.majorA === filterA || c.majorB === filterA || (c.title && c.title.includes(filterA))) &&
       (!filterB || c.majorA === filterB || c.majorB === filterB || (c.title && c.title.includes(filterB))) &&
@@ -424,7 +426,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
                     <div className="text-xl font-bold">{q.question}</div>
                   </div>
                   <div className="flex items-center gap-6">
-                    <div className="text-xs text-white/50">פורסם ב-{q.date} על ידי {q.author}</div>
+                    <div className="text-xs text-white/50">פורסם ב-{q.date}</div>
                     <ChevronLeft className={`h-5 w-5 text-slate-500 transition-transform duration-300 ${expandedQuestions[q.id] ? '-rotate-90' : 'rotate-0'}`} />
                   </div>
                 </div>
@@ -458,7 +460,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
                           <div className="flex-1 flex justify-between items-start">
                             <div>
                               <p className="text-slate-700 font-medium">{a.text}</p>
-                              <div className="text-[10px] text-slate-400 font-black mt-1">מאת {a.author || 'אורח/ת'} • {a.date}</div>
+                              <div className="text-[10px] text-slate-400 font-black mt-1">{a.date}</div>
                             </div>
                             <button 
                               onClick={() => handleLikeAnswer(q.id, i)}
