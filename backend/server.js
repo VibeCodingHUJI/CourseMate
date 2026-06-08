@@ -292,9 +292,12 @@ app.post('/api/reviews', async (req, res) => {
 
     let saved;
     if (existing) {
+      const updateFields = { comment: comment || null, visibility: visibility || 'full_name', semester, year };
+      if (difficulty !== undefined && difficulty !== null) updateFields.difficulty = difficulty;
+      if (attendanceEnforced !== undefined) updateFields.attendance_enforced = attendanceEnforced ?? null;
       const { data, error } = await supabase
         .from('course_reviews')
-        .update({ comment: comment || null, visibility: visibility || 'full_name', semester, year })
+        .update(updateFields)
         .eq('id', existing.id)
         .select()
         .single();
