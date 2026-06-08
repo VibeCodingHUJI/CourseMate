@@ -309,8 +309,26 @@ app.post('/api/reviews', async (req, res) => {
         .insert({ user_id: userId || null, course_id: courseId, difficulty, attendance_enforced: attendanceEnforced ?? null, comment: comment || null, visibility: visibility || 'full_name', semester, year })
         .select()
         .single();
-      if (error) throw new Error(error.message);
-      saved = data;
+      if (error) {
+        // If insert failed due to duplicate (e.g. delete didn't propagate), fall back to update
+        if (userId && (error.code === '23505' || error.message.includes('duplicate') || error.message.includes('unique'))) {
+          const { data: existingRow } = await supabase.from('course_reviews').select('id').eq('user_id', userId).eq('course_id', courseId).maybeSingle();
+          if (existingRow) {
+            const updateFields = { comment: comment || null, visibility: visibility || 'full_name', semester, year };
+            if (difficulty !== undefined && difficulty !== null) updateFields.difficulty = difficulty;
+            if (attendanceEnforced !== undefined) updateFields.attendance_enforced = attendanceEnforced ?? null;
+            const { data: updated, error: updateError } = await supabase.from('course_reviews').update(updateFields).eq('id', existingRow.id).select().single();
+            if (updateError) throw new Error(updateError.message);
+            saved = updated;
+          } else {
+            throw new Error(error.message);
+          }
+        } else {
+          throw new Error(error.message);
+        }
+      } else {
+        saved = data;
+      }
     }
 
     let fullName = null;

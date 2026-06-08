@@ -1,5 +1,5 @@
-import React from 'react';
-import { Send, X, User, UserCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Send, X, User, UserCheck, Edit2 } from 'lucide-react';
 
 const ReviewForm = ({ 
   comment, semester, year, identityType, attendanceEnforced, difficulty,
@@ -34,6 +34,8 @@ const ReviewForm = ({
     { id: 'full_name', label: 'שם מלא', icon: UserCheck },
     { id: 'initials', label: 'ראשי תיבות', icon: User },
   ];
+
+  const [isEditingRating, setIsEditingRating] = useState(false);
 
   const placeholderText = "ספרו בקצרה על החוויה שלכם מהקורס.";
 
@@ -103,7 +105,7 @@ const ReviewForm = ({
           <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative">
             <div className="flex justify-between items-center mb-4">
               <label className="text-sm font-black text-slate-700 block">רמת קושי הקורס (1-10)</label>
-              {hasRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}
+              {hasRated && !isEditingRating && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg flex items-center gap-1.5">כבר דירגת רכיב זה בעבר.<button onClick={() => setIsEditingRating(true)} className="text-amber-500 hover:text-amber-700 transition-colors"><Edit2 className="h-3 w-3" /></button></span>}
             </div>
             <div className="flex items-center gap-6">
               <input 
@@ -113,16 +115,16 @@ const ReviewForm = ({
                 step="1"
                 value={difficulty}
                 onChange={(e) => onDifficultyChange(parseInt(e.target.value))}
-                disabled={hasRated}
-                className={`flex-1 h-3 bg-slate-200 rounded-lg appearance-none accent-rose-500 ${hasRated ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                disabled={hasRated && !isEditingRating}
+                className={`flex-1 h-3 bg-slate-200 rounded-lg appearance-none accent-rose-500 ${hasRated && !isEditingRating ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
               />
-              <div className={`h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0 ${hasRated ? 'opacity-50' : ''}`}>
+              <div className={`h-12 w-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center font-black text-xl border-2 border-rose-100 shadow-sm shrink-0 ${hasRated && !isEditingRating ? 'opacity-50' : ''}`}>
                 {difficulty}
               </div>
             </div>
             <div className="flex justify-between mt-2 px-1">
-              <span className={`text-[10px] font-black uppercase tracking-tighter ${hasRated ? 'text-slate-300' : 'text-slate-400'}`}>קל מאוד</span>
-              <span className={`text-[10px] font-black uppercase tracking-tighter ${hasRated ? 'text-rose-300' : 'text-rose-600'}`}>
+              <span className={`text-[10px] font-black uppercase tracking-tighter ${hasRated && !isEditingRating ? 'text-slate-300' : 'text-slate-400'}`}>קל מאוד</span>
+              <span className={`text-[10px] font-black uppercase tracking-tighter ${hasRated && !isEditingRating ? 'text-rose-300' : 'text-rose-600'}`}>
                 {getDifficultyText(difficulty)}
               </span>
             </div>
@@ -131,7 +133,7 @@ const ReviewForm = ({
           <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative">
             <div className="flex justify-between items-center mb-4">
               <label className="text-sm font-black text-slate-700 block">האם נבדקה נוכחות?</label>
-              {hasRated && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg">כבר דירגת רכיב זה בעבר.</span>}
+              {hasRated && !isEditingRating && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg flex items-center gap-1.5">כבר דירגת רכיב זה בעבר.<button onClick={() => setIsEditingRating(true)} className="text-amber-500 hover:text-amber-700 transition-colors"><Edit2 className="h-3 w-3" /></button></span>}
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
@@ -142,12 +144,12 @@ const ReviewForm = ({
                 <button
                   key={String(option.id)}
                   onClick={() => onAttendanceChange(option.id)}
-                  disabled={hasRated}
+                  disabled={hasRated && !isEditingRating}
                   className={`py-3 rounded-xl font-black text-[10px] border-2 transition-all ${
-                    attendanceEnforced === option.id 
-                      ? `${option.id === true ? 'bg-emerald-600' : option.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md` 
+                    attendanceEnforced === option.id
+                      ? `${option.id === true ? 'bg-emerald-600' : option.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md`
                       : `${option.color} hover:shadow-sm`
-                  } ${hasRated ? 'cursor-not-allowed opacity-50' : ''}`}
+                  } ${hasRated && !isEditingRating ? 'cursor-not-allowed opacity-50' : ''}`}
                 >
                   {option.label}
                 </button>

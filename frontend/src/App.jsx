@@ -1295,13 +1295,15 @@ const App = () => {
   const handleDeleteReview = async (id) => {
     if (!window.confirm('האם למחוק?')) return;
     try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('שגיאה במחיקה מהשרת');
       logActivity(user.id, ActivityActions.DELETE_REVIEW, { reviewId: id, courseId: selectedCourse?.id });
       setReviews(reviews.filter(r => r.id !== id));
       setAllReviews(allReviews.filter(r => r.id !== id));
       setAllCourses(allCourses.map(c => c.id === selectedCourse?.id ? { ...c, reviewCount: Math.max(0, (c.reviewCount || 0) - 1) } : c));
+      if (editingReviewId === id) { setEditingReviewId(null); setInlineEditComment(''); }
       alert('נמחק בהצלחה');
-    } catch (err) { alert('שגיאה'); }
+    } catch (err) { alert('שגיאה במחיקה: ' + err.message); }
   };
 
   const [inlineEditComment, setInlineEditComment] = useState('');
