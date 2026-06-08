@@ -102,7 +102,7 @@ const Dashboard = ({
             <div className="bg-indigo-50 p-2 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
               <MessageSquare className="h-4 w-4" />
             </div>
-            <span className="text-sm font-black text-slate-700 group-hover:text-indigo-600">הפורומים של השילוב שלך</span>
+            <span className="text-sm font-black text-slate-700 group-hover:text-indigo-600">הפורומים שרלוונטיים לחוגים שלך</span>
           </button>
         )}
 
@@ -1619,7 +1619,7 @@ const App = () => {
           <div className="flex items-center gap-2 cursor-pointer group" onClick={() => { setSelectedCourse(null); if (user?.isGuest) setGuestTab('forum'); }}><span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span><img src="/logo.png" alt="CourseMate Logo" className="h-10 w-10 object-contain group-hover:scale-110 transition-transform" /></div>
         </div>
         {isChangingTrack && (
-          <div className="absolute top-20 left-6 bg-white rounded-3xl shadow-2xl border border-slate-200 p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]" dir="rtl">
+          <div className="absolute top-20 right-6 bg-white rounded-3xl shadow-2xl border border-slate-200 p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]" dir="rtl">
             <div className="flex items-center gap-3 mb-3 px-2"><button onClick={() => setIsChangingTrack(false)} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-4 w-4" /></button><p className="text-xs font-black text-slate-400 uppercase tracking-widest">חפש מסלול לימוד חדש</p></div>
             <div className="relative mb-4"><input autoFocus type="text" placeholder="חפש מסלול..." value={trackSearch} onChange={(e) => setTrackSearch(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-4 outline-none focus:border-indigo-500/20 text-sm font-bold text-right font-medium" /></div>
             <div className="space-y-1 max-h-72 overflow-y-auto">{(studyTracks || []).filter(t => t.label.includes(trackSearch)).map(t => (<button key={t.value} onClick={() => { handleChangeTrack(t.value); }} className={`w-full text-right px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${(user?.isGuest ? guestSelectedTrack : user?.track) === t.value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-600 hover:bg-slate-50'}`}>{t.label}</button>))}{(studyTracks || []).filter(t => t.label.includes(trackSearch)).length === 0 && <p className="text-xs text-slate-400 text-center py-2">לא נמצאו מסלולים</p>}</div>

@@ -1195,30 +1195,30 @@ app.post('/api/general-forums', async (req, res) => {
       .single();
     if (error) throw error;
 
-    // Notify registered users whose combination matches both departments
-    if (majorA && majorB) {
+    // Notify users whose combination includes majorA or majorB (exact match)
+    if (majorA || majorB) {
       try {
-        const words = `${majorA} ${majorB}`
-          .split(/\s+/)
-          .filter(w => w.length >= 3)
-          .map(w => `%${w}%`);
-        const conditions = words.map((_, i) => `name ILIKE $${i + 1}`).join(' OR ');
-        const combResult = await pool.query(
-          `SELECT DISTINCT id FROM combinations WHERE ${conditions}`,
-          words
-        );
-        if (combResult.rows.length > 0) {
-          const combinationIds = combResult.rows.map(r => r.id);
+        const majorsToMatch = [majorA, majorB].filter(Boolean);
+        // Find combinations that contain at least one of the forum's majors (exact split match)
+        const allCombs = await pool.query('SELECT id, name FROM combinations');
+        const matchingIds = allCombs.rows
+          .filter(row => {
+            const parts = (row.name || '').split(/\s*\+\s*/).map(p => p.trim().toLowerCase());
+            return majorsToMatch.some(m => parts.includes(m.trim().toLowerCase()));
+          })
+          .map(row => row.id);
+
+        if (matchingIds.length > 0) {
           const { data: matchedUsers } = await supabase
             .from('users')
             .select('id')
-            .in('combination_id', combinationIds);
+            .in('combination_id', matchingIds);
 
           if (matchedUsers && matchedUsers.length > 0) {
             await supabase.from('notifications').insert(
               matchedUsers.map(u => ({
                 user_id: u.id,
-                text: `פורום חדש נפתח עבור השילוב שלך: ${title}`,
+                text: `פורום חדש נפתח שרלוונטי לחוגים שלך: ${title}`,
                 forum_id: data.forum_id
               }))
             );
