@@ -1167,8 +1167,8 @@ app.get('/api/general-forums', async (req, res) => {
         id: f.forum_id,
         title: f.title,
         slug: f.slug,
-        majorA: meta.majorA || '',
-        majorB: meta.majorB || '',
+        majorA: f.major_a || meta.majorA || '',
+        majorB: f.major_b || meta.majorB || '',
         academicYear: meta.academicYear || '',
         date: new Date(f.created_at).toLocaleDateString('he-IL'),
         replies: 0
@@ -1198,13 +1198,13 @@ app.post('/api/general-forums', async (req, res) => {
     // Notify users whose combination includes majorA or majorB (exact match)
     if (majorA || majorB) {
       try {
-        const majorsToMatch = [majorA, majorB].filter(Boolean);
-        // Find combinations that contain at least one of the forum's majors (exact split match)
-        const allCombs = await pool.query('SELECT id, name FROM combinations');
+        const majorsToMatch = [majorA, majorB].filter(Boolean).map(m => m.trim().toLowerCase());
+        // Find combinations that contain at least one of the forum's majors using major_a/major_b columns
+        const allCombs = await pool.query('SELECT id, major_a, major_b FROM combinations');
         const matchingIds = allCombs.rows
           .filter(row => {
-            const parts = (row.name || '').split(/\s*\+\s*/).map(p => p.trim().toLowerCase());
-            return majorsToMatch.some(m => parts.includes(m.trim().toLowerCase()));
+            const combMajors = [row.major_a, row.major_b].filter(Boolean).map(p => p.trim().toLowerCase());
+            return majorsToMatch.some(m => combMajors.includes(m));
           })
           .map(row => row.id);
 
@@ -1529,13 +1529,13 @@ app.get('/api/general-forums/relevant', async (req, res) => {
     if (!track) return res.json([]);
 
     const combResult = await pool.query(
-      'SELECT name FROM combinations WHERE roadmap_code = $1',
+      'SELECT major_a, major_b FROM combinations WHERE roadmap_code = $1',
       [track]
     );
     if (combResult.rows.length === 0) return res.json([]);
-    const combName = combResult.rows[0].name || '';
-    // Split user's combination into individual majors (e.g. "מנהל עסקים + מט"ר" → ["מנהל עסקים", "מט"ר"])
-    const userMajors = combName.split(/\s*\+\s*/).map(m => m.trim().toLowerCase()).filter(Boolean);
+    const { major_a, major_b } = combResult.rows[0];
+    // Use major_a and major_b directly instead of parsing the name field
+    const userMajors = [major_a, major_b].filter(Boolean).map(m => m.trim().toLowerCase());
 
     const { data, error } = await supabase
       .from('general_forums')

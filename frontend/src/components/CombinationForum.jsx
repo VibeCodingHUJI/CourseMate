@@ -120,9 +120,10 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
   // Filters
   const [filterA, setFilterA] = useState('');
   const [filterB, setFilterB] = useState('');
-  const [filterYear, setFilterYear] = useState('תשפ"ו (2025-26)');
+  const [filterYear, setFilterYear] = useState('');
 
   const ACADEMIC_YEARS = [
+    { value: '', label: 'כל השנים' },
     { value: 'תשפ"ד (2023-24)', label: 'תשפ"ד (2023-24)' },
     { value: 'תשפ"ה (2024-25)', label: 'תשפ"ה (2024-25)' },
     { value: 'תשפ"ו (2025-26)', label: 'תשפ"ו (2025-26)' },
@@ -268,7 +269,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
     ));
   };
 
-  const relevantIds = (!user?.isGuest && Array.isArray(relevantForums))
+  const relevantIds = (!user?.isGuest && Array.isArray(relevantForums) && relevantForums.length > 0)
     ? new Set(relevantForums.map(f => String(f.id)))
     : null;
 
