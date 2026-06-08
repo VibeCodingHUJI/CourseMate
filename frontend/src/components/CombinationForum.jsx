@@ -138,7 +138,10 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
   };
 
   useEffect(() => {
-    fetch(`${API}/api/general-forums`)
+    const endpoint = (!user?.isGuest && user?.track)
+      ? `${API}/api/general-forums/relevant?track=${encodeURIComponent(user.track)}`
+      : `${API}/api/general-forums`;
+    fetch(endpoint)
       .then(res => res.json())
       .then(data => {
         setCombinations(data);
@@ -148,7 +151,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
         }
       })
       .catch(err => console.error('Error fetching forums:', err));
-  }, []);
+  }, [user?.track, user?.isGuest]);
 
   useEffect(() => {
     if (selectedCombination) {
@@ -268,15 +271,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
     ));
   };
 
-  const userWords = userCombination
-    ? userCombination.split(/[\s,،ו]+/).filter(w => w.length >= 3)
-    : [];
-
   const filteredCombinations = combinations.filter(c => {
-    if (userWords.length > 0 && !filterA && !filterB) {
-      const title = (c.title || '').toLowerCase();
-      if (!userWords.some(w => title.includes(w.toLowerCase()))) return false;
-    }
     return (
       (!filterA || c.majorA === filterA || c.majorB === filterA || (c.title && c.title.includes(filterA))) &&
       (!filterB || c.majorA === filterB || c.majorB === filterB || (c.title && c.title.includes(filterB))) &&
@@ -307,8 +302,8 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
       {!selectedCombination ? (
         <>
           <header className="text-right">
-            <h1 className="text-5xl font-black text-slate-900 mb-4">פורום שילובים</h1>
-            <p className="text-xl text-slate-500 font-medium">כאן תוכלו להתייעץ על שילובים בין חוגים ולקבל טיפים מסטודנטים אחרים.</p>
+            <h1 className="text-5xl font-black text-slate-900 mb-4">{user?.isGuest ? 'פורום שילובים' : 'פורומים שרלוונטיים לחוגים שלך'}</h1>
+            <p className="text-xl text-slate-500 font-medium">{user?.isGuest ? 'כאן תוכלו להתייעץ על שילובים בין חוגים ולקבל טיפים מסטודנטים אחרים.' : 'כאן תוכלו לשאול שאלות על השילוב שלכם ולענות על שאלות של אנשים שעומדים להיות סטודנטים לגבי השילוב שלכם והחוגים שלכם.'}</p>
           </header>
 
           {/* Filters Bar */}
