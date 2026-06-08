@@ -1153,6 +1153,24 @@ const parseForumMeta = (description) => {
   try { return JSON.parse(description) || {}; } catch { return {}; }
 };
 
+// Extracts individual majors from a combination name.
+// Handles both "X + Y" and "X - description, בשילוב Y" formats.
+const parseMajorsFromCombName = (name) => {
+  if (!name) return [];
+  const n = name.trim();
+  if (n.includes(' + ')) {
+    return n.split(/\s*\+\s*/).map(m => m.trim().toLowerCase()).filter(Boolean);
+  }
+  if (n.includes(' בשילוב ')) {
+    const idx = n.lastIndexOf(' בשילוב ');
+    const majorB = n.slice(idx + ' בשילוב '.length).trim().toLowerCase();
+    const beforePart = n.slice(0, idx);
+    const majorA = (beforePart.includes(' - ') ? beforePart.split(' - ')[0] : beforePart).trim().toLowerCase();
+    return [majorA, majorB].filter(Boolean);
+  }
+  return [n.toLowerCase()];
+};
+
 app.get('/api/general-forums', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -1199,11 +1217,13 @@ app.post('/api/general-forums', async (req, res) => {
     if (majorA || majorB) {
       try {
         const majorsToMatch = [majorA, majorB].filter(Boolean).map(m => m.trim().toLowerCase());
-        // Find combinations that contain at least one of the forum's majors using major_a/major_b columns
-        const allCombs = await pool.query('SELECT id, major_a, major_b FROM combinations');
+        // Find combinations whose majors match the forum's majors
+        const allCombs = await pool.query('SELECT id, name, major_a, major_b FROM combinations');
         const matchingIds = allCombs.rows
           .filter(row => {
-            const combMajors = [row.major_a, row.major_b].filter(Boolean).map(p => p.trim().toLowerCase());
+            const combMajors = (row.major_a || row.major_b)
+              ? [row.major_a, row.major_b].filter(Boolean).map(p => p.trim().toLowerCase())
+              : parseMajorsFromCombName(row.name);
             return majorsToMatch.some(m => combMajors.includes(m));
           })
           .map(row => row.id);
@@ -1529,13 +1549,15 @@ app.get('/api/general-forums/relevant', async (req, res) => {
     if (!track) return res.json([]);
 
     const combResult = await pool.query(
-      'SELECT major_a, major_b FROM combinations WHERE roadmap_code = $1',
+      'SELECT name, major_a, major_b FROM combinations WHERE roadmap_code = $1',
       [track]
     );
     if (combResult.rows.length === 0) return res.json([]);
-    const { major_a, major_b } = combResult.rows[0];
-    // Use major_a and major_b directly instead of parsing the name field
-    const userMajors = [major_a, major_b].filter(Boolean).map(m => m.trim().toLowerCase());
+    const row = combResult.rows[0];
+    // Use major_a/major_b if available, otherwise parse the name field intelligently
+    const userMajors = (row.major_a || row.major_b)
+      ? [row.major_a, row.major_b].filter(Boolean).map(m => m.trim().toLowerCase())
+      : parseMajorsFromCombName(row.name);
 
     const { data, error } = await supabase
       .from('general_forums')

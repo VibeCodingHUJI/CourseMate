@@ -102,6 +102,24 @@ const SearchableSelect = ({ options, value, onChange, placeholder, label }) => {
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+// Extracts individual majors from a combination name.
+// Handles "X + Y" and "X - description, בשילוב Y" formats.
+const parseMajorsFromCombName = (name) => {
+  if (!name) return [];
+  const n = name.trim();
+  if (n.includes(' + ')) {
+    return n.split(/\s*\+\s*/).map(m => m.trim().toLowerCase()).filter(Boolean);
+  }
+  if (n.includes(' בשילוב ')) {
+    const idx = n.lastIndexOf(' בשילוב ');
+    const majorB = n.slice(idx + ' בשילוב '.length).trim().toLowerCase();
+    const beforePart = n.slice(0, idx);
+    const majorA = (beforePart.includes(' - ') ? beforePart.split(' - ')[0] : beforePart).trim().toLowerCase();
+    return [majorA, majorB].filter(Boolean);
+  }
+  return [];
+};
+
 const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initialForumId, onBack, userCombination, relevantForums }) => {
   const [combinations, setCombinations] = useState([]);
   const [selectedCombination, setSelectedCombination] = useState(null);
@@ -269,12 +287,30 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
     ));
   };
 
+  // Parse user's majors from their combination name (e.g. "מט"ר - ..., בשילוב מנהל עסקים" → ["מט"ר", "מנהל עסקים"])
+  const userMajors = (!user?.isGuest && userCombination)
+    ? parseMajorsFromCombName(userCombination)
+    : null;
+
+  // Fallback: use backend-provided relevant IDs if local parsing fails
   const relevantIds = (!user?.isGuest && Array.isArray(relevantForums) && relevantForums.length > 0)
     ? new Set(relevantForums.map(f => String(f.id)))
     : null;
 
   const filteredCombinations = combinations.filter(c => {
-    if (relevantIds && !relevantIds.has(String(c.id))) return false;
+    if (!user?.isGuest) {
+      if (userMajors && userMajors.length > 0) {
+        // Primary filter: does this forum include one of the user's majors?
+        // Use majorA/majorB columns; fall back to parsing the title
+        const colMajors = [c.majorA, c.majorB].filter(Boolean).map(m => m.toLowerCase());
+        const titleMajors = parseMajorsFromCombName(c.title || '');
+        const forumMajors = colMajors.length > 0 ? colMajors : titleMajors;
+        if (!forumMajors.some(m => userMajors.includes(m))) return false;
+      } else if (relevantIds) {
+        // Fallback: use backend-provided list
+        if (!relevantIds.has(String(c.id))) return false;
+      }
+    }
     return (
       (!filterA || c.majorA === filterA || c.majorB === filterA || (c.title && c.title.includes(filterA))) &&
       (!filterB || c.majorA === filterB || c.majorB === filterB || (c.title && c.title.includes(filterB))) &&
