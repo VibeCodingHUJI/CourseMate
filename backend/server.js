@@ -1533,7 +1533,9 @@ app.get('/api/general-forums/relevant', async (req, res) => {
       [track]
     );
     if (combResult.rows.length === 0) return res.json([]);
-    const combName = combResult.rows[0].name.toLowerCase();
+    const combName = combResult.rows[0].name || '';
+    // Split user's combination into individual majors (e.g. "מנהל עסקים + מט"ר" → ["מנהל עסקים", "מט"ר"])
+    const userMajors = combName.split(/\s*\+\s*/).map(m => m.trim().toLowerCase()).filter(Boolean);
 
     const { data, error } = await supabase
       .from('general_forums')
@@ -1547,9 +1549,7 @@ app.get('/api/general-forums/relevant', async (req, res) => {
       const mA = (f.major_a || meta.majorA || titleParts[0] || '').trim().toLowerCase();
       const mB = (f.major_b || meta.majorB || titleParts[1] || '').trim().toLowerCase();
       if (!mA && !mB) return false;
-      const matchA = mA && combName.includes(mA);
-      const matchB = mB && combName.includes(mB);
-      return matchA || matchB;
+      return userMajors.some(m => m === mA || m === mB);
     });
 
     res.json(relevant.map(f => {

@@ -166,30 +166,13 @@ const LecturerProfile = ({ user, onDepartmentClick }) => {
         </div>
 
         {/* Header */}
-        <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 p-10 mb-10 relative overflow-hidden text-right">
+        <header className="bg-white rounded-[40px] shadow-sm border border-slate-200 py-8 px-10 mb-10 relative overflow-hidden text-right">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
+          <div className="absolute top-5 right-5 bg-indigo-50 p-2 rounded-xl z-20">
+            <GraduationCap className="h-5 w-5 text-indigo-400" />
+          </div>
           <div className="relative z-10">
-            <h1 className="text-5xl font-black text-slate-900 mb-4 tracking-tight">{lecturer.name}</h1>
-            <div className="flex items-start gap-3 justify-start mb-6">
-              <div className="bg-indigo-50 p-1.5 rounded-xl">
-                <GraduationCap className="h-6 w-6 text-indigo-400" />
-              </div>
-              <div className="flex flex-wrap gap-2 justify-start">
-                {Array.isArray(lecturer.department) ? (
-                  lecturer.department.map((dept, i) => (
-                    <button key={i} onClick={() => onDepartmentClick && onDepartmentClick(dept)}
-                      className="bg-white border border-slate-200 text-slate-600 px-4 py-1 rounded-2xl text-sm font-bold shadow-sm hover:border-indigo-500 hover:text-indigo-600 transition-all">
-                      {dept}
-                    </button>
-                  ))
-                ) : (
-                  <button onClick={() => onDepartmentClick && onDepartmentClick(lecturer.department)}
-                    className="bg-white border border-slate-200 text-slate-600 px-4 py-1 rounded-2xl text-sm font-bold shadow-sm hover:border-indigo-500 hover:text-indigo-600 transition-all">
-                    {lecturer.department}
-                  </button>
-                )}
-              </div>
-            </div>
+            <h1 className="text-5xl font-black text-slate-900 mb-3 tracking-tight pr-16">{lecturer.name}</h1>
             {lecturer.bio && <p className="text-slate-600 leading-relaxed max-w-2xl text-lg font-medium italic">{lecturer.bio}</p>}
           </div>
         </header>
