@@ -358,6 +358,7 @@ app.post('/api/reviews', async (req, res) => {
           await supabase.from('notifications').insert(
             followers.map(f => ({
               user_id: f.user_id,
+              course_id: courseId,
               text: `ביקורת חדשה נוספה לקורס "${courseName}" שאתה עוקב אחריו`
             }))
           );
@@ -537,7 +538,6 @@ app.post('/api/questions', async (req, res) => {
     }
 
     // Notify followers of the course about the new question
-    console.log('[Q-NOTIF] courseId:', courseId, 'type:', typeof courseId, 'userId:', userId);
     if (courseId) {
       try {
         let courseName = 'קורס';
@@ -555,16 +555,14 @@ app.post('/api/questions', async (req, res) => {
         if (userId) followersQuery = followersQuery.neq('user_id', userId);
         const { data: followers, error: followersError } = await followersQuery;
 
-        console.log('[Q-NOTIF] followers found:', followers?.length, 'error:', followersError);
-
         if (followers && followers.length > 0) {
-          const { error: insertError } = await supabase.from('notifications').insert(
+          await supabase.from('notifications').insert(
             followers.map(f => ({
               user_id: f.user_id,
+              course_id: courseId,
               text: `שאלה חדשה נוספה לקורס "${courseName}" שאתה עוקב אחריו: "${title}"`
             }))
           );
-          console.log('[Q-NOTIF] insert error:', insertError);
         }
       } catch (notifErr) {
         console.error('Error sending question notifications:', notifErr);
@@ -1324,6 +1322,7 @@ app.get('/api/notifications', async (req, res) => {
       text: n.text,
       read: n.read,
       forumId: n.forum_id,
+      courseId: n.course_id || null,
       date: new Date(n.created_at).toLocaleDateString('he-IL', { hour: '2-digit', minute: '2-digit' })
     })));
   } catch (err) {
@@ -1589,15 +1588,20 @@ app.get('/api/general-forums/relevant', async (req, res) => {
     if (!track) return res.json([]);
 
     const combResult = await pool.query(
-      'SELECT name, major_a, major_b FROM combinations WHERE roadmap_code = $1',
+      'SELECT name FROM combinations WHERE roadmap_code = $1',
       [track]
     );
     if (combResult.rows.length === 0) return res.json([]);
     const row = combResult.rows[0];
-    // Use major_a/major_b if available, otherwise parse the name field intelligently
-    const userMajors = (row.major_a || row.major_b)
-      ? [row.major_a, row.major_b].filter(Boolean).map(m => m.trim().toLowerCase())
-      : parseMajorsFromCombName(row.name);
+
+    const rawMajors = parseMajorsFromCombName(row.name);
+
+    // Strip type suffixes like "דו חוגי", "דו-חוגי", "דו חוגי," etc.
+    const userMajors = rawMajors
+      .map(m => m.replace(/[,،]?\s*[-–]?\s*דו[- ]?חוגי\s*/gi, '').trim())
+      .filter(Boolean);
+
+    if (userMajors.length === 0) return res.json([]);
 
     const { data, error } = await supabase
       .from('general_forums')
@@ -1611,7 +1615,7 @@ app.get('/api/general-forums/relevant', async (req, res) => {
       const mA = (f.major_a || meta.majorA || titleParts[0] || '').trim().toLowerCase();
       const mB = (f.major_b || meta.majorB || titleParts[1] || '').trim().toLowerCase();
       if (!mA && !mB) return false;
-      return userMajors.some(m => m === mA || m === mB);
+      return userMajors.some(m => m === mA || m === mB || mA.includes(m) || mB.includes(m));
     });
 
     res.json(relevant.map(f => {

@@ -292,6 +292,11 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
     ? parseMajorsFromCombName(userCombination)
     : null;
 
+  // When the track name has no combination partner (e.g. "כלכלה, דו-חוגי"), extract just the base course name
+  const userBaseCourse = (userMajors !== null && userMajors.length === 0 && userCombination)
+    ? userCombination.replace(/[,،]?\s*[-–]?\s*דו[- ]?חוגי\s*/gi, '').trim().toLowerCase()
+    : null;
+
   // Fallback: use backend-provided relevant IDs if local parsing fails
   const relevantIds = (!user?.isGuest && Array.isArray(relevantForums) && relevantForums.length > 0)
     ? new Set(relevantForums.map(f => String(f.id)))
@@ -307,8 +312,13 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
         const forumMajors = colMajors.length > 0 ? colMajors : titleMajors;
         if (!forumMajors.some(m => userMajors.includes(m))) return false;
       } else if (relevantIds) {
-        // Fallback: use backend-provided list
+        // Backend-provided list (handles single-major dual programs via major_a column)
         if (!relevantIds.has(String(c.id))) return false;
+      } else if (userBaseCourse) {
+        // Fallback: backend had no data — filter by base course name substring
+        const titleLower = (c.title || '').toLowerCase();
+        const colMajors = [c.majorA, c.majorB].filter(Boolean).map(m => m.toLowerCase());
+        if (!titleLower.includes(userBaseCourse) && !colMajors.some(m => m.includes(userBaseCourse))) return false;
       }
     }
     return (
