@@ -340,8 +340,13 @@ app.post('/api/reviews', async (req, res) => {
     // Notify followers only on new reviews (not edits)
     if (!existing) {
       try {
-        const courseResult = await pool.query('SELECT name FROM courses WHERE id = $1', [courseId]);
-        const courseName = courseResult.rows[0]?.name || 'קורס';
+        let courseName = 'קורס';
+        try {
+          const courseResult = await pool.query('SELECT name FROM courses WHERE id = $1', [courseId]);
+          courseName = courseResult.rows[0]?.name || 'קורס';
+        } catch (poolErr) {
+          console.error('Error fetching course name for review notification:', poolErr);
+        }
 
         const { data: followers } = await supabase
           .from('saved_courses')
@@ -529,6 +534,36 @@ app.post('/api/questions', async (req, res) => {
     if (userId) {
       const { data: userData } = await supabase.from('users').select('full_name').eq('id', userId).maybeSingle();
       if (userData) fullName = userData.full_name;
+    }
+
+    // Notify followers of the course about the new question
+    if (courseId) {
+      try {
+        let courseName = 'קורס';
+        try {
+          const courseResult = await pool.query('SELECT name FROM courses WHERE id = $1', [courseId]);
+          courseName = courseResult.rows[0]?.name || 'קורס';
+        } catch (poolErr) {
+          console.error('Error fetching course name for question notification:', poolErr);
+        }
+
+        const { data: followers } = await supabase
+          .from('saved_courses')
+          .select('user_id')
+          .eq('course_id', courseId)
+          .neq('user_id', userId || '');
+
+        if (followers && followers.length > 0) {
+          await supabase.from('notifications').insert(
+            followers.map(f => ({
+              user_id: f.user_id,
+              text: `שאלה חדשה נוספה לקורס "${courseName}" שאתה עוקב אחריו: "${title}"`
+            }))
+          );
+        }
+      } catch (notifErr) {
+        console.error('Error sending question notifications:', notifErr);
+      }
     }
 
     res.status(201).json(mapQuestion({ ...data, full_name: fullName }, []));
