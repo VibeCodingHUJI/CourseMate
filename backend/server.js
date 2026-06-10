@@ -537,6 +537,7 @@ app.post('/api/questions', async (req, res) => {
     }
 
     // Notify followers of the course about the new question
+    console.log('[Q-NOTIF] courseId:', courseId, 'type:', typeof courseId, 'userId:', userId);
     if (courseId) {
       try {
         let courseName = 'קורס';
@@ -547,19 +548,23 @@ app.post('/api/questions', async (req, res) => {
           console.error('Error fetching course name for question notification:', poolErr);
         }
 
-        const { data: followers } = await supabase
+        let followersQuery = supabase
           .from('saved_courses')
           .select('user_id')
-          .eq('course_id', courseId)
-          .neq('user_id', userId || '');
+          .eq('course_id', courseId);
+        if (userId) followersQuery = followersQuery.neq('user_id', userId);
+        const { data: followers, error: followersError } = await followersQuery;
+
+        console.log('[Q-NOTIF] followers found:', followers?.length, 'error:', followersError);
 
         if (followers && followers.length > 0) {
-          await supabase.from('notifications').insert(
+          const { error: insertError } = await supabase.from('notifications').insert(
             followers.map(f => ({
               user_id: f.user_id,
               text: `שאלה חדשה נוספה לקורס "${courseName}" שאתה עוקב אחריו: "${title}"`
             }))
           );
+          console.log('[Q-NOTIF] insert error:', insertError);
         }
       } catch (notifErr) {
         console.error('Error sending question notifications:', notifErr);
