@@ -184,7 +184,7 @@ app.get('/api/courses/:id', async (req, res) => {
 const mapLecturerReview = (r) => {
   let author = 'סטודנט/ית אנונימי/ת';
   if (r.visibility === 'initials' && r.full_name)
-    author = r.full_name.trim().split(/\s+/).map(w => w[0] + '.').join(' ');
+    author = r.full_name.trim().split(/\s+/).filter(w => w.length > 0).map(w => w[0]).join('.');
   else if (r.full_name)
     author = r.full_name;
   return {
@@ -202,7 +202,7 @@ const mapReview = (r) => {
   let author = 'אנונימי/ת';
   if (r.visibility === 'full_name' && r.full_name) author = r.full_name;
   else if (r.visibility === 'initials' && r.full_name)
-    author = r.full_name.trim().split(/\s+/).map(w => w[0] + '.').join(' ');
+    author = r.full_name.trim().split(/\s+/).filter(w => w.length > 0).map(w => w[0]).join('.');
   return {
     id: r.id,
     courseId: r.course_id,

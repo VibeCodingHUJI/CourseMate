@@ -1264,7 +1264,7 @@ const App = () => {
     return (user.track === 'General' || !user.track || c.track === user.track) && matchesSearch && matchesFilter && passes;
   });
 
-  const getAuthorDisplayName = (n, t) => { if (!n) return 'אורח/ת'; if (t === 'anon') return 'אנונימי/ת'; if (t === 'initials') return n.trim().split(/\s+/).map(x => x[0] + '.').join(' '); return n; };
+  const getAuthorDisplayName = (n, t) => { if (!n) return 'אורח/ת'; if (t === 'anon') return 'אנונימי/ת'; if (t === 'initials') return n.trim().split(/\s+/).filter(x => x.length > 0).map(x => x[0]).join('.'); return n; };
 
   const handlePostReview = async () => {
     if (!newReviewComment) return;
@@ -1345,7 +1345,7 @@ const App = () => {
       if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
       const saved = await res.json();
       const authorDisplay = newQuestionIdentity === 'initials'
-        ? (user.name || '').trim().split(/\s+/).map(w => w[0] + '.').join(' ')
+        ? (user.name || '').trim().split(/\s+/).filter(w => w.length > 0).map(w => w[0]).join('.')
         : (user.name || saved.author);
       logActivity(user.id, ActivityActions.POST_QUESTION, { courseId: selectedCourse.id, courseTitle: selectedCourse.title });
       setQuestions([{ ...saved, author: authorDisplay }, ...questions]);
