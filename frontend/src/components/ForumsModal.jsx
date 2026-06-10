@@ -35,8 +35,8 @@ const ForumsModal = ({
               <MessageSquare className="h-8 w-8 text-white" />
             </div>
             <div className="text-right">
-              <h2 className="text-3xl font-black mb-1">הפורומים של השילוב שלך</h2>
-              <p className="text-white/70 font-bold">כאן תוכלו להתייעץ על השילוב שלכם עם סטודנטים נוספים.</p>
+              <h2 className="text-3xl font-black mb-1">הפורומים שרלוונטיים לחוגים שלך</h2>
+              <p className="text-white/70 font-bold">כאן תוכלו להתייעץ על החוגים שלכם עם סטודנטים נוספים.</p>
             </div>
           </div>
           <button 

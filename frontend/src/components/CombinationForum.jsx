@@ -102,7 +102,25 @@ const SearchableSelect = ({ options, value, onChange, placeholder, label }) => {
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initialForumId, onBack, userCombination }) => {
+// Extracts individual majors from a combination name.
+// Handles "X + Y" and "X - description, בשילוב Y" formats.
+const parseMajorsFromCombName = (name) => {
+  if (!name) return [];
+  const n = name.trim();
+  if (n.includes(' + ')) {
+    return n.split(/\s*\+\s*/).map(m => m.trim().toLowerCase()).filter(Boolean);
+  }
+  if (n.includes(' בשילוב ')) {
+    const idx = n.lastIndexOf(' בשילוב ');
+    const majorB = n.slice(idx + ' בשילוב '.length).trim().toLowerCase();
+    const beforePart = n.slice(0, idx);
+    const majorA = (beforePart.includes(' - ') ? beforePart.split(' - ')[0] : beforePart).trim().toLowerCase();
+    return [majorA, majorB].filter(Boolean);
+  }
+  return [];
+};
+
+const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initialForumId, onBack, userCombination, relevantForums }) => {
   const [combinations, setCombinations] = useState([]);
   const [selectedCombination, setSelectedCombination] = useState(null);
   const [combinationQuestions, setCombinationQuestions] = useState([]);
@@ -120,9 +138,10 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
   // Filters
   const [filterA, setFilterA] = useState('');
   const [filterB, setFilterB] = useState('');
-  const [filterYear, setFilterYear] = useState('תשפ"ו (2025-26)');
+  const [filterYear, setFilterYear] = useState('');
 
   const ACADEMIC_YEARS = [
+    { value: '', label: 'כל השנים' },
     { value: 'תשפ"ד (2023-24)', label: 'תשפ"ד (2023-24)' },
     { value: 'תשפ"ה (2024-25)', label: 'תשפ"ה (2024-25)' },
     { value: 'תשפ"ו (2025-26)', label: 'תשפ"ו (2025-26)' },
@@ -268,14 +287,29 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
     ));
   };
 
-  const userWords = userCombination
-    ? userCombination.split(/[\s,،ו]+/).filter(w => w.length >= 3)
-    : [];
+  // Parse user's majors from their combination name (e.g. "מט"ר - ..., בשילוב מנהל עסקים" → ["מט"ר", "מנהל עסקים"])
+  const userMajors = (!user?.isGuest && userCombination)
+    ? parseMajorsFromCombName(userCombination)
+    : null;
+
+  // Fallback: use backend-provided relevant IDs if local parsing fails
+  const relevantIds = (!user?.isGuest && Array.isArray(relevantForums) && relevantForums.length > 0)
+    ? new Set(relevantForums.map(f => String(f.id)))
+    : null;
 
   const filteredCombinations = combinations.filter(c => {
-    if (userWords.length > 0 && !filterA && !filterB) {
-      const title = (c.title || '').toLowerCase();
-      if (!userWords.some(w => title.includes(w.toLowerCase()))) return false;
+    if (!user?.isGuest) {
+      if (userMajors && userMajors.length > 0) {
+        // Primary filter: does this forum include one of the user's majors?
+        // Use majorA/majorB columns; fall back to parsing the title
+        const colMajors = [c.majorA, c.majorB].filter(Boolean).map(m => m.toLowerCase());
+        const titleMajors = parseMajorsFromCombName(c.title || '');
+        const forumMajors = colMajors.length > 0 ? colMajors : titleMajors;
+        if (!forumMajors.some(m => userMajors.includes(m))) return false;
+      } else if (relevantIds) {
+        // Fallback: use backend-provided list
+        if (!relevantIds.has(String(c.id))) return false;
+      }
     }
     return (
       (!filterA || c.majorA === filterA || c.majorB === filterA || (c.title && c.title.includes(filterA))) &&
@@ -307,8 +341,8 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
       {!selectedCombination ? (
         <>
           <header className="text-right">
-            <h1 className="text-5xl font-black text-slate-900 mb-4">פורום שילובים</h1>
-            <p className="text-xl text-slate-500 font-medium">כאן תוכלו להתייעץ על שילובים בין חוגים ולקבל טיפים מסטודנטים אחרים.</p>
+            <h1 className="text-5xl font-black text-slate-900 mb-4">{user?.isGuest ? 'פורום שילובים' : 'פורומים שרלוונטיים לחוגים שלך'}</h1>
+            <p className="text-xl text-slate-500 font-medium">{user?.isGuest ? 'כאן תוכלו להתייעץ על שילובים בין חוגים ולקבל טיפים מסטודנטים אחרים.' : 'כאן תוכלו לשאול שאלות על השילוב שלכם ולענות על שאלות של אנשים שעומדים להיות סטודנטים לגבי השילוב שלכם והחוגים שלכם.'}</p>
           </header>
 
           {/* Filters Bar */}
@@ -429,7 +463,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
                     <div className="text-xl font-bold">{q.question}</div>
                   </div>
                   <div className="flex items-center gap-6">
-                    <div className="text-xs text-white/50">פורסם ב-{q.date} על ידי {q.author}</div>
+                    <div className="text-xs text-white/50">פורסם ב-{q.date}</div>
                     <ChevronLeft className={`h-5 w-5 text-slate-500 transition-transform duration-300 ${expandedQuestions[q.id] ? '-rotate-90' : 'rotate-0'}`} />
                   </div>
                 </div>
@@ -463,7 +497,7 @@ const CombinationForum = ({ user, onLogout, onTrackSelect, STUDY_TRACKS, initial
                           <div className="flex-1 flex justify-between items-start">
                             <div>
                               <p className="text-slate-700 font-medium">{a.text}</p>
-                              <div className="text-[10px] text-slate-400 font-black mt-1">מאת {a.author || 'אורח/ת'} • {a.date}</div>
+                              <div className="text-[10px] text-slate-400 font-black mt-1">{a.date}</div>
                             </div>
                             <button 
                               onClick={() => handleLikeAnswer(q.id, i)}
