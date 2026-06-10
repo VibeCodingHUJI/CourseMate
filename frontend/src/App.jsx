@@ -416,6 +416,10 @@ const CourseDetail = ({
   editingReviewId,
   inlineEditComment,
   setInlineEditComment,
+  inlineEditDifficulty,
+  setInlineEditDifficulty,
+  inlineEditAttendance,
+  setInlineEditAttendance,
   handleSaveInlineEdit,
   handleCancelInlineEdit,
   questions,
@@ -711,11 +715,28 @@ const CourseDetail = ({
                 <div className="mb-8 pr-4 border-r-2 border-indigo-50">
                   {editingReviewId === r.id ? (
                     <div className="space-y-4">
-                      <textarea 
+                      <textarea
                         value={inlineEditComment}
                         onChange={(e) => setInlineEditComment(e.target.value)}
                         className="w-full bg-slate-50 border-2 border-indigo-100 focus:border-indigo-500 rounded-[24px] p-6 h-32 outline-none text-right font-medium text-slate-700 resize-none transition-all"
                       />
+                      <div className="bg-slate-50 rounded-2xl p-4 space-y-4">
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">רמת קושי ({inlineEditDifficulty})</label>
+                          <div className="flex items-center gap-3">
+                            <input type="range" min="1" max="10" step="1" value={inlineEditDifficulty} onChange={(e) => setInlineEditDifficulty(parseInt(e.target.value))} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none accent-rose-500 cursor-pointer" />
+                            <span className="text-xs font-black text-slate-400 w-16 text-left">{inlineEditDifficulty <= 2 ? 'קל מאוד' : inlineEditDifficulty <= 4 ? 'קל' : inlineEditDifficulty <= 7 ? 'בינוני' : inlineEditDifficulty <= 9 ? 'קשה' : 'קשה מאוד'}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">בדיקת נוכחות</label>
+                          <div className="flex gap-2">
+                            {[{ val: true, label: 'כן', active: 'bg-emerald-600 text-white', inactive: 'bg-white text-emerald-600 border border-emerald-200' }, { val: false, label: 'לא', active: 'bg-rose-600 text-white', inactive: 'bg-white text-rose-600 border border-rose-200' }, { val: null, label: 'לא יודע/ת', active: 'bg-slate-600 text-white', inactive: 'bg-white text-slate-500 border border-slate-200' }].map(o => (
+                              <button key={String(o.val)} onClick={() => setInlineEditAttendance(o.val)} className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all ${inlineEditAttendance === o.val ? o.active : o.inactive}`}>{o.label}</button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                       <div className="flex items-center gap-3 justify-end">
                         <button onClick={handleCancelInlineEdit} className="px-6 py-2 rounded-xl text-slate-500 font-bold hover:bg-slate-100 transition-all text-sm">ביטול</button>
                         <button onClick={() => handleSaveInlineEdit(r.id)} className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700 transition-all text-sm shadow-md">שמירה</button>
@@ -1316,16 +1337,33 @@ const App = () => {
   };
 
   const [inlineEditComment, setInlineEditComment] = useState('');
-  const handleEditReview = (r) => { setEditingReviewId(r.id); setInlineEditComment(r.comment); };
-  const handleCancelInlineEdit = () => { setEditingReviewId(null); setInlineEditComment(''); };
+  const [inlineEditDifficulty, setInlineEditDifficulty] = useState(5);
+  const [inlineEditAttendance, setInlineEditAttendance] = useState(null);
+  const handleEditReview = (r) => {
+    setEditingReviewId(r.id);
+    setInlineEditComment(r.comment || '');
+    setInlineEditDifficulty(r.difficulty ?? 5);
+    setInlineEditAttendance(r.attendanceEnforced ?? null);
+  };
+  const handleCancelInlineEdit = () => {
+    setEditingReviewId(null);
+    setInlineEditComment('');
+    setInlineEditDifficulty(5);
+    setInlineEditAttendance(null);
+  };
   const handleSaveInlineEdit = async (id) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ comment: inlineEditComment }) });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/reviews/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment: inlineEditComment, difficulty: inlineEditDifficulty, attendanceEnforced: inlineEditAttendance })
+      });
       const saved = await res.json();
+      if (!res.ok) throw new Error(saved.message || 'שגיאה');
       setReviews(reviews.map(r => r.id === id ? saved : r));
       setAllReviews(allReviews.map(r => r.id === id ? saved : r));
       setEditingReviewId(null); setInlineEditComment(''); alert('עודכן בהצלחה');
-    } catch (err) { alert('שגיאה'); }
+    } catch (err) { alert('שגיאה: ' + err.message); }
   };
 
   const handlePostQuestion = async () => {
@@ -1649,7 +1687,7 @@ const App = () => {
       <main className="flex-grow container mx-auto px-4 sm:px-6 py-6 sm:py-12">
         <Routes>
           <Route path="/lecturer/:id" element={<LecturerProfile user={user} onDepartmentClick={(dept) => { const tT = (studyTracks || []).find(t => t?.label === dept || t?.value === dept)?.value || dept; handleChangeTrack(tT); navigate('/'); }} />} />
-          <Route path="/course/:id" element={<CourseDetail selectedCourse={selectedCourse} navigate={navigate} activeTab={activeTab} setActiveTab={setActiveTab} reviews={reviews} user={user} setIsReviewModalOpen={setIsReviewModalOpen} setIsRatingModalOpen={setIsRatingModalOpen} handleLogout={handleLogout} handleLikeReview={handleLikeReview} handleDeleteReview={handleDeleteReview} handleEditReview={handleEditReview} editingReviewId={editingReviewId} inlineEditComment={inlineEditComment} setInlineEditComment={setInlineEditComment} handleSaveInlineEdit={handleSaveInlineEdit} handleCancelInlineEdit={handleCancelInlineEdit} questions={questions} setIsQuestionModalOpen={setIsQuestionModalOpen} handleDeleteQuestion={handleDeleteQuestion} handlePostAnswer={handlePostAnswer} handleDeleteAnswer={handleDeleteAnswer} onOpenMaterialUpload={handleOpenMaterialUpload} setIsLinkModalOpen={setIsLinkModalOpen} materials={materials} onUpdateMaterial={handleUpdateMaterial} onDeleteMaterial={handleDeleteMaterial} isFollowing={selectedCourse ? followedCourseIds.includes(selectedCourse.id) : false} onToggleFollow={handleToggleFollow} setIsEditingRating={setIsEditingRating} onOpenRatingModal={handleOpenRatingModal} />} />
+          <Route path="/course/:id" element={<CourseDetail selectedCourse={selectedCourse} navigate={navigate} activeTab={activeTab} setActiveTab={setActiveTab} reviews={reviews} user={user} setIsReviewModalOpen={setIsReviewModalOpen} setIsRatingModalOpen={setIsRatingModalOpen} handleLogout={handleLogout} handleLikeReview={handleLikeReview} handleDeleteReview={handleDeleteReview} handleEditReview={handleEditReview} editingReviewId={editingReviewId} inlineEditComment={inlineEditComment} setInlineEditComment={setInlineEditComment} inlineEditDifficulty={inlineEditDifficulty} setInlineEditDifficulty={setInlineEditDifficulty} inlineEditAttendance={inlineEditAttendance} setInlineEditAttendance={setInlineEditAttendance} handleSaveInlineEdit={handleSaveInlineEdit} handleCancelInlineEdit={handleCancelInlineEdit} questions={questions} setIsQuestionModalOpen={setIsQuestionModalOpen} handleDeleteQuestion={handleDeleteQuestion} handlePostAnswer={handlePostAnswer} handleDeleteAnswer={handleDeleteAnswer} onOpenMaterialUpload={handleOpenMaterialUpload} setIsLinkModalOpen={setIsLinkModalOpen} materials={materials} onUpdateMaterial={handleUpdateMaterial} onDeleteMaterial={handleDeleteMaterial} isFollowing={selectedCourse ? followedCourseIds.includes(selectedCourse.id) : false} onToggleFollow={handleToggleFollow} setIsEditingRating={setIsEditingRating} onOpenRatingModal={handleOpenRatingModal} />} />
           <Route path="/" element={<>{user.isGuest && <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500"><button onClick={() => setGuestTab('forum')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>פורום שילובים</button><button onClick={() => setGuestTab('courses')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>צפייה בקורסים</button></div>}{(user.isGuest && guestTab === 'forum') || showForumView ? <CombinationForum user={user} onLogout={handleLogout} onTrackSelect={handleChangeTrack} STUDY_TRACKS={studyTracks} initialForumId={forumViewId} userCombination={!user?.isGuest ? ((studyTracks || []).find(t => t.value === user?.track)?.label || '') : ''} onBack={() => { setShowForumView(false); setForumViewId(null); }} relevantForums={!user?.isGuest ? studentForums : null} /> : <Dashboard user={user} guestSelectedTrack={guestSelectedTrack} setIsGuestDrawerOpen={setIsGuestDrawerOpen} allCourses={allCourses} filteredCourses={filteredCourses} courseFilter={courseFilter} setCourseFilter={setCourseFilter} searchQuery={searchQuery} setSearchQuery={setSearchQuery} showSuggestions={showSuggestions} setShowSuggestions={setShowSuggestions} suggestions={suggestions} navigate={navigate} studyTracks={studyTracks} filterSemester={filterSemester} setFilterSemester={setFilterSemester} filterCampus={filterCampus} setFilterCampus={setFilterCampus} filterLanguage={filterLanguage} setFilterLanguage={setFilterLanguage} filterYear={filterYear} setFilterYear={setFilterYear} studentForums={studentForums} studentForumQuestions={studentForumQuestions} newStudentForumQ={newStudentForumQ} setNewStudentForumQ={setNewStudentForumQ} onPostStudentForumQ={handlePostStudentForumQ} onPostStudentForumA={handlePostStudentForumA} expandedStudentQs={expandedStudentQs} onToggleStudentQ={toggleStudentQ} activeStudentForumId={activeStudentForumId} setActiveStudentForumId={setActiveStudentForumId} onOpenForumPage={() => { logActivity(user.id, ActivityActions.OPEN_FORUM, { track: user.track }); setShowForumView(true); setForumViewId(null); }} />}</>} />
         </Routes>
       </main>
