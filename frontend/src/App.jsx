@@ -27,6 +27,46 @@ const STUDY_TRACKS = projectData.tracks;
 // Module-level variable — lives completely outside React, never affected by renders or closures
 let _uploadCategory = 'misc';
 
+// Custom dropdown that always opens downward
+const FilterSelect = ({ label, value, onChange, options }) => {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+  const selected = options.find(o => o.value === value);
+  return (
+    <div className="flex flex-col gap-2" ref={ref}>
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">{label}</label>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          className={`w-full bg-white border-2 rounded-2xl px-4 py-3 font-bold text-sm text-right flex items-center justify-between transition-all cursor-pointer ${open ? 'border-indigo-500' : 'border-slate-200 hover:border-slate-300'}`}
+        >
+          <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`} />
+          <span className="flex-1 text-right">{selected?.label ?? value}</span>
+        </button>
+        {open && (
+          <div className="absolute top-full mt-1 right-0 left-0 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+            {options.map(opt => (
+              <div
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                className={`px-4 py-2.5 text-sm font-bold text-right cursor-pointer transition-colors ${opt.value === value ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-slate-50'}`}
+              >
+                {opt.label}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const MATERIAL_CATEGORIES = [
   { id: 'links', label: 'קישורים שימושיים', icon: LinkIcon },
   { id: 'summaries', label: 'סיכומים', icon: FileText },
@@ -172,56 +212,36 @@ const Dashboard = ({
 
     {/* Multi-criteria Filters */}
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12" dir="rtl">
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">שנה בתואר</label>
-        <select
-          value={filterYear}
-          onChange={(e) => setFilterYear(e.target.value)}
-          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
-        >
-          {['הכל', "שנה א'", "שנה ב'", "שנה ג'", "שנה ד'"].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">נקודות זכות</label>
-        <select
-          value={filterCredits}
-          onChange={(e) => setFilterCredits(e.target.value)}
-          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
-        >
-          {['הכל', '0', '1', '2', '3', '4', '5', '6', '7'].map(opt => <option key={opt} value={opt}>{opt === 'הכל' ? 'הכל' : `${opt} נ"ז`}</option>)}
-        </select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">סמסטר</label>
-        <select
-          value={filterSemester}
-          onChange={(e) => setFilterSemester(e.target.value)}
-          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
-        >
-          {['הכל', "סמסטר א'", "סמסטר ב'", 'שנתי', 'קיץ'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">שפה</label>
-        <select
-          value={filterLanguage}
-          onChange={(e) => setFilterLanguage(e.target.value)}
-          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
-        >
-          {['הכל', 'עברית', 'אנגלית'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">קמפוס</label>
-        <select
-          value={filterCampus}
-          onChange={(e) => setFilterCampus(e.target.value)}
-          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
-        >
-          {['הכל', 'הר הצופים', 'קרית א"י ספרא', 'עין כרם', 'רחובות'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-      </div>
+      <FilterSelect
+        label="שנה בתואר"
+        value={filterYear}
+        onChange={setFilterYear}
+        options={["הכל", "שנה א'", "שנה ב'", "שנה ג'", "שנה ד'"].map(o => ({ value: o, label: o }))}
+      />
+      <FilterSelect
+        label="נקודות זכות"
+        value={filterCredits}
+        onChange={setFilterCredits}
+        options={['הכל', '0', '1', '2', '3', '4', '5', '6', '7'].map(o => ({ value: o, label: o === 'הכל' ? 'הכל' : `${o} נ"ז` }))}
+      />
+      <FilterSelect
+        label="סמסטר"
+        value={filterSemester}
+        onChange={setFilterSemester}
+        options={["הכל", "סמסטר א'", "סמסטר ב'", 'שנתי', 'קיץ'].map(o => ({ value: o, label: o }))}
+      />
+      <FilterSelect
+        label="שפה"
+        value={filterLanguage}
+        onChange={setFilterLanguage}
+        options={['הכל', 'עברית', 'אנגלית'].map(o => ({ value: o, label: o }))}
+      />
+      <FilterSelect
+        label="קמפוס"
+        value={filterCampus}
+        onChange={setFilterCampus}
+        options={['הכל', 'הר הצופים', 'קרית א"י ספרא', 'עין כרם', 'רחובות'].map(o => ({ value: o, label: o }))}
+      />
     </div>
     
     <div className="space-y-16">
