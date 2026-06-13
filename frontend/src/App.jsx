@@ -55,6 +55,7 @@ const Dashboard = ({
   filterCampus, setFilterCampus,
   filterLanguage, setFilterLanguage,
   filterYear, setFilterYear,
+  filterCredits, setFilterCredits,
   studentForums,
   studentForumQuestions,
   newStudentForumQ,
@@ -170,11 +171,11 @@ const Dashboard = ({
     </div>
 
     {/* Multi-criteria Filters */}
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12" dir="rtl">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12" dir="rtl">
       <div className="flex flex-col gap-2">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">סמסטר</label>
-        <select 
-          value={filterSemester} 
+        <select
+          value={filterSemester}
           onChange={(e) => setFilterSemester(e.target.value)}
           className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
         >
@@ -183,8 +184,8 @@ const Dashboard = ({
       </div>
       <div className="flex flex-col gap-2">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">קמפוס</label>
-        <select 
-          value={filterCampus} 
+        <select
+          value={filterCampus}
           onChange={(e) => setFilterCampus(e.target.value)}
           className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
         >
@@ -193,8 +194,8 @@ const Dashboard = ({
       </div>
       <div className="flex flex-col gap-2">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">שפה</label>
-        <select 
-          value={filterLanguage} 
+        <select
+          value={filterLanguage}
           onChange={(e) => setFilterLanguage(e.target.value)}
           className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
         >
@@ -203,12 +204,22 @@ const Dashboard = ({
       </div>
       <div className="flex flex-col gap-2">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">שנה בתואר</label>
-        <select 
-          value={filterYear} 
+        <select
+          value={filterYear}
           onChange={(e) => setFilterYear(e.target.value)}
           className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
         >
           {['הכל', "שנה א'", "שנה ב'", "שנה ג'", "שנה ד'"].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">נקודות זכות</label>
+        <select
+          value={filterCredits}
+          onChange={(e) => setFilterCredits(e.target.value)}
+          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
+        >
+          {['הכל', '0', '1', '2', '3', '4', '5', '6', '7'].map(opt => <option key={opt} value={opt}>{opt === 'הכל' ? 'הכל' : `${opt} נ"ז`}</option>)}
         </select>
       </div>
     </div>
@@ -933,6 +944,7 @@ const App = () => {
   const [filterCampus, setFilterCampus] = useState('הכל');
   const [filterLanguage, setFilterLanguage] = useState('הכל');
   const [filterYear, setFilterYear] = useState('הכל');
+  const [filterCredits, setFilterCredits] = useState('הכל');
   
   const [studentForums, setStudentForums] = useState([]);
   const [studentForumQuestions, setStudentForumQuestions] = useState([]);
@@ -1281,7 +1293,8 @@ const App = () => {
     const matchesLanguage = filterLanguage === 'הכל' || (c.language && c.language.includes(filterLanguage));
     const map = { "שנה א'": "א", "שנה ב'": "ב", "שנה ג'": "ג", "שנה ד'": "ד" };
     const matchesYear = filterYear === 'הכל' || c.year === map[filterYear];
-    const passes = matchesSemester && matchesCampus && matchesLanguage && matchesYear;
+    const matchesCredits = filterCredits === 'הכל' || Math.round(parseFloat(c.credits)) === parseInt(filterCredits);
+    const passes = matchesSemester && matchesCampus && matchesLanguage && matchesYear && matchesCredits;
     if (user.isGuest) return guestSelectedTrack && c.track === guestSelectedTrack && matchesSearch && matchesFilter && passes;
     return (user.track === 'General' || !user.track || c.track === user.track) && matchesSearch && matchesFilter && passes;
   });
@@ -1675,7 +1688,7 @@ const App = () => {
             </div>}
           </div>
           <div className="flex-1"></div>
-          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => { setSelectedCourse(null); if (user?.isGuest) setGuestTab('forum'); }}><span className="text-2xl font-black text-slate-900 tracking-tight">CourseMate</span><img src="/logo.png" alt="CourseMate Logo" className="h-10 w-10 object-contain group-hover:scale-110 transition-transform" /></div>
+          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => { setSelectedCourse(null); if (user?.isGuest) setGuestTab('forum'); }}><span className="text-2xl font-black text-indigo-600 tracking-tight">CourseMate</span><img src="/logo.png" alt="CourseMate Logo" className="h-10 w-10 object-contain group-hover:scale-110 transition-transform" /></div>
         </div>
         {isChangingTrack && (
           <div className="absolute top-20 right-6 bg-white rounded-3xl shadow-2xl border border-slate-200 p-4 w-72 animate-in fade-in slide-in-from-top-2 duration-200 z-[60]" dir="rtl">
@@ -1689,7 +1702,7 @@ const App = () => {
         <Routes>
           <Route path="/lecturer/:id" element={<LecturerProfile user={user} onDepartmentClick={(dept) => { const tT = (studyTracks || []).find(t => t?.label === dept || t?.value === dept)?.value || dept; handleChangeTrack(tT); navigate('/'); }} />} />
           <Route path="/course/:id" element={<CourseDetail selectedCourse={selectedCourse} navigate={navigate} activeTab={activeTab} setActiveTab={setActiveTab} reviews={reviews} user={user} setIsReviewModalOpen={setIsReviewModalOpen} setIsRatingModalOpen={setIsRatingModalOpen} handleLogout={handleLogout} handleLikeReview={handleLikeReview} handleDeleteReview={handleDeleteReview} handleEditReview={handleEditReview} editingReviewId={editingReviewId} inlineEditComment={inlineEditComment} setInlineEditComment={setInlineEditComment} inlineEditDifficulty={inlineEditDifficulty} setInlineEditDifficulty={setInlineEditDifficulty} inlineEditAttendance={inlineEditAttendance} setInlineEditAttendance={setInlineEditAttendance} handleSaveInlineEdit={handleSaveInlineEdit} handleCancelInlineEdit={handleCancelInlineEdit} questions={questions} setIsQuestionModalOpen={setIsQuestionModalOpen} handleDeleteQuestion={handleDeleteQuestion} handlePostAnswer={handlePostAnswer} handleDeleteAnswer={handleDeleteAnswer} onOpenMaterialUpload={handleOpenMaterialUpload} setIsLinkModalOpen={setIsLinkModalOpen} materials={materials} onUpdateMaterial={handleUpdateMaterial} onDeleteMaterial={handleDeleteMaterial} isFollowing={selectedCourse ? followedCourseIds.includes(selectedCourse.id) : false} onToggleFollow={handleToggleFollow} setIsEditingRating={setIsEditingRating} onOpenRatingModal={handleOpenRatingModal} />} />
-          <Route path="/" element={<>{user.isGuest && <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500"><button onClick={() => setGuestTab('forum')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>פורום שילובים</button><button onClick={() => setGuestTab('courses')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>צפייה בקורסים</button></div>}{(user.isGuest && guestTab === 'forum') || showForumView ? <CombinationForum user={user} onLogout={handleLogout} onTrackSelect={handleChangeTrack} STUDY_TRACKS={studyTracks} initialForumId={forumViewId} userCombination={!user?.isGuest ? ((studyTracks || []).find(t => t.value === user?.track)?.label || '') : ''} onBack={() => { setShowForumView(false); setForumViewId(null); }} relevantForums={!user?.isGuest ? studentForums : null} /> : <Dashboard user={user} guestSelectedTrack={guestSelectedTrack} setIsGuestDrawerOpen={setIsGuestDrawerOpen} allCourses={allCourses} filteredCourses={filteredCourses} courseFilter={courseFilter} setCourseFilter={setCourseFilter} searchQuery={searchQuery} setSearchQuery={setSearchQuery} showSuggestions={showSuggestions} setShowSuggestions={setShowSuggestions} suggestions={suggestions} navigate={navigate} studyTracks={studyTracks} filterSemester={filterSemester} setFilterSemester={setFilterSemester} filterCampus={filterCampus} setFilterCampus={setFilterCampus} filterLanguage={filterLanguage} setFilterLanguage={setFilterLanguage} filterYear={filterYear} setFilterYear={setFilterYear} studentForums={studentForums} studentForumQuestions={studentForumQuestions} newStudentForumQ={newStudentForumQ} setNewStudentForumQ={setNewStudentForumQ} onPostStudentForumQ={handlePostStudentForumQ} onPostStudentForumA={handlePostStudentForumA} expandedStudentQs={expandedStudentQs} onToggleStudentQ={toggleStudentQ} activeStudentForumId={activeStudentForumId} setActiveStudentForumId={setActiveStudentForumId} onOpenForumPage={() => { logActivity(user.id, ActivityActions.OPEN_FORUM, { track: user.track }); setShowForumView(true); setForumViewId(null); }} />}</>} />
+          <Route path="/" element={<>{user.isGuest && <div className="flex gap-4 p-1.5 bg-slate-100 rounded-2xl w-fit mb-12 mr-auto ml-0 transition-all animate-in fade-in slide-in-from-top-4 duration-500"><button onClick={() => setGuestTab('forum')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'forum' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>פורום שילובים</button><button onClick={() => setGuestTab('courses')} className={`px-8 py-3 rounded-xl font-black text-sm transition-all ${guestTab === 'courses' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>צפייה בקורסים</button></div>}{(user.isGuest && guestTab === 'forum') || showForumView ? <CombinationForum user={user} onLogout={handleLogout} onTrackSelect={handleChangeTrack} STUDY_TRACKS={studyTracks} initialForumId={forumViewId} userCombination={!user?.isGuest ? ((studyTracks || []).find(t => t.value === user?.track)?.label || '') : ''} onBack={() => { setShowForumView(false); setForumViewId(null); }} relevantForums={!user?.isGuest ? studentForums : null} /> : <Dashboard user={user} guestSelectedTrack={guestSelectedTrack} setIsGuestDrawerOpen={setIsGuestDrawerOpen} allCourses={allCourses} filteredCourses={filteredCourses} courseFilter={courseFilter} setCourseFilter={setCourseFilter} searchQuery={searchQuery} setSearchQuery={setSearchQuery} showSuggestions={showSuggestions} setShowSuggestions={setShowSuggestions} suggestions={suggestions} navigate={navigate} studyTracks={studyTracks} filterSemester={filterSemester} setFilterSemester={setFilterSemester} filterCampus={filterCampus} setFilterCampus={setFilterCampus} filterLanguage={filterLanguage} setFilterLanguage={setFilterLanguage} filterYear={filterYear} setFilterYear={setFilterYear} filterCredits={filterCredits} setFilterCredits={setFilterCredits} studentForums={studentForums} studentForumQuestions={studentForumQuestions} newStudentForumQ={newStudentForumQ} setNewStudentForumQ={setNewStudentForumQ} onPostStudentForumQ={handlePostStudentForumQ} onPostStudentForumA={handlePostStudentForumA} expandedStudentQs={expandedStudentQs} onToggleStudentQ={toggleStudentQ} activeStudentForumId={activeStudentForumId} setActiveStudentForumId={setActiveStudentForumId} onOpenForumPage={() => { logActivity(user.id, ActivityActions.OPEN_FORUM, { track: user.track }); setShowForumView(true); setForumViewId(null); }} />}</>} />
         </Routes>
       </main>
       {isRatingModalOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm" dir="rtl" onClick={() => { setIsRatingModalOpen(false); setIsEditingRating(false); }}><div className="bg-white w-full max-w-md rounded-[40px] p-6 shadow-2xl overflow-y-auto max-h-[90vh] animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}><div className="flex items-center gap-3 mb-3"><button onClick={() => { setIsRatingModalOpen(false); setIsEditingRating(false); }} className="text-slate-400 hover:text-rose-500 transition-colors"><X className="h-6 w-6" /></button><h3 className="text-xl font-black text-slate-900">דירוג קורס מהיר</h3></div><div className="space-y-3"><div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative"><div className="flex justify-between items-center mb-2"><label className="text-sm font-black text-slate-700 block">רמת קושי הקורס (1-10)</label>{hasUserRated && !isEditingRating && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg flex items-center gap-1.5">כבר דירגת רכיב זה בעבר.<button onClick={() => setIsEditingRating(true)} className="text-amber-500 hover:text-amber-700 transition-colors"><Edit2 className="h-3 w-3" /></button></span>}</div><div className="flex items-center gap-4"><input type="range" min="1" max="10" step="1" value={newReviewDifficulty} onChange={(e) => setNewReviewDifficulty(parseInt(e.target.value))} disabled={hasUserRated && !isEditingRating} className={`flex-1 h-2 bg-slate-200 rounded-lg appearance-none accent-rose-500 ${hasUserRated && !isEditingRating ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`} /><div className={`h-10 w-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center font-black text-base border-2 border-rose-100 shadow-sm shrink-0 ${hasUserRated && !isEditingRating ? 'opacity-50' : ''}`}>{newReviewDifficulty}</div></div><div className="flex justify-between mt-2 px-1"><span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-slate-300' : 'text-slate-400'}`}>קל מאוד</span><span className={`text-[10px] font-black uppercase tracking-tighter ${hasUserRated ? 'text-rose-300' : 'text-rose-600'}`}>{newReviewDifficulty <= 2 ? "קל מאוד" : newReviewDifficulty === 3 ? "קל" : newReviewDifficulty <= 7 ? "בינוני" : newReviewDifficulty <= 9 ? "קשה" : "קשה מאוד"}</span></div></div><div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100"><label className="text-sm font-black text-slate-700 mb-2 block">סמסטר</label><div className="grid grid-cols-2 gap-2">{[{ id: "סמסטר א'", label: "סמסטר א'" }, { id: "סמסטר ב'", label: "סמסטר ב'" }, { id: "סמסטר קיץ", label: "סמסטר קיץ" }, { id: "שנתי", label: "שנתי" }].map(o => (<button key={o.id} onClick={() => setNewReviewSemester(o.id)} className={`py-2 rounded-xl font-black text-xs border-2 transition-all ${newReviewSemester === o.id ? 'bg-indigo-600 text-white border-transparent shadow-md' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200 hover:shadow-sm'}`}>{o.label}</button>))}</div></div><div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 relative"><div className="flex justify-between items-center mb-2"><label className="text-sm font-black text-slate-700 block">האם נבדקה נוכחות?</label>{hasUserRated && !isEditingRating && <span className="text-[10px] font-black text-amber-500 bg-amber-50 px-2 py-1 rounded-lg flex items-center gap-1.5">כבר דירגת רכיב זה בעבר.<button onClick={() => setIsEditingRating(true)} className="text-amber-500 hover:text-amber-700 transition-colors"><Edit2 className="h-3 w-3" /></button></span>}</div><div className="grid grid-cols-3 gap-3">{[{ id: true, label: 'כן', color: 'bg-emerald-50 text-emerald-600 border-emerald-100' }, { id: false, label: 'לא', color: 'bg-rose-50 text-rose-600 border-rose-100' }, { id: null, label: 'לא יודע/ת', color: 'bg-slate-100 text-slate-500 border-slate-200' }].map(o => (<button key={String(o.id)} onClick={() => setNewReviewAttendance(o.id)} disabled={hasUserRated && !isEditingRating} className={`py-2 rounded-xl font-black text-xs border-2 transition-all ${newReviewAttendance === o.id ? `${o.id === true ? 'bg-emerald-600' : o.id === false ? 'bg-rose-600' : 'bg-slate-600'} text-white border-transparent shadow-md` : `${o.color} hover:shadow-sm`} ${hasUserRated && !isEditingRating ? 'cursor-not-allowed opacity-50' : ''}`}>{o.label}</button>))}</div></div><button onClick={handlePostRating} className="w-full bg-indigo-600 text-white py-3 rounded-2xl font-black text-sm hover:bg-indigo-700 shadow-lg active:scale-95 transition-all">שלח דירוג</button></div></div></div>}

@@ -51,7 +51,7 @@ const AuthPage = ({ onLogin }) => {
               {/* Logo + title */}
               <div className="flex flex-col items-center mb-8">
                 <img src="/logo.png" alt="CourseMate Logo" className="h-16 w-16 object-contain mb-3" />
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">ברוכים הבאים ל-CourseMate</h2>
+                <h2 className="text-2xl font-black text-indigo-600 tracking-tight">ברוכים הבאים ל-CourseMate</h2>
                 <p className="text-sm text-slate-500 font-medium mt-1 text-center">כניסה עם חשבון Google של האוניברסיטה העברית</p>
               </div>
 
