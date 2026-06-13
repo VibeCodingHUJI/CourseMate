@@ -173,36 +173,6 @@ const Dashboard = ({
     {/* Multi-criteria Filters */}
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12" dir="rtl">
       <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">סמסטר</label>
-        <select
-          value={filterSemester}
-          onChange={(e) => setFilterSemester(e.target.value)}
-          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
-        >
-          {['הכל', "סמסטר א'", "סמסטר ב'", 'שנתי', 'קיץ'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">קמפוס</label>
-        <select
-          value={filterCampus}
-          onChange={(e) => setFilterCampus(e.target.value)}
-          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
-        >
-          {['הכל', 'הר הצופים', 'קרית א"י ספרא', 'עין כרם', 'רחובות'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">שפה</label>
-        <select
-          value={filterLanguage}
-          onChange={(e) => setFilterLanguage(e.target.value)}
-          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
-        >
-          {['הכל', 'עברית', 'אנגלית'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
-        </select>
-      </div>
-      <div className="flex flex-col gap-2">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">שנה בתואר</label>
         <select
           value={filterYear}
@@ -220,6 +190,36 @@ const Dashboard = ({
           className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
         >
           {['הכל', '0', '1', '2', '3', '4', '5', '6', '7'].map(opt => <option key={opt} value={opt}>{opt === 'הכל' ? 'הכל' : `${opt} נ"ז`}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">סמסטר</label>
+        <select
+          value={filterSemester}
+          onChange={(e) => setFilterSemester(e.target.value)}
+          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
+        >
+          {['הכל', "סמסטר א'", "סמסטר ב'", 'שנתי', 'קיץ'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">שפה</label>
+        <select
+          value={filterLanguage}
+          onChange={(e) => setFilterLanguage(e.target.value)}
+          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
+        >
+          {['הכל', 'עברית', 'אנגלית'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2 text-right">קמפוס</label>
+        <select
+          value={filterCampus}
+          onChange={(e) => setFilterCampus(e.target.value)}
+          className="bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500 transition-all font-bold text-sm text-right appearance-none cursor-pointer hover:border-slate-300"
+        >
+          {['הכל', 'הר הצופים', 'קרית א"י ספרא', 'עין כרם', 'רחובות'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
         </select>
       </div>
     </div>
