@@ -661,6 +661,15 @@ const CourseDetail = ({
               <div className="text-[10px] text-slate-400 font-black uppercase text-center">קושי ממוצע</div>
               <div className="text-[10px] text-slate-400 font-bold text-center mt-1">({difficultyReviews.length || 0} הצבעות)</div>
             </div>
+            {enforcementRate !== null && (
+              <div className="text-center pt-3 sm:pt-4 border-t border-slate-200 w-full">
+                <div className="text-2xl font-black text-blue-600 mb-1">{enforcementRate}%</div>
+                <div className="text-[10px] text-slate-400 font-black uppercase text-center">אכיפת נוכחות בפועל</div>
+                <div className="text-[10px] text-slate-400 font-bold text-center mt-1">
+                  ({attendanceReviews.length} הצבעות: {attendanceReviews.filter(r => r.attendanceEnforced === true).length} כן, {attendanceReviews.filter(r => r.attendanceEnforced === false).length} לא)
+                </div>
+              </div>
+            )}
             {!user.isGuest && (
               <button
                 onClick={() => {
